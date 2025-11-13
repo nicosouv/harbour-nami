@@ -35,9 +35,9 @@ PkgConfigBR:
   - Qt5Sql
 
 # Runtime dependencies (C++ only, no Python!)
+# Note: OpenCV and ONNX Runtime are bundled and loaded dynamically
 Requires:
   - sailfishsilica-qt5 >= 0.10.9
-  - opencv >= 4.0
   - qt5-plugin-sqldriver-sqlite
 
 # All installed files
