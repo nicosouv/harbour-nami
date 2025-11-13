@@ -1,6 +1,6 @@
 Name: harbour-nami
 Summary: Face Recognition Photo Gallery
-Version: 0.1.0
+Version: 0.2.0
 Release: 1
 # The contents of the Group field should be one of the groups listed here:
 # https://github.com/mer-tools/spectacle/blob/master/data/GROUPS
@@ -16,30 +16,30 @@ Description: |
 
   Features:
   - 100% on-device processing (no cloud, no internet required)
-  - YuNet face detection + ArcFace recognition
+  - YuNet face detection + ArcFace recognition (C++ native)
   - Smart photo grouping by faces
   - GDPR compliant (data export, right to be forgotten)
   - Multilingual (EN, FR, DE, IT, ES, FI)
+  - Optimized C++ implementation for better performance
 
 Configure: none
-Builder: qtc5
+Builder: cmake
 
+# Build dependencies
 PkgConfigBR:
   - sailfishapp >= 1.0.2
   - Qt5Core
   - Qt5Qml
   - Qt5Quick
   - Qt5Concurrent
-  - Qt5Multimedia
+  - Qt5Sql
+  - opencv >= 4.0
 
-# Python runtime dependencies
+# Runtime dependencies (C++ only, no Python!)
 Requires:
   - sailfishsilica-qt5 >= 0.10.9
-  - pyotherside-qml-plugin-python3-qt5
-  - python3-base
-  - python3-numpy
-  - python3-opencv
-  - python3-Pillow
+  - opencv >= 4.0
+  - qt5-qtsql-sqlite
 
 # All installed files
 Files:

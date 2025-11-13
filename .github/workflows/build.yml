@@ -20,41 +20,38 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Download ML Models
+      - name: Download Dependencies
         run: |
-          mkdir -p python/models
+          # Download ML Models
+          bash scripts/download_models_for_build.sh
 
-          # Download YuNet face detection model (~353 KB)
-          echo "Downloading YuNet face detection model..."
-          curl -L "https://github.com/opencv/opencv_zoo/raw/main/models/face_detection_yunet/face_detection_yunet_2023mar.onnx" \
-            -o python/models/face_detection_yunet_2023mar.onnx
+          # Download ONNX Runtime for the target architecture
+          mkdir -p 3rdparty/onnxruntime
 
-          # Verify YuNet downloaded correctly
-          if [ ! -f python/models/face_detection_yunet_2023mar.onnx ]; then
-            echo "Failed to download YuNet model"
-            exit 1
-          fi
-          echo "✓ YuNet model downloaded ($(du -h python/models/face_detection_yunet_2023mar.onnx | cut -f1))"
+          # Map Sailfish arch to ONNX Runtime arch
+          case "${{ matrix.arch }}" in
+            aarch64)
+              ONNX_ARCH="linux-aarch64"
+              ;;
+            armv7hl)
+              ONNX_ARCH="linux-aarch64"  # Use aarch64 for armv7hl
+              ;;
+            i486)
+              ONNX_ARCH="linux-x64"  # Use x64 for i486
+              ;;
+          esac
 
-          # Download ArcFace recognition model from Hugging Face (~4.3 MB)
-          echo "Downloading ArcFace recognition model..."
-          curl -L "https://huggingface.co/garavv/arcface-onnx/resolve/main/arc.onnx?download=true" \
-            -o python/models/arcface_mobilefacenet.onnx
+          echo "Downloading ONNX Runtime for $ONNX_ARCH..."
+          curl -L "https://github.com/microsoft/onnxruntime/releases/download/v1.16.3/onnxruntime-$ONNX_ARCH-1.16.3.tgz" \
+            -o onnxruntime.tgz
 
-          # Verify ArcFace downloaded correctly (should be ~4-5 MB)
-          if [ ! -f python/models/arcface_mobilefacenet.onnx ]; then
-            echo "Failed to download ArcFace model"
-            exit 1
-          fi
+          tar -xzf onnxruntime.tgz
+          cp -r onnxruntime-*/include 3rdparty/onnxruntime/
+          cp -r onnxruntime-*/lib 3rdparty/onnxruntime/
+          rm -rf onnxruntime*
 
-          SIZE=$(stat -c%s python/models/arcface_mobilefacenet.onnx 2>/dev/null || stat -f%z python/models/arcface_mobilefacenet.onnx 2>/dev/null)
-          if [ $SIZE -lt 1000000 ]; then
-            echo "ArcFace model too small ($(du -h python/models/arcface_mobilefacenet.onnx | cut -f1)), download may have failed"
-            exit 1
-          fi
-          echo "✓ ArcFace model downloaded ($(du -h python/models/arcface_mobilefacenet.onnx | cut -f1))"
-
-          echo "All models downloaded successfully"
+          echo "✓ ONNX Runtime downloaded and extracted"
+          ls -lh 3rdparty/onnxruntime/lib/
 
       - name: Build for ${{ matrix.arch }}
         run: |

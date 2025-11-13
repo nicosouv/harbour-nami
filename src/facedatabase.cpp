@@ -1,0 +1,595 @@
+#include "facedatabase.h"
+#include <QDebug>
+#include <QSqlQuery>
+#include <QSqlError>
+#include <QVariant>
+#include <QDataStream>
+#include <QBuffer>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonArray>
+
+FaceDatabase::FaceDatabase(QObject *parent)
+    : QObject(parent)
+    , m_isOpen(false)
+{
+}
+
+FaceDatabase::~FaceDatabase()
+{
+    close();
+}
+
+bool FaceDatabase::open(const QString &dbPath)
+{
+    if (m_isOpen) {
+        qWarning() << "Database already open";
+        return true;
+    }
+
+    m_dbPath = dbPath;
+    m_db = QSqlDatabase::addDatabase("QSQLITE");
+    m_db.setDatabaseName(dbPath);
+
+    if (!m_db.open()) {
+        emit error("Failed to open database: " + m_db.lastError().text());
+        return false;
+    }
+
+    m_isOpen = true;
+    qDebug() << "Database opened:" << dbPath;
+
+    return initializeSchema();
+}
+
+void FaceDatabase::close()
+{
+    if (m_isOpen) {
+        m_db.close();
+        m_isOpen = false;
+        qDebug() << "Database closed";
+    }
+}
+
+bool FaceDatabase::initializeSchema()
+{
+    QSqlQuery query(m_db);
+
+    // Photos table
+    if (!query.exec(R"(
+        CREATE TABLE IF NOT EXISTS photos (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            file_path TEXT NOT NULL UNIQUE,
+            date_taken TEXT,
+            width INTEGER,
+            height INTEGER,
+            processed_at TEXT,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        )
+    )")) {
+        emit error("Failed to create photos table: " + query.lastError().text());
+        return false;
+    }
+
+    // Faces table
+    if (!query.exec(R"(
+        CREATE TABLE IF NOT EXISTS faces (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            photo_id INTEGER NOT NULL,
+            bbox_x REAL NOT NULL,
+            bbox_y REAL NOT NULL,
+            bbox_width REAL NOT NULL,
+            bbox_height REAL NOT NULL,
+            confidence REAL NOT NULL,
+            embedding BLOB NOT NULL,
+            person_id INTEGER DEFAULT -1,
+            detected_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (photo_id) REFERENCES photos(id) ON DELETE CASCADE
+        )
+    )")) {
+        emit error("Failed to create faces table: " + query.lastError().text());
+        return false;
+    }
+
+    // People table
+    if (!query.exec(R"(
+        CREATE TABLE IF NOT EXISTS people (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        )
+    )")) {
+        emit error("Failed to create people table: " + query.lastError().text());
+        return false;
+    }
+
+    // Settings table
+    if (!query.exec(R"(
+        CREATE TABLE IF NOT EXISTS settings (
+            key TEXT PRIMARY KEY,
+            value TEXT
+        )
+    )")) {
+        emit error("Failed to create settings table: " + query.lastError().text());
+        return false;
+    }
+
+    // Create indexes
+    query.exec("CREATE INDEX IF NOT EXISTS idx_faces_photo ON faces(photo_id)");
+    query.exec("CREATE INDEX IF NOT EXISTS idx_faces_person ON faces(person_id)");
+    query.exec("CREATE INDEX IF NOT EXISTS idx_photos_path ON photos(file_path)");
+
+    qDebug() << "Database schema initialized";
+    return true;
+}
+
+// === Photo operations ===
+
+int FaceDatabase::addPhoto(const QString &filePath, const QDateTime &dateTaken,
+                           int width, int height)
+{
+    QSqlQuery query(m_db);
+    query.prepare(R"(
+        INSERT INTO photos (file_path, date_taken, width, height)
+        VALUES (:file_path, :date_taken, :width, :height)
+    )");
+    query.bindValue(":file_path", filePath);
+    query.bindValue(":date_taken", dateTaken.toString(Qt::ISODate));
+    query.bindValue(":width", width);
+    query.bindValue(":height", height);
+
+    if (!query.exec()) {
+        emit error("Failed to add photo: " + query.lastError().text());
+        return -1;
+    }
+
+    return query.lastInsertId().toInt();
+}
+
+Photo FaceDatabase::getPhoto(int photoId)
+{
+    QSqlQuery query(m_db);
+    query.prepare("SELECT * FROM photos WHERE id = :id");
+    query.bindValue(":id", photoId);
+
+    if (query.exec() && query.next()) {
+        Photo photo;
+        photo.id = query.value("id").toInt();
+        photo.filePath = query.value("file_path").toString();
+        photo.dateTaken = QDateTime::fromString(query.value("date_taken").toString(), Qt::ISODate);
+        photo.width = query.value("width").toInt();
+        photo.height = query.value("height").toInt();
+        photo.processedAt = QDateTime::fromString(query.value("processed_at").toString(), Qt::ISODate);
+        return photo;
+    }
+
+    return Photo{-1, "", QDateTime(), 0, 0, QDateTime()};
+}
+
+QVector<Photo> FaceDatabase::getAllPhotos()
+{
+    QVector<Photo> photos;
+    QSqlQuery query(m_db);
+
+    if (query.exec("SELECT * FROM photos ORDER BY date_taken DESC")) {
+        while (query.next()) {
+            Photo photo;
+            photo.id = query.value("id").toInt();
+            photo.filePath = query.value("file_path").toString();
+            photo.dateTaken = QDateTime::fromString(query.value("date_taken").toString(), Qt::ISODate);
+            photo.width = query.value("width").toInt();
+            photo.height = query.value("height").toInt();
+            photo.processedAt = QDateTime::fromString(query.value("processed_at").toString(), Qt::ISODate);
+            photos.append(photo);
+        }
+    }
+
+    return photos;
+}
+
+bool FaceDatabase::markPhotoProcessed(int photoId)
+{
+    QSqlQuery query(m_db);
+    query.prepare("UPDATE photos SET processed_at = :processed_at WHERE id = :id");
+    query.bindValue(":processed_at", QDateTime::currentDateTime().toString(Qt::ISODate));
+    query.bindValue(":id", photoId);
+
+    return query.exec();
+}
+
+// === Face operations ===
+
+int FaceDatabase::addFace(int photoId, const QRectF &bbox, float confidence,
+                          const FaceEmbedding &embedding, int personId)
+{
+    QSqlQuery query(m_db);
+    query.prepare(R"(
+        INSERT INTO faces (photo_id, bbox_x, bbox_y, bbox_width, bbox_height,
+                          confidence, embedding, person_id)
+        VALUES (:photo_id, :bbox_x, :bbox_y, :bbox_width, :bbox_height,
+                :confidence, :embedding, :person_id)
+    )");
+    query.bindValue(":photo_id", photoId);
+    query.bindValue(":bbox_x", bbox.x());
+    query.bindValue(":bbox_y", bbox.y());
+    query.bindValue(":bbox_width", bbox.width());
+    query.bindValue(":bbox_height", bbox.height());
+    query.bindValue(":confidence", confidence);
+    query.bindValue(":embedding", serializeEmbedding(embedding));
+    query.bindValue(":person_id", personId);
+
+    if (!query.exec()) {
+        emit error("Failed to add face: " + query.lastError().text());
+        return -1;
+    }
+
+    return query.lastInsertId().toInt();
+}
+
+Face FaceDatabase::getFace(int faceId)
+{
+    QSqlQuery query(m_db);
+    query.prepare("SELECT * FROM faces WHERE id = :id");
+    query.bindValue(":id", faceId);
+
+    if (query.exec() && query.next()) {
+        Face face;
+        face.id = query.value("id").toInt();
+        face.photoId = query.value("photo_id").toInt();
+        face.bbox = QRectF(
+            query.value("bbox_x").toDouble(),
+            query.value("bbox_y").toDouble(),
+            query.value("bbox_width").toDouble(),
+            query.value("bbox_height").toDouble()
+        );
+        face.confidence = query.value("confidence").toFloat();
+        face.embedding = deserializeEmbedding(query.value("embedding").toByteArray());
+        face.personId = query.value("person_id").toInt();
+        face.detectedAt = QDateTime::fromString(query.value("detected_at").toString(), Qt::ISODate);
+        return face;
+    }
+
+    return Face{-1, -1, QRectF(), 0.0f, FaceEmbedding(), -1, QDateTime()};
+}
+
+QVector<Face> FaceDatabase::getFacesForPhoto(int photoId)
+{
+    QVector<Face> faces;
+    QSqlQuery query(m_db);
+    query.prepare("SELECT * FROM faces WHERE photo_id = :photo_id");
+    query.bindValue(":photo_id", photoId);
+
+    if (query.exec()) {
+        while (query.next()) {
+            Face face;
+            face.id = query.value("id").toInt();
+            face.photoId = query.value("photo_id").toInt();
+            face.bbox = QRectF(
+                query.value("bbox_x").toDouble(),
+                query.value("bbox_y").toDouble(),
+                query.value("bbox_width").toDouble(),
+                query.value("bbox_height").toDouble()
+            );
+            face.confidence = query.value("confidence").toFloat();
+            face.embedding = deserializeEmbedding(query.value("embedding").toByteArray());
+            face.personId = query.value("person_id").toInt();
+            face.detectedAt = QDateTime::fromString(query.value("detected_at").toString(), Qt::ISODate);
+            faces.append(face);
+        }
+    }
+
+    return faces;
+}
+
+QVector<Face> FaceDatabase::getUnmappedFaces()
+{
+    QVector<Face> faces;
+    QSqlQuery query(m_db);
+
+    if (query.exec("SELECT * FROM faces WHERE person_id = -1 ORDER BY detected_at DESC")) {
+        while (query.next()) {
+            Face face;
+            face.id = query.value("id").toInt();
+            face.photoId = query.value("photo_id").toInt();
+            face.bbox = QRectF(
+                query.value("bbox_x").toDouble(),
+                query.value("bbox_y").toDouble(),
+                query.value("bbox_width").toDouble(),
+                query.value("bbox_height").toDouble()
+            );
+            face.confidence = query.value("confidence").toFloat();
+            face.embedding = deserializeEmbedding(query.value("embedding").toByteArray());
+            face.personId = query.value("person_id").toInt();
+            face.detectedAt = QDateTime::fromString(query.value("detected_at").toString(), Qt::ISODate);
+            faces.append(face);
+        }
+    }
+
+    return faces;
+}
+
+bool FaceDatabase::updateFacePersonMapping(int faceId, int personId)
+{
+    QSqlQuery query(m_db);
+    query.prepare("UPDATE faces SET person_id = :person_id WHERE id = :id");
+    query.bindValue(":person_id", personId);
+    query.bindValue(":id", faceId);
+
+    return query.exec();
+}
+
+// === Person operations ===
+
+int FaceDatabase::createPerson(const QString &name)
+{
+    QSqlQuery query(m_db);
+    query.prepare("INSERT INTO people (name) VALUES (:name)");
+    query.bindValue(":name", name);
+
+    if (!query.exec()) {
+        emit error("Failed to create person: " + query.lastError().text());
+        return -1;
+    }
+
+    return query.lastInsertId().toInt();
+}
+
+Person FaceDatabase::getPerson(int personId)
+{
+    QSqlQuery query(m_db);
+    query.prepare(R"(
+        SELECT p.*, COUNT(f.id) as photo_count
+        FROM people p
+        LEFT JOIN faces f ON f.person_id = p.id
+        WHERE p.id = :id
+        GROUP BY p.id
+    )");
+    query.bindValue(":id", personId);
+
+    if (query.exec() && query.next()) {
+        Person person;
+        person.id = query.value("id").toInt();
+        person.name = query.value("name").toString();
+        person.createdAt = QDateTime::fromString(query.value("created_at").toString(), Qt::ISODate);
+        person.photoCount = query.value("photo_count").toInt();
+        return person;
+    }
+
+    return Person{-1, "", QDateTime(), 0};
+}
+
+QVector<Person> FaceDatabase::getAllPeople()
+{
+    QVector<Person> people;
+    QSqlQuery query(m_db);
+
+    if (query.exec(R"(
+        SELECT p.*, COUNT(f.id) as photo_count
+        FROM people p
+        LEFT JOIN faces f ON f.person_id = p.id
+        GROUP BY p.id
+        ORDER BY p.name ASC
+    )")) {
+        while (query.next()) {
+            Person person;
+            person.id = query.value("id").toInt();
+            person.name = query.value("name").toString();
+            person.createdAt = QDateTime::fromString(query.value("created_at").toString(), Qt::ISODate);
+            person.photoCount = query.value("photo_count").toInt();
+            people.append(person);
+        }
+    }
+
+    return people;
+}
+
+bool FaceDatabase::updatePersonName(int personId, const QString &name)
+{
+    QSqlQuery query(m_db);
+    query.prepare("UPDATE people SET name = :name WHERE id = :id");
+    query.bindValue(":name", name);
+    query.bindValue(":id", personId);
+
+    return query.exec();
+}
+
+bool FaceDatabase::deletePerson(int personId)
+{
+    m_db.transaction();
+
+    // Unmap all faces for this person
+    QSqlQuery query1(m_db);
+    query1.prepare("UPDATE faces SET person_id = -1 WHERE person_id = :person_id");
+    query1.bindValue(":person_id", personId);
+
+    if (!query1.exec()) {
+        m_db.rollback();
+        return false;
+    }
+
+    // Delete person
+    QSqlQuery query2(m_db);
+    query2.prepare("DELETE FROM people WHERE id = :id");
+    query2.bindValue(":id", personId);
+
+    if (!query2.exec()) {
+        m_db.rollback();
+        return false;
+    }
+
+    m_db.commit();
+    return true;
+}
+
+QVector<Face> FaceDatabase::getFacesForPerson(int personId)
+{
+    QVector<Face> faces;
+    QSqlQuery query(m_db);
+    query.prepare("SELECT * FROM faces WHERE person_id = :person_id");
+    query.bindValue(":person_id", personId);
+
+    if (query.exec()) {
+        while (query.next()) {
+            Face face;
+            face.id = query.value("id").toInt();
+            face.photoId = query.value("photo_id").toInt();
+            face.bbox = QRectF(
+                query.value("bbox_x").toDouble(),
+                query.value("bbox_y").toDouble(),
+                query.value("bbox_width").toDouble(),
+                query.value("bbox_height").toDouble()
+            );
+            face.confidence = query.value("confidence").toFloat();
+            face.embedding = deserializeEmbedding(query.value("embedding").toByteArray());
+            face.personId = query.value("person_id").toInt();
+            face.detectedAt = QDateTime::fromString(query.value("detected_at").toString(), Qt::ISODate);
+            faces.append(face);
+        }
+    }
+
+    return faces;
+}
+
+FaceEmbedding FaceDatabase::getAverageEmbedding(int personId)
+{
+    QVector<Face> faces = getFacesForPerson(personId);
+
+    if (faces.isEmpty()) {
+        return FaceEmbedding();
+    }
+
+    // Calculate average embedding
+    size_t embeddingSize = faces.first().embedding.size();
+    FaceEmbedding avgEmbedding(embeddingSize, 0.0f);
+
+    for (const Face &face : faces) {
+        for (size_t i = 0; i < embeddingSize; i++) {
+            avgEmbedding[i] += face.embedding[i];
+        }
+    }
+
+    for (size_t i = 0; i < embeddingSize; i++) {
+        avgEmbedding[i] /= faces.size();
+    }
+
+    // L2 normalize
+    return FaceRecognizer::normalizeEmbedding(avgEmbedding);
+}
+
+QVector<QPair<int, FaceEmbedding>> FaceDatabase::getAllPersonEmbeddings()
+{
+    QVector<QPair<int, FaceEmbedding>> result;
+    QVector<Person> people = getAllPeople();
+
+    for (const Person &person : people) {
+        FaceEmbedding avgEmbedding = getAverageEmbedding(person.id);
+        if (!avgEmbedding.empty()) {
+            result.append(qMakePair(person.id, avgEmbedding));
+        }
+    }
+
+    return result;
+}
+
+// === GDPR ===
+
+QVariantMap FaceDatabase::exportPersonData(int personId)
+{
+    QVariantMap data;
+    Person person = getPerson(personId);
+
+    data["person_id"] = person.id;
+    data["name"] = person.name;
+    data["created_at"] = person.createdAt.toString(Qt::ISODate);
+
+    QVariantList facesData;
+    QVector<Face> faces = getFacesForPerson(personId);
+
+    for (const Face &face : faces) {
+        QVariantMap faceData;
+        faceData["face_id"] = face.id;
+        faceData["photo_id"] = face.photoId;
+        faceData["confidence"] = face.confidence;
+        faceData["detected_at"] = face.detectedAt.toString(Qt::ISODate);
+        facesData.append(faceData);
+    }
+
+    data["faces"] = facesData;
+    data["total_faces"] = faces.size();
+
+    return data;
+}
+
+bool FaceDatabase::deleteAllData()
+{
+    m_db.transaction();
+
+    QSqlQuery query(m_db);
+
+    if (!query.exec("DELETE FROM faces") ||
+        !query.exec("DELETE FROM people") ||
+        !query.exec("DELETE FROM photos")) {
+        m_db.rollback();
+        return false;
+    }
+
+    m_db.commit();
+    return true;
+}
+
+QVariantMap FaceDatabase::getStatistics()
+{
+    QVariantMap stats;
+    QSqlQuery query(m_db);
+
+    if (query.exec("SELECT COUNT(*) FROM photos")) {
+        query.next();
+        stats["total_photos"] = query.value(0).toInt();
+    }
+
+    if (query.exec("SELECT COUNT(*) FROM faces")) {
+        query.next();
+        stats["total_faces"] = query.value(0).toInt();
+    }
+
+    if (query.exec("SELECT COUNT(*) FROM people")) {
+        query.next();
+        stats["total_people"] = query.value(0).toInt();
+    }
+
+    if (query.exec("SELECT COUNT(*) FROM faces WHERE person_id = -1")) {
+        query.next();
+        stats["unmapped_faces"] = query.value(0).toInt();
+    }
+
+    return stats;
+}
+
+// === Helpers ===
+
+QByteArray FaceDatabase::serializeEmbedding(const FaceEmbedding &embedding)
+{
+    QByteArray data;
+    QDataStream stream(&data, QIODevice::WriteOnly);
+
+    stream << static_cast<quint32>(embedding.size());
+    for (float val : embedding) {
+        stream << val;
+    }
+
+    return data;
+}
+
+FaceEmbedding FaceDatabase::deserializeEmbedding(const QByteArray &data)
+{
+    QDataStream stream(data);
+    quint32 size;
+    stream >> size;
+
+    FaceEmbedding embedding(size);
+    for (quint32 i = 0; i < size; i++) {
+        stream >> embedding[i];
+    }
+
+    return embedding;
+}
