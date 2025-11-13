@@ -61,7 +61,9 @@ jobs:
           docker run --rm \
             -v $(pwd):/home/mersdk/src:z \
             coderus/sailfishos-platform-sdk:5.0.0.43 \
-            bash -c "cd /home/mersdk/src && mb2 -t SailfishOS-5.0.0.43-${{ matrix.arch }} build"
+            bash -c "cd /home/mersdk/src && \
+                     sb2 -t SailfishOS-5.0.0.43-${{ matrix.arch }} -m sdk-install -R zypper install -y opencv-devel && \
+                     mb2 -t SailfishOS-5.0.0.43-${{ matrix.arch }} build"
 
       - name: Upload RPM
         uses: actions/upload-artifact@v4
