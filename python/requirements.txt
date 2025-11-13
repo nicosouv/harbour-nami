@@ -1,0 +1,16 @@
+# Core ML libraries
+opencv-python>=4.8.0
+onnxruntime>=1.16.0
+numpy>=1.24.0
+
+# Face recognition models
+# Note: YuNet and ArcFace models will be downloaded separately
+
+# Database
+# SQLite3 is built-in Python
+
+# Image processing
+Pillow>=10.0.0
+
+# Utilities
+scipy>=1.11.0

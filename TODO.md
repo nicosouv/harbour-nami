@@ -1,0 +1,4 @@
+- l'app a besoin de permission pour Camera, Gallery
+- appliquer un model ML pour la reconnaissance de visage, l'idée c'est de faire des folders (virtuel??) pour regrouper les photos en fonction des visages des images de la gallery
+- pour chaque nouveau visage il faut demander à l'utilisateur un nom (est-ce qu'on peut faire un lien avec un contact existant ? ou bien simplement un nom)
+- il faut utiliser Silica et l'UI sailfish au maximum

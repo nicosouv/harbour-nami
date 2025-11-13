@@ -1,0 +1,35 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(tree:*)",
+      "Bash(chmod:*)",
+      "Bash(gh run list:*)",
+      "Bash(gh run view:*)",
+      "Bash(curl:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "WebFetch(domain:releases.sailfishos.org)",
+      "WebFetch(domain:github.com)",
+      "Bash(git tag:*)",
+      "Bash(git push:*)",
+      "WebSearch",
+      "WebFetch(domain:sailfishos.org)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(mb2 -t SailfishOS-4.5.0.19-armv7hl build:*)",
+      "Bash(for lang in es fi it)",
+      "Bash(do echo \"=== $lang ===\")",
+      "Bash(done)",
+      "WebFetch(domain:api.slack.com)",
+      "WebFetch(domain:docs.slack.dev)",
+      "Read(//tmp/harbour-fernschreiber/src/**)",
+      "Read(//private/tmp/harbour-fernschreiber/**)",
+      "Read(//tmp/harbour-fernschreiber/**)",
+      "Bash(gh release view:*)",
+      "Bash(gh release create:*)",
+      "Bash(qmake:*)",
+      "Bash(git reset:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

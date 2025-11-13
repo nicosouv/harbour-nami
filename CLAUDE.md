@@ -1,0 +1,6 @@
+- Pour la github CI/CD, inspire toi de https://github.com/nicosouv/lagoon
+- tous les messages de commits doivent etre simple et en anglais
+- commit, tag doivent etre en anglais et réalisés de manière simple, concise
+- on privilegie les tags en mode patch
+- utilisation de Silica pour SailfishOS, il faut gérer les bonnes pratiques
+- l'app doit etre pensé pour etre multilingue: français, anglais, italien, espagnol, finnois

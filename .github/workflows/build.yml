@@ -1,0 +1,48 @@
+name: Build
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        arch: [armv7hl, aarch64, i486]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build for ${{ matrix.arch }}
+        run: |
+          docker run --rm \
+            -v $(pwd):/home/mersdk/src:z \
+            coderus/sailfishos-platform-sdk:5.0.0.43 \
+            bash -c "cd /home/mersdk/src && mb2 -t SailfishOS-5.0.0.43-${{ matrix.arch }} build"
+
+      - name: Upload RPM
+        uses: actions/upload-artifact@v4
+        with:
+          name: harbour-nami-${{ matrix.arch }}
+          path: RPMS/*.rpm
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            harbour-nami-*/*.rpm
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

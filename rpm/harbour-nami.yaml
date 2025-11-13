@@ -1,0 +1,52 @@
+Name: harbour-nami
+Summary: Face Recognition Photo Gallery
+Version: 0.1.0
+Release: 1
+# The contents of the Group field should be one of the groups listed here:
+# https://github.com/mer-tools/spectacle/blob/master/data/GROUPS
+Group: Qt/Qt
+URL: https://github.com/nicosouv/harbour-nami
+License: LICENSE
+# This must be generated before uploading a package to a remote build service.
+# Usually this line does not need to be modified.
+Sources:
+- '%{name}-%{version}.tar.bz2'
+Description: |
+  Intelligent face recognition photo gallery for Sailfish OS. Automatically groups your photos by detected faces with complete on-device processing and privacy.
+
+  Features:
+  - 100% on-device processing (no cloud, no internet required)
+  - YuNet face detection + ArcFace recognition
+  - Smart photo grouping by faces
+  - GDPR compliant (data export, right to be forgotten)
+  - Multilingual (EN, FR, DE, IT, ES, FI)
+
+Configure: none
+Builder: qtc_qmake5
+
+PkgConfigBR:
+  - sailfishapp >= 1.0.2
+  - Qt5Core
+  - Qt5Qml
+  - Qt5Quick
+  - Qt5Concurrent
+  - Qt5Multimedia
+
+# Python runtime dependencies
+Requires:
+  - sailfishsilica-qt5 >= 0.10.9
+  - pyotherside-qml-plugin-python3-qt5
+  - python3-base
+  - python3-numpy
+  - python3-opencv
+  - python3-Pillow
+
+# All installed files
+Files:
+  - '%{_bindir}'
+  - '%{_datadir}/%{name}'
+  - '%{_datadir}/applications/%{name}.desktop'
+  - '%{_datadir}/icons/hicolor/*/apps/%{name}.png'
+
+# For more information about yaml and what's supported in Sailfish OS
+# build system, please see https://wiki.merproject.org/wiki/Spectacle

@@ -1,0 +1,218 @@
+import QtQuick 2.0
+import Sailfish.Silica 1.0
+import "../components"
+
+Page {
+    id: page
+
+    allowedOrientations: Orientation.All
+
+    // Access global face recognition manager
+    property var faceManager: appWindow.faceRecognition
+
+    // People model
+    ListModel {
+        id: peopleModel
+    }
+
+    // Refresh people list
+    function refreshPeople() {
+        if (!faceManager || !faceManager.ready) return
+
+        faceManager.getAllPeople(function(people) {
+            peopleModel.clear()
+            for (var i = 0; i < people.length; i++) {
+                peopleModel.append(people[i])
+            }
+        })
+    }
+
+    Component.onCompleted: {
+        // Wait for face manager to be ready
+        if (faceManager && faceManager.ready) {
+            refreshPeople()
+        }
+    }
+
+    Connections {
+        target: faceManager
+        onInitialized: refreshPeople()
+        onScanCompleted: refreshPeople()
+        onPersonCreated: refreshPeople()
+        onPersonDeleted: refreshPeople()
+    }
+
+    SilicaListView {
+        id: listView
+        anchors.fill: parent
+
+        model: peopleModel
+
+        PullDownMenu {
+            MenuItem {
+                text: qsTr("About")
+                onClicked: pageStack.push(Qt.resolvedUrl("AboutPage.qml"))
+            }
+            MenuItem {
+                text: qsTr("Settings")
+                onClicked: pageStack.push(Qt.resolvedUrl("SettingsPage.qml"))
+            }
+            MenuItem {
+                text: qsTr("Review Unknown Faces")
+                enabled: faceManager && faceManager.ready
+                onClicked: pageStack.push(Qt.resolvedUrl("UnknownFacesPage.qml"))
+            }
+            MenuItem {
+                text: qsTr("Scan Gallery")
+                enabled: faceManager && faceManager.ready && !faceManager.processing
+                onClicked: {
+                    // Get gallery path from system
+                    var galleryPath = StandardPaths.pictures
+
+                    // Show scanning page
+                    pageStack.push(Qt.resolvedUrl("ScanningPage.qml"), {
+                        galleryPath: galleryPath
+                    })
+                }
+            }
+        }
+
+        header: Column {
+            width: parent.width
+            spacing: 0
+
+            PageHeader {
+                title: qsTr("Nami")
+            }
+
+            Item {
+                width: parent.width
+                height: Theme.paddingLarge
+            }
+
+            Label {
+                x: Theme.horizontalPageMargin
+                width: parent.width - 2 * Theme.horizontalPageMargin
+                text: qsTr("Face Recognition Gallery")
+                color: Theme.highlightColor
+                font.pixelSize: Theme.fontSizeLarge
+                wrapMode: Text.WordWrap
+            }
+
+            Label {
+                x: Theme.horizontalPageMargin
+                width: parent.width - 2 * Theme.horizontalPageMargin
+                text: qsTr("Automatically organize your photos by faces. All processing happens on your device for complete privacy.")
+                color: Theme.secondaryHighlightColor
+                font.pixelSize: Theme.fontSizeSmall
+                wrapMode: Text.WordWrap
+            }
+
+            Item {
+                width: parent.width
+                height: Theme.paddingLarge
+            }
+
+            SectionHeader {
+                text: qsTr("People")
+            }
+        }
+
+        // Model will be populated with detected faces
+        model: 0
+
+        delegate: ListItem {
+            id: listItem
+            width: ListView.view.width
+            contentHeight: Theme.itemSizeMedium
+
+            Row {
+                anchors {
+                    left: parent.left
+                    leftMargin: Theme.horizontalPageMargin
+                    right: parent.right
+                    rightMargin: Theme.horizontalPageMargin
+                    verticalCenter: parent.verticalCenter
+                }
+                spacing: Theme.paddingMedium
+
+                // Face thumbnail placeholder
+                Rectangle {
+                    width: Theme.itemSizeSmall
+                    height: Theme.itemSizeSmall
+                    radius: Theme.itemSizeSmall / 2
+                    color: Theme.rgba(Theme.highlightBackgroundColor, 0.2)
+
+                    Image {
+                        anchors.centerIn: parent
+                        source: "image://theme/icon-m-contact"
+                        width: Theme.iconSizeMedium
+                        height: Theme.iconSizeMedium
+                    }
+                }
+
+                Column {
+                    width: parent.width - Theme.itemSizeSmall - Theme.paddingMedium
+                    anchors.verticalCenter: parent.verticalCenter
+
+                    Label {
+                        text: model.name || qsTr("Unknown")
+                        color: listItem.highlighted ? Theme.highlightColor : Theme.primaryColor
+                        truncationMode: TruncationMode.Fade
+                        width: parent.width
+                    }
+
+                    Label {
+                        text: model.photo_count + " " + (model.photo_count === 1 ? qsTr("photo") : qsTr("photos"))
+                        color: listItem.highlighted ? Theme.secondaryHighlightColor : Theme.secondaryColor
+                        font.pixelSize: Theme.fontSizeExtraSmall
+                        truncationMode: TruncationMode.Fade
+                        width: parent.width
+                    }
+                }
+            }
+
+            menu: ContextMenu {
+                MenuItem {
+                    text: qsTr("Rename")
+                    onClicked: {
+                        var dialog = pageStack.push(Qt.resolvedUrl("../dialogs/RenamePersonDialog.qml"), {
+                            personId: model.person_id,
+                            currentName: model.name
+                        })
+                        dialog.accepted.connect(function() {
+                            refreshPeople()
+                        })
+                    }
+                }
+                MenuItem {
+                    text: qsTr("Delete")
+                    onClicked: {
+                        var dialog = pageStack.push(Qt.resolvedUrl("../dialogs/ConfirmDialog.qml"), {
+                            title: qsTr("Delete person?"),
+                            message: qsTr("This will remove %1 and unlink all their photos. This action cannot be undone.").arg(model.name)
+                        })
+                        dialog.accepted.connect(function() {
+                            faceManager.deletePerson(model.person_id)
+                        })
+                    }
+                }
+            }
+
+            onClicked: {
+                pageStack.push(Qt.resolvedUrl("PersonPage.qml"), {
+                    personId: model.person_id,
+                    personName: model.name
+                })
+            }
+        }
+
+        ViewPlaceholder {
+            enabled: listView.count === 0
+            text: qsTr("No faces detected yet")
+            hintText: qsTr("Pull down to scan your gallery")
+        }
+
+        VerticalScrollDecorator {}
+    }
+}
