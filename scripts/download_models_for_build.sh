@@ -15,7 +15,7 @@ echo ""
 mkdir -p "$MODELS_DIR"
 
 # Download YuNet face detection model
-YUNET_URL="https://raw.githubusercontent.com/opencv/opencv_zoo/main/models/face_detection_yunet/face_detection_yunet_2023mar.onnx"
+YUNET_URL="https://media.githubusercontent.com/media/opencv/opencv_zoo/main/models/face_detection_yunet/face_detection_yunet_2023mar.onnx"
 YUNET_FILE="$MODELS_DIR/face_detection_yunet_2023mar.onnx"
 
 if [ -f "$YUNET_FILE" ]; then
@@ -24,9 +24,9 @@ else
     echo "Downloading YuNet face detection model..."
     curl -L -H "User-Agent: Mozilla/5.0" "$YUNET_URL" -o "$YUNET_FILE"
 
-    # Check file size (should be ~353 KB)
+    # Check file size (should be ~227 KB)
     SIZE=$(stat -f%z "$YUNET_FILE" 2>/dev/null || stat -c%s "$YUNET_FILE" 2>/dev/null)
-    if [ $SIZE -lt 300000 ]; then
+    if [ $SIZE -lt 200000 ]; then
         echo "✗ YuNet download failed (file too small)"
         rm -f "$YUNET_FILE"
         exit 1
