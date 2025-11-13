@@ -66,16 +66,19 @@ class FaceRecognizer:
         # Convert BGR to RGB
         face_rgb = cv2.cvtColor(face_image, cv2.COLOR_BGR2RGB)
 
-        # Normalize to [0, 1]
-        face_normalized = face_rgb.astype(np.float32) / 255.0
+        # ArcFace preprocessing (from Hugging Face model):
+        # Normalize: (pixel - 127.5) / 128.0
+        face_normalized = (face_rgb.astype(np.float32) - 127.5) / 128.0
 
-        # Standardize (mean=0.5, std=0.5)
-        face_standardized = (face_normalized - 0.5) / 0.5
-
-        # Add batch dimension and transpose to NCHW format
-        # (1, H, W, C) -> (1, C, H, W)
-        face_input = np.transpose(face_standardized, (2, 0, 1))
-        face_input = np.expand_dims(face_input, axis=0)
+        # Check if model expects NCHW or NHWC format
+        # The Hugging Face model expects (1, 112, 112, 3) - NHWC format
+        if len(self.input_shape) == 4 and self.input_shape[-1] == 3:
+            # NHWC format - just add batch dimension
+            face_input = np.expand_dims(face_normalized, axis=0)
+        else:
+            # NCHW format - transpose and add batch dimension
+            face_input = np.transpose(face_normalized, (2, 0, 1))
+            face_input = np.expand_dims(face_input, axis=0)
 
         return face_input.astype(np.float32)
 

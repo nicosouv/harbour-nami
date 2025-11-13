@@ -25,9 +25,17 @@ This directory contains the machine learning models used by Nami for face detect
 
 **File:** `arcface_mobilefacenet.onnx`
 
-**Recommended Sources:**
+**Automatic Download:**
 
-#### Option A: InsightFace (Recommended for Sailfish OS)
+The model is automatically downloaded during build from Hugging Face:
+- Source: https://huggingface.co/garavv/arcface-onnx
+- Direct URL: https://huggingface.co/garavv/arcface-onnx/resolve/main/arc.onnx
+- Size: ~4.3 MB
+- License: Non-commercial research use only
+
+**Alternative Sources:**
+
+#### Option A: InsightFace (Manual)
 - GitHub: https://github.com/deepinsight/insightface/tree/master/model_zoo
 - Model: `buffalo_l` or `buffalo_sc` (smaller)
 - Extract recognition model from package
@@ -56,14 +64,15 @@ torch.onnx.export(model, dummy_input, 'arcface_mobilefacenet.onnx',
                                'output': {0: 'batch_size'}})
 ```
 
-**Expected Input:**
-- Shape: [1, 3, 112, 112]
-- Format: RGB, normalized to [-1, 1]
+**Expected Input (Hugging Face model):**
+- Shape: [1, 112, 112, 3] (NHWC format)
+- Format: RGB, normalized using (pixel - 127.5) / 128.0
 - Type: float32
 
 **Output:**
 - Shape: [1, 512] (embedding vector)
 - Type: float32
+- Note: Should be L2-normalized before computing similarity
 
 **Size:** ~2-5 MB (MobileFaceNet), 260 MB (ResNet100)
 

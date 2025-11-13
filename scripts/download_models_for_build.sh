@@ -32,40 +32,30 @@ else
         exit 1
     fi
 
-    echo "✓ YuNet model downloaded successfully"
+    echo "✓ YuNet model downloaded successfully ($(du -h "$YUNET_FILE" | cut -f1))"
 fi
 
 echo ""
 
-# Download/prepare ArcFace model
+# Download ArcFace recognition model
+ARCFACE_URL="https://huggingface.co/garavv/arcface-onnx/resolve/main/arc.onnx?download=true"
 ARCFACE_FILE="$MODELS_DIR/arcface_mobilefacenet.onnx"
 
 if [ -f "$ARCFACE_FILE" ]; then
     echo "✓ ArcFace model already exists"
 else
-    echo "⚠️  ArcFace model not found"
-    echo ""
-    echo "Please provide ArcFace MobileFaceNet ONNX model."
-    echo ""
-    echo "Options:"
-    echo "1. Download from InsightFace:"
-    echo "   https://github.com/deepinsight/insightface/tree/master/model_zoo"
-    echo ""
-    echo "2. Use a pre-converted model:"
-    echo "   - Place your arcface_mobilefacenet.onnx in python/models/"
-    echo ""
-    echo "3. Convert from PyTorch (if you have the weights):"
-    echo "   - Run the conversion script in python/models/"
-    echo ""
-    echo "Expected location: $ARCFACE_FILE"
-    echo ""
+    echo "Downloading ArcFace recognition model from Hugging Face..."
+    curl -L "$ARCFACE_URL" -o "$ARCFACE_FILE"
 
-    # Check if user wants to continue without ArcFace
-    read -p "Continue without ArcFace model? (y/N) " -n 1 -r
-    echo
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+    # Check file size (should be ~4-5 MB)
+    SIZE=$(stat -f%z "$ARCFACE_FILE" 2>/dev/null || stat -c%s "$ARCFACE_FILE" 2>/dev/null)
+    if [ $SIZE -lt 1000000 ]; then
+        echo "✗ ArcFace download failed (file too small)"
+        rm -f "$ARCFACE_FILE"
         exit 1
     fi
+
+    echo "✓ ArcFace model downloaded successfully ($(du -h "$ARCFACE_FILE" | cut -f1))"
 fi
 
 echo ""
