@@ -1,0 +1,2 @@
+# This directory will contain ML models bundled with the app
+# Models will be included in the RPM package

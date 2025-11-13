@@ -38,6 +38,11 @@ TRANSLATIONS += translations/harbour-nami-de.ts \
                 translations/harbour-nami-fi.ts
 
 # Install Python files
-python.files = python
-python.path = /usr/share/$${TARGET}
+python.files = python/*.py
+python.path = /usr/share/$${TARGET}/python
 INSTALLS += python
+
+# Install ML models (will be bundled in RPM)
+models.files = python/models/*.onnx python/models/README.md
+models.path = /usr/share/$${TARGET}/python/models
+INSTALLS += models

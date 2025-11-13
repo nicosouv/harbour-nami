@@ -17,6 +17,23 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Download ML Models
+        run: |
+          # Download YuNet model (small, always download)
+          mkdir -p python/models
+          curl -L "https://github.com/opencv/opencv_zoo/raw/main/models/face_detection_yunet/face_detection_yunet_2023mar.onnx" \
+            -o python/models/face_detection_yunet_2023mar.onnx
+
+          # Check YuNet downloaded correctly
+          if [ ! -f python/models/face_detection_yunet_2023mar.onnx ]; then
+            echo "Failed to download YuNet model"
+            exit 1
+          fi
+
+          # ArcFace model: Either download from releases or use placeholder
+          # TODO: Upload ArcFace model to GitHub releases and download here
+          echo "Note: ArcFace model should be added to repository or releases"
+
       - name: Build for ${{ matrix.arch }}
         run: |
           docker run --rm \

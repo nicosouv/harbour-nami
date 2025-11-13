@@ -17,16 +17,44 @@ Face recognition photo gallery for Sailfish OS.
 - Sailfish SDK
 - Qt 5.6+
 - QtMultimedia
+- ML Models (YuNet + ArcFace)
+
+### Download ML Models First
+
+Before building, download the required ML models:
+
+```bash
+./scripts/download_models_for_build.sh
+```
+
+Or manually:
+
+```bash
+# YuNet (automatically downloaded)
+curl -L "https://github.com/opencv/opencv_zoo/raw/main/models/face_detection_yunet/face_detection_yunet_2023mar.onnx" \
+  -o python/models/face_detection_yunet_2023mar.onnx
+
+# ArcFace (see python/models/README.md for sources)
+# Place arcface_mobilefacenet.onnx in python/models/
+```
 
 ### Build with mb2
 
 ```bash
+# Download models first
+./scripts/download_models_for_build.sh
+
+# Build
 mb2 -t SailfishOS-5.0.0.43-armv7hl build
 ```
 
 ### Build with Docker
 
 ```bash
+# Download models
+./scripts/download_models_for_build.sh
+
+# Build
 docker run --rm \
   -v $(pwd):/home/mersdk/src:z \
   coderus/sailfishos-platform-sdk:5.0.0.43 \
