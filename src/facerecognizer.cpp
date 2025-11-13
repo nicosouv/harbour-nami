@@ -26,7 +26,7 @@ bool FaceRecognizer::loadModel(const QString &modelPath)
         qDebug() << "Loading ArcFace recognition model from:" << modelPath;
 
         // Create ONNX Runtime session
-        m_session = new Ort::Session(m_env, modelPath.toStdWString().c_str(), m_sessionOptions);
+        m_session = new Ort::Session(m_env, modelPath.toUtf8().constData(), m_sessionOptions);
 
         // Get input/output info
         Ort::AllocatorWithDefaultOptions allocator;
