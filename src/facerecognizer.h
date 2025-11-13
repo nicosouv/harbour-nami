@@ -6,7 +6,7 @@
 #include <QVector>
 #include <QImage>
 #include <opencv2/opencv.hpp>
-#include <onnxruntime/core/session/onnxruntime_cxx_api.h>
+#include <onnxruntime_cxx_api.h>
 
 /**
  * @brief Face embedding (512-d vector for ArcFace)
