@@ -14,6 +14,20 @@ ApplicationWindow {
     FaceRecognitionManager {
         id: faceManager
 
+        Component.onCompleted: {
+            // Check models first, then initialize
+            checkModels(function(result) {
+                if (result.success && result.models_ready) {
+                    // Models available, initialize
+                    initialize()
+                } else {
+                    // Models missing, show download page
+                    console.log("ML models not available")
+                    pageStack.replace(Qt.resolvedUrl("pages/ModelDownloadPage.qml"))
+                }
+            })
+        }
+
         onInitialized: {
             console.log("Face recognition initialized")
             console.log("Statistics:", JSON.stringify(statistics))
@@ -21,6 +35,11 @@ ApplicationWindow {
 
         onError: {
             console.error("Face recognition error:", message)
+
+            // Check if error is due to missing models
+            if (message.indexOf("models") !== -1 || message.indexOf("Models") !== -1) {
+                pageStack.replace(Qt.resolvedUrl("pages/ModelDownloadPage.qml"))
+            }
         }
 
         onScanProgress: {

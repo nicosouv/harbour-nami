@@ -14,6 +14,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 
 from face_pipeline import FaceRecognitionPipeline
+from model_downloader import ModelDownloader
 
 
 class NamiBridge:
@@ -23,8 +24,74 @@ class NamiBridge:
         """Initialize bridge"""
         self.pipeline = None
         self.processing = False
+        self.downloader = ModelDownloader()
 
         pyotherside.send('bridge-ready')
+
+    def check_models(self):
+        """
+        Check if ML models are available
+
+        Returns:
+            dict: Model availability status
+        """
+        try:
+            status = self.downloader.check_models_available()
+            info = self.downloader.get_model_info()
+
+            return {
+                'success': True,
+                'models_ready': status['all_ready'],
+                'yunet_available': status['yunet'],
+                'arcface_available': status['arcface'],
+                'model_info': info
+            }
+
+        except Exception as e:
+            error_msg = f"Failed to check models: {str(e)}"
+            return {
+                'success': False,
+                'error': error_msg,
+                'models_ready': False
+            }
+
+    def download_models(self):
+        """
+        Download missing ML models
+
+        Returns:
+            dict: Download status
+        """
+        try:
+            pyotherside.send('download-started')
+
+            def progress_callback(model_name, current, total, percentage):
+                pyotherside.send('download-progress', {
+                    'model': model_name,
+                    'current': current,
+                    'total': total,
+                    'percentage': percentage
+                })
+
+            results = self.downloader.download_all_models(progress_callback)
+
+            if results['all_success']:
+                pyotherside.send('download-completed', results)
+            else:
+                pyotherside.send('download-failed', results)
+
+            return {
+                'success': results['all_success'],
+                'results': results
+            }
+
+        except Exception as e:
+            error_msg = f"Failed to download models: {str(e)}"
+            pyotherside.send('error', error_msg)
+            return {
+                'success': False,
+                'error': error_msg
+            }
 
     def initialize(self, db_path=None, detector_conf=0.6, recognition_threshold=0.65):
         """
@@ -39,6 +106,16 @@ class NamiBridge:
             dict: Initialization status
         """
         try:
+            # Check if models are available first
+            model_status = self.check_models()
+            if not model_status['models_ready']:
+                return {
+                    'success': False,
+                    'error': 'ML models not available',
+                    'models_missing': True,
+                    'model_status': model_status
+                }
+
             self.pipeline = FaceRecognitionPipeline(
                 db_path=db_path,
                 detector_conf=detector_conf,
@@ -443,6 +520,12 @@ bridge = NamiBridge()
 
 
 # Expose functions to QML
+def check_models():
+    return bridge.check_models()
+
+def download_models():
+    return bridge.download_models()
+
 def initialize(db_path=None, detector_conf=0.6, recognition_threshold=0.65):
     return bridge.initialize(db_path, detector_conf, recognition_threshold)
 

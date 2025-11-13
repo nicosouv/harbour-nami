@@ -63,6 +63,18 @@ Item {
         }
     }
 
+    // Check if ML models are available
+    function checkModels(callback) {
+        if (!python.ready) {
+            console.warn("Python not ready yet")
+            return
+        }
+
+        python.call('nami_bridge.check_models', [], function(result) {
+            if (callback) callback(result)
+        })
+    }
+
     // Initialize face recognition pipeline
     function initialize(dbPath, detectorConf, recognitionThresh) {
         if (!python.ready) {
@@ -81,7 +93,13 @@ Item {
                 manager.initialized(result.statistics)
                 console.log("Pipeline initialized:", JSON.stringify(result.statistics))
             } else {
-                manager.error("Initialization failed: " + result.error)
+                if (result.models_missing) {
+                    manager.error("ML models not available. Please download them first.")
+                    // Show model download page
+                    // This will be handled by main app
+                } else {
+                    manager.error("Initialization failed: " + result.error)
+                }
             }
         })
     }
