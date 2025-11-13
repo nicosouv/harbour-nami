@@ -80,8 +80,19 @@ target_link_libraries(${PROJECT_NAME}
     Qt5::Sql
     Qt5::Concurrent
     ${OpenCV_LIBS}
-    ${ONNXRUNTIME_LIB_DIR}/libonnxruntime.so
+    onnxruntime
 )
+
+# For cross-compilation, allow undefined symbols - libs will be available at runtime
+set_target_properties(${PROJECT_NAME} PROPERTIES
+    LINK_FLAGS "-Wl,--allow-shlib-undefined"
+)
+
+# Create a dummy libonnxruntime.so for linking (actual lib will be bundled in RPM)
+add_custom_command(TARGET ${PROJECT_NAME} PRE_LINK
+    COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_BINARY_DIR}/libonnxruntime.so
+)
+link_directories(${CMAKE_BINARY_DIR})
 
 # Installation
 install(TARGETS ${PROJECT_NAME}
@@ -105,6 +116,14 @@ install(DIRECTORY python/models
 install(FILES harbour-nami.desktop
     DESTINATION share/applications
 )
+
+# Install ONNX Runtime library (bundled)
+if(EXISTS "${ONNXRUNTIME_LIB_DIR}/libonnxruntime.so")
+    install(FILES "${ONNXRUNTIME_LIB_DIR}/libonnxruntime.so.1.16.3"
+        DESTINATION lib
+    )
+    install(CODE "execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink libonnxruntime.so.1.16.3 ${CMAKE_INSTALL_PREFIX}/lib/libonnxruntime.so)")
+endif()
 
 # Desktop file validation
 find_program(DESKTOP_FILE_VALIDATE desktop-file-validate)
