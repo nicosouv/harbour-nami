@@ -22,7 +22,7 @@ Description: |
   - Multilingual (EN, FR, DE, IT, ES, FI)
 
 Configure: none
-Builder: qtc_qmake5
+Builder: qtc5
 
 PkgConfigBR:
   - sailfishapp >= 1.0.2
