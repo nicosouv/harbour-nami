@@ -15,14 +15,14 @@ echo ""
 mkdir -p "$MODELS_DIR"
 
 # Download YuNet face detection model
-YUNET_URL="https://github.com/opencv/opencv_zoo/raw/main/models/face_detection_yunet/face_detection_yunet_2023mar.onnx"
+YUNET_URL="https://raw.githubusercontent.com/opencv/opencv_zoo/main/models/face_detection_yunet/face_detection_yunet_2023mar.onnx"
 YUNET_FILE="$MODELS_DIR/face_detection_yunet_2023mar.onnx"
 
 if [ -f "$YUNET_FILE" ]; then
     echo "✓ YuNet model already exists"
 else
     echo "Downloading YuNet face detection model..."
-    curl -L "$YUNET_URL" -o "$YUNET_FILE"
+    curl -L -H "User-Agent: Mozilla/5.0" "$YUNET_URL" -o "$YUNET_FILE"
 
     # Check file size (should be ~353 KB)
     SIZE=$(stat -f%z "$YUNET_FILE" 2>/dev/null || stat -c%s "$YUNET_FILE" 2>/dev/null)
@@ -45,7 +45,7 @@ if [ -f "$ARCFACE_FILE" ]; then
     echo "✓ ArcFace model already exists"
 else
     echo "Downloading ArcFace recognition model from Hugging Face..."
-    curl -L "$ARCFACE_URL" -o "$ARCFACE_FILE"
+    curl -L -H "User-Agent: Mozilla/5.0" "$ARCFACE_URL" -o "$ARCFACE_FILE"
 
     # Check file size (should be ~4-5 MB)
     SIZE=$(stat -f%z "$ARCFACE_FILE" 2>/dev/null || stat -c%s "$ARCFACE_FILE" 2>/dev/null)
