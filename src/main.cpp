@@ -2,13 +2,13 @@
 #include <QtQuick>
 #endif
 
-#include <sailfishapp.h>
 #include <QGuiApplication>
 #include <QQuickView>
 #include <QQmlContext>
 #include <QQmlEngine>
 #include <QStandardPaths>
 #include <QDir>
+#include <QCoreApplication>
 
 #include "facepipeline.h"
 #include "facedetector.h"
@@ -18,12 +18,12 @@
 int main(int argc, char *argv[])
 {
     // Setup application
-    QScopedPointer<QGuiApplication> app(SailfishApp::application(argc, argv));
+    QScopedPointer<QGuiApplication> app(new QGuiApplication(argc, argv));
     app->setApplicationName("harbour-nami");
     app->setOrganizationName("harbour-nami");
 
     // Create QML view
-    QScopedPointer<QQuickView> view(SailfishApp::createView());
+    QScopedPointer<QQuickView> view(new QQuickView);
 
     // Get application data paths
     QString dataDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
@@ -35,7 +35,7 @@ int main(int argc, char *argv[])
     QDir().mkpath(cacheDir);
 
     // Model paths (bundled with app)
-    QString appDir = SailfishApp::pathTo("").toString();
+    QString appDir = QCoreApplication::applicationDirPath() + "/../share/harbour-nami";
     QString detectorModelPath = appDir + "/models/face_detection_yunet_2023mar.onnx";
     QString recognizerModelPath = appDir + "/models/arcface_mobilefacenet.onnx";
     QString databasePath = dataDir + "/nami.db";
@@ -72,10 +72,10 @@ int main(int argc, char *argv[])
     view->rootContext()->setContextProperty("defaultGalleryPath", picturesDir);
 
     // Set QML source
-    view->setSource(SailfishApp::pathTo("qml/harbour-nami.qml"));
+    view->setSource(QUrl::fromLocalFile(appDir + "/qml/harbour-nami.qml"));
 
     // Show view
-    view->show();
+    view->showFullScreen();
 
     return app->exec();
 }
