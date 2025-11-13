@@ -111,11 +111,27 @@ install(FILES harbour-nami.desktop
 )
 
 # Install ONNX Runtime library (bundled)
-if(EXISTS "${ONNXRUNTIME_LIB_DIR}/libonnxruntime.so")
+# Use lib or lib64 depending on LIB_SUFFIX from spec file
+if(LIB_SUFFIX)
+    set(INSTALL_LIB_DIR "lib${LIB_SUFFIX}")
+else()
+    set(INSTALL_LIB_DIR "lib")
+endif()
+
+if(EXISTS "${ONNXRUNTIME_LIB_DIR}/libonnxruntime.so.1.16.3")
     install(FILES "${ONNXRUNTIME_LIB_DIR}/libonnxruntime.so.1.16.3"
-        DESTINATION lib
+        DESTINATION "${INSTALL_LIB_DIR}"
     )
-    install(CODE "execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink libonnxruntime.so.1.16.3 ${CMAKE_INSTALL_PREFIX}/lib/libonnxruntime.so)")
+    # Create symlink at install time (in staging area, not root /)
+    install(CODE "execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink \
+        libonnxruntime.so.1.16.3 \
+        \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${INSTALL_LIB_DIR}/libonnxruntime.so)")
+elseif(EXISTS "${ONNXRUNTIME_LIB_DIR}/libonnxruntime.so")
+    # Fallback if versioned lib doesn't exist
+    install(FILES "${ONNXRUNTIME_LIB_DIR}/libonnxruntime.so"
+        DESTINATION "${INSTALL_LIB_DIR}"
+        RENAME libonnxruntime.so.1.16.3
+    )
 endif()
 
 # Desktop file validation
