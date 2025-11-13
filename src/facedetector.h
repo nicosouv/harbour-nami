@@ -58,6 +58,11 @@ public:
      */
     QSize inputSize() const { return m_inputSize; }
 
+    /**
+     * @brief Helper: Convert QImage to cv::Mat
+     */
+    static cv::Mat qImageToCvMat(const QImage &image);
+
 signals:
     void error(const QString &message);
 
@@ -65,9 +70,6 @@ private:
     cv::dnn::Net m_net;
     bool m_modelLoaded;
     QSize m_inputSize;
-
-    // Helper: Convert QImage to cv::Mat
-    cv::Mat qImageToCvMat(const QImage &image);
 
     // Helper: Preprocess image for YuNet
     cv::Mat preprocessImage(const cv::Mat &image);
