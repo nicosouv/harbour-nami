@@ -11,7 +11,16 @@ set(CMAKE_AUTORCC ON)
 find_package(Qt5 REQUIRED COMPONENTS Core Gui Qml Quick Sql Concurrent)
 
 # Find OpenCV
-find_package(OpenCV REQUIRED COMPONENTS core imgproc dnn)
+# For Sailfish OS cross-compilation, OpenCV may not be available via find_package
+# but will be present at runtime on the device
+if(EXISTS "${CMAKE_SOURCE_DIR}/3rdparty/opencv/include")
+    # Use bundled OpenCV headers for cross-compilation
+    set(OpenCV_INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/3rdparty/opencv/include/opencv4")
+    set(OpenCV_LIBS opencv_core opencv_imgproc opencv_dnn)
+    message(STATUS "Using bundled OpenCV headers from 3rdparty/opencv")
+else()
+    find_package(OpenCV REQUIRED COMPONENTS core imgproc dnn)
+endif()
 
 # ONNX Runtime - manual for now (will be bundled)
 set(ONNXRUNTIME_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/3rdparty/onnxruntime/include")
