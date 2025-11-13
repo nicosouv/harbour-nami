@@ -55,6 +55,9 @@ jobs:
 
       - name: Build for ${{ matrix.arch }}
         run: |
+          # Fix permissions for Docker container
+          chmod -R 777 .
+
           docker run --rm \
             -v $(pwd):/home/mersdk/src:z \
             coderus/sailfishos-platform-sdk:5.0.0.43 \
