@@ -38,7 +38,7 @@ PkgConfigBR:
 Requires:
   - sailfishsilica-qt5 >= 0.10.9
   - opencv >= 4.0
-  - qt5-qtsql-sqlite
+  - qt5-plugin-sqldriver-sqlite
 
 # All installed files
 Files:
