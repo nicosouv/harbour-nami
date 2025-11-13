@@ -26,6 +26,7 @@ Configure: none
 Builder: cmake
 
 # Build dependencies
+# Note: OpenCV headers are bundled in 3rdparty/ for cross-compilation
 PkgConfigBR:
   - sailfishapp >= 1.0.2
   - Qt5Core
@@ -33,7 +34,6 @@ PkgConfigBR:
   - Qt5Quick
   - Qt5Concurrent
   - Qt5Sql
-  - opencv >= 4.0
 
 # Runtime dependencies (C++ only, no Python!)
 Requires:
