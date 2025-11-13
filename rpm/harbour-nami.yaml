@@ -22,8 +22,8 @@ Description: |
   - Multilingual (EN, FR, DE, IT, ES, FI)
   - Optimized C++ implementation for better performance
 
-Configure: none
-Builder: cmake
+Configure: cmake
+Builder: make
 
 # Build dependencies
 # Note: OpenCV headers are bundled in 3rdparty/ for cross-compilation
