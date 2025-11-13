@@ -53,6 +53,18 @@ if [ ! -f "$OPENCV_DIR/include/opencv4/opencv2/opencv.hpp" ]; then
 EOFCPP
 fi
 
+# Create opencv_modules.hpp stub (generated file)
+cat > "$OPENCV_DIR/include/opencv4/opencv2/opencv_modules.hpp" << 'EOFCPP'
+#ifndef OPENCV_MODULES_HPP
+#define OPENCV_MODULES_HPP
+
+#define HAVE_OPENCV_CORE
+#define HAVE_OPENCV_IMGPROC
+#define HAVE_OPENCV_DNN
+
+#endif
+EOFCPP
+
 # Cleanup
 rm -rf /tmp/opencv.tar.gz /tmp/opencv-4.5.5
 
