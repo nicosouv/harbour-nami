@@ -130,6 +130,20 @@ install(FILES harbour-nami.desktop
     DESTINATION share/applications
 )
 
+# Install application icons
+install(FILES icons/86x86/harbour-nami.png
+    DESTINATION share/icons/hicolor/86x86/apps
+)
+install(FILES icons/108x108/harbour-nami.png
+    DESTINATION share/icons/hicolor/108x108/apps
+)
+install(FILES icons/128x128/harbour-nami.png
+    DESTINATION share/icons/hicolor/128x128/apps
+)
+install(FILES icons/172x172/harbour-nami.png
+    DESTINATION share/icons/hicolor/172x172/apps
+)
+
 # Install bundled libraries to lib64/harbour-nami
 # Use lib or lib64 depending on LIB_SUFFIX from spec file
 if(LIB_SUFFIX)
