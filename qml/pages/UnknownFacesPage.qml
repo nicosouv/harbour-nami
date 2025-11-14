@@ -4,7 +4,7 @@ import Sailfish.Silica 1.0
 Page {
     id: page
 
-    property var faceManager: appWindow.faceRecognition
+    property var faceManager: facePipeline
 
     allowedOrientations: Orientation.All
 

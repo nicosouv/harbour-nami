@@ -7,8 +7,9 @@ Page {
 
     allowedOrientations: Orientation.All
 
-    // Access global face recognition manager
-    property var faceManager: appWindow.faceRecognition
+    // Access global face recognition manager from C++ backend
+    // facePipeline is exposed via QML context in main.cpp
+    property var faceManager: facePipeline
 
     // People model
     ListModel {

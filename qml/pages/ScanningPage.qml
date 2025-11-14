@@ -5,7 +5,7 @@ Page {
     id: page
 
     property string galleryPath
-    property var faceManager: appWindow.faceRecognition
+    property var faceManager: facePipeline
 
     allowedOrientations: Orientation.All
 

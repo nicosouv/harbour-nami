@@ -7,7 +7,7 @@ Page {
     property int personId
     property string personName
 
-    property var faceManager: appWindow.faceRecognition
+    property var faceManager: facePipeline
 
     allowedOrientations: Orientation.All
 
