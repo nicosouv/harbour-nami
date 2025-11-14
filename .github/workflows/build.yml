@@ -30,7 +30,7 @@ jobs:
       - name: Fix Permissions
         run: |
           # Fix permissions for all files including cached ones
-          chmod -R 777 . 2>/dev/null || true
+          sudo chmod -R 777 .
 
       - name: Download Dependencies
         run: |
