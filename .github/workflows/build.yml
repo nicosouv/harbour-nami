@@ -20,17 +20,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Cache OpenCV Build
-        id: cache-opencv
-        uses: actions/cache@v4
-        with:
-          path: 3rdparty/opencv
-          key: opencv-minimal-4.5.5-${{ matrix.arch }}-v1
+      # Temporarily disabled cache due to permission issues with Docker volumes
+      # - name: Cache OpenCV Build
+      #   id: cache-opencv
+      #   uses: actions/cache@v4
+      #   with:
+      #     path: 3rdparty/opencv
+      #     key: opencv-minimal-4.5.5-${{ matrix.arch }}-v1
 
       - name: Fix Permissions
         run: |
-          # Fix permissions for all files including cached ones
-          sudo chmod -R 777 .
+          # Fix permissions for Docker container
+          chmod -R 777 .
 
       - name: Download Dependencies
         run: |
@@ -66,7 +67,6 @@ jobs:
           ls -lh 3rdparty/onnxruntime/lib/
 
       - name: Build OpenCV Minimal
-        if: steps.cache-opencv.outputs.cache-hit != 'true'
         run: |
           docker run --rm \
             -v $(pwd):/home/mersdk/src:z \
@@ -74,12 +74,6 @@ jobs:
             bash -c "cd /home/mersdk/src && sb2 -t SailfishOS-5.0.0.43-${{ matrix.arch }} bash scripts/build_opencv_minimal.sh"
 
           echo "✓ OpenCV minimal build complete"
-          ls -lh 3rdparty/opencv/lib/
-
-      - name: Verify OpenCV Cache
-        if: steps.cache-opencv.outputs.cache-hit == 'true'
-        run: |
-          echo "✓ Using cached OpenCV build"
           ls -lh 3rdparty/opencv/lib/
 
       - name: Build for ${{ matrix.arch }}
