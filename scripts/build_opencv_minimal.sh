@@ -37,59 +37,21 @@ tar -xzf "/tmp/opencv-${OPENCV_VERSION}.tar.gz" -C "$BUILD_DIR"
 
 cd "$BUILD_DIR/opencv-${OPENCV_VERSION}"
 
-# Detect if running in Sailfish OS SDK (scratchbox2)
-if command -v sb2 &> /dev/null; then
-    echo "Detected Sailfish OS SDK environment"
-    USE_SB2=true
-
-    # Get toolchain info from sb2
-    SB2_TARGET=$(sb2-config -l | grep default | awk '{print $1}')
-    echo "SB2 Target: $SB2_TARGET"
-
-    # Toolchain paths
-    TOOLCHAIN_FILE="$BUILD_DIR/sailfish-toolchain.cmake"
-
-    # Create CMake toolchain file for SailfishOS
-    cat > "$TOOLCHAIN_FILE" << 'EOF'
-set(CMAKE_SYSTEM_NAME Linux)
-set(CMAKE_SYSTEM_PROCESSOR aarch64)
-
-# Use sb2 for cross-compilation
-set(CMAKE_C_COMPILER gcc)
-set(CMAKE_CXX_COMPILER g++)
-
-# SailfishOS sysroot (will be set by sb2)
-set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
-set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
-set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
-set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE ONLY)
-
-# Flags for ARM optimization
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=armv8-a -mtune=cortex-a53")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=armv8-a -mtune=cortex-a53")
-EOF
-
-    CMAKE_CMD="sb2 cmake"
-    MAKE_CMD="sb2 make"
-else
-    echo "WARNING: Not in Sailfish OS SDK - building for host architecture"
-    echo "This is OK for CI with Docker, but won't work for local builds"
-    USE_SB2=false
-    TOOLCHAIN_FILE=""
-    CMAKE_CMD="cmake"
-    MAKE_CMD="make"
-fi
-
 echo ""
 echo "Configuring OpenCV minimal build..."
+echo "Building for aarch64 cross-compilation"
 echo ""
+
+# When called via "sb2 -t target bash script.sh", we're already in sb2
+# Just use cmake and make directly (sb2 wraps them automatically)
+CMAKE_CMD="cmake"
+MAKE_CMD="make"
 
 mkdir -p build
 cd build
 
 # Configure with minimal modules
 $CMAKE_CMD \
-    ${TOOLCHAIN_FILE:+-DCMAKE_TOOLCHAIN_FILE=$TOOLCHAIN_FILE} \
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_INSTALL_PREFIX="$INSTALL_DIR" \
     -DBUILD_SHARED_LIBS=ON \
