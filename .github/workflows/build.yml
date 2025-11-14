@@ -14,19 +14,23 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        arch: [armv7hl, aarch64, i486]
+        arch: [aarch64]
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Cache OpenCV Build
+        id: cache-opencv
+        uses: actions/cache@v4
+        with:
+          path: 3rdparty/opencv
+          key: opencv-minimal-4.5.5-${{ matrix.arch }}-v1
+
       - name: Download Dependencies
         run: |
           # Download ML Models
           bash scripts/download_models_for_build.sh
-
-          # Download OpenCV headers for cross-compilation
-          bash scripts/download_opencv_for_build.sh
 
           # Download ONNX Runtime for the target architecture
           mkdir -p 3rdparty/onnxruntime
@@ -37,10 +41,10 @@ jobs:
               ONNX_ARCH="linux-aarch64"
               ;;
             armv7hl)
-              ONNX_ARCH="linux-aarch64"  # Use aarch64 for armv7hl
+              ONNX_ARCH="linux-aarch64"
               ;;
             i486)
-              ONNX_ARCH="linux-x64"  # Use x64 for i486
+              ONNX_ARCH="linux-x64"
               ;;
           esac
 
@@ -55,6 +59,26 @@ jobs:
 
           echo "✓ ONNX Runtime downloaded and extracted"
           ls -lh 3rdparty/onnxruntime/lib/
+
+      - name: Build OpenCV Minimal
+        if: steps.cache-opencv.outputs.cache-hit != 'true'
+        run: |
+          # Fix permissions for Docker container
+          chmod -R 777 .
+
+          docker run --rm \
+            -v $(pwd):/home/mersdk/src:z \
+            coderus/sailfishos-platform-sdk:5.0.0.43 \
+            bash -c "cd /home/mersdk/src && sb2 -t SailfishOS-5.0.0.43-${{ matrix.arch }} bash scripts/build_opencv_minimal.sh"
+
+          echo "✓ OpenCV minimal build complete"
+          ls -lh 3rdparty/opencv/lib/
+
+      - name: Verify OpenCV Cache
+        if: steps.cache-opencv.outputs.cache-hit == 'true'
+        run: |
+          echo "✓ Using cached OpenCV build"
+          ls -lh 3rdparty/opencv/lib/
 
       - name: Build for ${{ matrix.arch }}
         run: |

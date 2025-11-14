@@ -11,15 +11,25 @@ set(CMAKE_AUTORCC ON)
 find_package(Qt5 REQUIRED COMPONENTS Core Gui Qml Quick Sql Concurrent)
 
 # Find OpenCV
-# For Sailfish OS cross-compilation, OpenCV may not be available via find_package
-# but will be present at runtime on the device
-if(EXISTS "${CMAKE_SOURCE_DIR}/3rdparty/opencv/include")
-    # Use bundled OpenCV headers for cross-compilation
+# For Sailfish OS: use bundled minimal OpenCV build
+if(EXISTS "${CMAKE_SOURCE_DIR}/3rdparty/opencv/lib")
+    # Use bundled OpenCV (headers + libs)
     set(OpenCV_INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/3rdparty/opencv/include/opencv4")
-    set(OpenCV_LIBS opencv_core opencv_imgproc opencv_dnn)
-    message(STATUS "Using bundled OpenCV headers from 3rdparty/opencv")
+    set(OpenCV_LIB_DIR "${CMAKE_SOURCE_DIR}/3rdparty/opencv/lib")
+
+    # Find the actual library files
+    find_library(OpenCV_core_LIB opencv_core PATHS ${OpenCV_LIB_DIR} NO_DEFAULT_PATH)
+    find_library(OpenCV_imgproc_LIB opencv_imgproc PATHS ${OpenCV_LIB_DIR} NO_DEFAULT_PATH)
+    find_library(OpenCV_dnn_LIB opencv_dnn PATHS ${OpenCV_LIB_DIR} NO_DEFAULT_PATH)
+
+    set(OpenCV_LIBS ${OpenCV_core_LIB} ${OpenCV_imgproc_LIB} ${OpenCV_dnn_LIB})
+    message(STATUS "Using bundled OpenCV minimal from 3rdparty/opencv")
+    message(STATUS "OpenCV include: ${OpenCV_INCLUDE_DIRS}")
+    message(STATUS "OpenCV libs: ${OpenCV_LIBS}")
 else()
+    # Fallback to system OpenCV (for local development)
     find_package(OpenCV REQUIRED COMPONENTS core imgproc dnn)
+    message(STATUS "Using system OpenCV")
 endif()
 
 # ONNX Runtime - manual for now (will be bundled)
@@ -79,12 +89,14 @@ target_link_libraries(${PROJECT_NAME}
     Qt5::Quick
     Qt5::Sql
     Qt5::Concurrent
+    ${OpenCV_LIBS}
 )
 
-# For cross-compilation: OpenCV and ONNX Runtime symbols will be resolved at runtime
-# Use linker flags to allow undefined symbols
+# Set RPATH so the app can find bundled libraries at runtime
 set_target_properties(${PROJECT_NAME} PROPERTIES
-    LINK_FLAGS "-Wl,--allow-shlib-undefined -Wl,--unresolved-symbols=ignore-all"
+    INSTALL_RPATH "\$ORIGIN/../lib64/harbour-nami"
+    BUILD_WITH_INSTALL_RPATH FALSE
+    LINK_FLAGS "-Wl,--enable-new-dtags"
 )
 
 # Installation
@@ -110,19 +122,28 @@ install(FILES harbour-nami.desktop
     DESTINATION share/applications
 )
 
-# Install ONNX Runtime library (bundled)
+# Install bundled libraries to lib64/harbour-nami
 # Use lib or lib64 depending on LIB_SUFFIX from spec file
 if(LIB_SUFFIX)
-    set(INSTALL_LIB_DIR "lib${LIB_SUFFIX}")
+    set(INSTALL_LIB_DIR "lib${LIB_SUFFIX}/harbour-nami")
 else()
-    set(INSTALL_LIB_DIR "lib")
+    set(INSTALL_LIB_DIR "lib/harbour-nami")
 endif()
 
+# Install OpenCV minimal libraries
+if(EXISTS "${CMAKE_SOURCE_DIR}/3rdparty/opencv/lib")
+    file(GLOB OPENCV_LIBS_TO_INSTALL "${CMAKE_SOURCE_DIR}/3rdparty/opencv/lib/libopencv_*.so*")
+    install(FILES ${OPENCV_LIBS_TO_INSTALL}
+        DESTINATION "${INSTALL_LIB_DIR}"
+    )
+endif()
+
+# Install ONNX Runtime library
 if(EXISTS "${ONNXRUNTIME_LIB_DIR}/libonnxruntime.so.1.16.3")
     install(FILES "${ONNXRUNTIME_LIB_DIR}/libonnxruntime.so.1.16.3"
         DESTINATION "${INSTALL_LIB_DIR}"
     )
-    # Create symlink at install time (in staging area, not root /)
+    # Create symlink
     install(CODE "execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink \
         libonnxruntime.so.1.16.3 \
         \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${INSTALL_LIB_DIR}/libonnxruntime.so)")

@@ -26,7 +26,6 @@ Configure: cmake
 Builder: make
 
 # Build dependencies
-# Note: OpenCV headers are bundled in 3rdparty/ for cross-compilation
 PkgConfigBR:
   - Qt5Core
   - Qt5Qml
@@ -34,8 +33,8 @@ PkgConfigBR:
   - Qt5Concurrent
   - Qt5Sql
 
-# Runtime dependencies (C++ only, no Python!)
-# Note: OpenCV and ONNX Runtime are bundled and loaded dynamically
+# Runtime dependencies
+# Note: OpenCV and ONNX Runtime are bundled in the RPM
 Requires:
   - sailfishsilica-qt5 >= 0.10.9
   - qt5-plugin-sqldriver-sqlite
@@ -45,7 +44,8 @@ Files:
   - '%{_bindir}'
   - '%{_datadir}/%{name}'
   - '%{_datadir}/applications/%{name}.desktop'
-  - '%{_libdir}/libonnxruntime.so*'
+  - '%{_libdir}/harbour-nami/libonnxruntime.so*'
+  - '%{_libdir}/harbour-nami/libopencv_*.so*'
 
 # Additional files
 SetupOptions: -q

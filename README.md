@@ -14,56 +14,57 @@ Face recognition photo gallery for Sailfish OS.
 
 ### Requirements
 
-- Sailfish SDK
-- Qt 5.6+
-- QtMultimedia
+- Sailfish SDK (for CI/CD builds)
+- Docker (recommended)
 - ML Models (YuNet + ArcFace)
 
-### Download ML Models First
+### Architecture
 
-Before building, download the required ML models:
+This app uses **C++ native implementation** with:
+- **OpenCV minimal** (core, imgproc, dnn modules only) - bundled
+- **ONNX Runtime** - bundled
+- **CMake** build system
+- Target: Jolla C2 (aarch64)
 
-```bash
-./scripts/download_models_for_build.sh
-```
+### CI/CD Build (Recommended)
 
-Or manually:
+The app is designed for **CI/CD only builds** using GitHub Actions:
 
-```bash
-# YuNet (automatically downloaded)
-curl -L "https://github.com/opencv/opencv_zoo/raw/main/models/face_detection_yunet/face_detection_yunet_2023mar.onnx" \
-  -o python/models/face_detection_yunet_2023mar.onnx
+1. Push a tag: `git tag v0.2.0 && git push origin v0.2.0`
+2. GitHub Actions will:
+   - Cross-compile OpenCV minimal (cached)
+   - Download ONNX Runtime
+   - Download ML models
+   - Build the RPM
+   - Create a GitHub release
 
-# ArcFace (see python/models/README.md for sources)
-# Place arcface_mobilefacenet.onnx in python/models/
-```
+### Manual Build (Advanced)
 
-### Build with mb2
-
-```bash
-# Download models first
-./scripts/download_models_for_build.sh
-
-# Build
-mb2 -t SailfishOS-5.0.0.43-armv7hl build
-```
-
-### Build with Docker
+If you need to build locally:
 
 ```bash
-# Download models
+# 1. Download ML models
 ./scripts/download_models_for_build.sh
 
-# Build
+# 2. Build OpenCV minimal (inside Sailfish SDK container)
 docker run --rm \
   -v $(pwd):/home/mersdk/src:z \
   coderus/sailfishos-platform-sdk:5.0.0.43 \
-  bash -c "cd /home/mersdk/src && mb2 -t SailfishOS-5.0.0.43-armv7hl build"
+  bash -c "cd /home/mersdk/src && sb2 -t SailfishOS-5.0.0.43-aarch64 bash scripts/build_opencv_minimal.sh"
+
+# 3. Download ONNX Runtime
+./scripts/download_onnxruntime.sh
+
+# 4. Build the app
+docker run --rm \
+  -v $(pwd):/home/mersdk/src:z \
+  coderus/sailfishos-platform-sdk:5.0.0.43 \
+  bash -c "cd /home/mersdk/src && mb2 -t SailfishOS-5.0.0.43-aarch64 build"
 ```
 
 ## Installation
 
-Install the RPM package on your Sailfish OS device:
+Download the RPM from [GitHub Releases](https://github.com/nicosouv/harbour-nami/releases) or OpenRepos, then install:
 
 ```bash
 pkcon install-local harbour-nami-*.rpm
