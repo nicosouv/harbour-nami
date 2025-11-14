@@ -100,10 +100,9 @@ $CMAKE_CMD \
     -DOPENCV_DNN_OPENCL=OFF \
     -DOPENCV_DNN_CUDA=OFF \
     \
-    `# ARM optimizations` \
+    `# ARM optimizations for aarch64` \
     -DENABLE_NEON=ON \
     -DCPU_BASELINE=NEON \
-    -DENABLE_VFPV3=ON \
     \
     `# Installation` \
     -DCMAKE_INSTALL_LIBDIR=lib \
