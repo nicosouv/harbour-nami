@@ -24,7 +24,11 @@ rm -rf "$BUILD_DIR"
 mkdir -p "$BUILD_DIR"
 
 # Clean and recreate install directory
-rm -rf "$INSTALL_DIR"
+# Remove existing directory if it exists (may have wrong permissions from cache)
+if [ -d "$INSTALL_DIR" ]; then
+    chmod -R 777 "$INSTALL_DIR" 2>/dev/null || true
+    rm -rf "$INSTALL_DIR"
+fi
 mkdir -p "$INSTALL_DIR"
 
 # Download OpenCV if not cached
