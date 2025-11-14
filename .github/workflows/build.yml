@@ -28,8 +28,12 @@ jobs:
       #     path: 3rdparty/opencv
       #     key: opencv-minimal-4.5.5-${{ matrix.arch }}-v1
 
-      - name: Fix Permissions
+      - name: Prepare Build Directories
         run: |
+          # Create directories before chmod
+          mkdir -p 3rdparty/opencv
+          mkdir -p 3rdparty/onnxruntime
+
           # Fix permissions for Docker container
           chmod -R 777 .
 
@@ -38,8 +42,7 @@ jobs:
           # Download ML Models
           bash scripts/download_models_for_build.sh
 
-          # Download ONNX Runtime for the target architecture
-          mkdir -p 3rdparty/onnxruntime
+          # Download ONNX Runtime for the target architecture (directory already created)
 
           # Map Sailfish arch to ONNX Runtime arch
           case "${{ matrix.arch }}" in
