@@ -27,6 +27,11 @@ jobs:
           path: 3rdparty/opencv
           key: opencv-minimal-4.5.5-${{ matrix.arch }}-v1
 
+      - name: Fix Permissions
+        run: |
+          # Fix permissions once for all Docker operations
+          chmod -R 777 .
+
       - name: Download Dependencies
         run: |
           # Download ML Models
@@ -63,9 +68,6 @@ jobs:
       - name: Build OpenCV Minimal
         if: steps.cache-opencv.outputs.cache-hit != 'true'
         run: |
-          # Fix permissions for Docker container
-          chmod -R 777 .
-
           docker run --rm \
             -v $(pwd):/home/mersdk/src:z \
             coderus/sailfishos-platform-sdk:5.0.0.43 \
@@ -82,8 +84,6 @@ jobs:
 
       - name: Build for ${{ matrix.arch }}
         run: |
-          # Fix permissions for Docker container
-          chmod -R 777 .
 
           docker run --rm \
             -v $(pwd):/home/mersdk/src:z \
