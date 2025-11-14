@@ -29,8 +29,8 @@ jobs:
 
       - name: Fix Permissions
         run: |
-          # Fix permissions once for all Docker operations
-          chmod -R 777 .
+          # Fix permissions for all files including cached ones
+          chmod -R 777 . 2>/dev/null || true
 
       - name: Download Dependencies
         run: |
