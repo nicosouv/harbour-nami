@@ -36,6 +36,13 @@ endif()
 set(ONNXRUNTIME_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/3rdparty/onnxruntime/include")
 set(ONNXRUNTIME_LIB_DIR "${CMAKE_SOURCE_DIR}/3rdparty/onnxruntime/lib")
 
+# Find ONNX Runtime library
+find_library(ONNXRUNTIME_LIB onnxruntime PATHS ${ONNXRUNTIME_LIB_DIR} NO_DEFAULT_PATH)
+if(NOT ONNXRUNTIME_LIB)
+    message(FATAL_ERROR "ONNX Runtime library not found in ${ONNXRUNTIME_LIB_DIR}")
+endif()
+message(STATUS "ONNX Runtime lib: ${ONNXRUNTIME_LIB}")
+
 # Sources
 set(SOURCES
     src/main.cpp
@@ -90,6 +97,7 @@ target_link_libraries(${PROJECT_NAME}
     Qt5::Sql
     Qt5::Concurrent
     ${OpenCV_LIBS}
+    ${ONNXRUNTIME_LIB}
 )
 
 # Set RPATH so the app can find bundled libraries at runtime
