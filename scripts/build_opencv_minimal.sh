@@ -21,8 +21,10 @@ echo ""
 
 # Clean previous builds
 rm -rf "$BUILD_DIR"
-rm -rf "$INSTALL_DIR"
 mkdir -p "$BUILD_DIR"
+
+# Clean and recreate install directory
+rm -rf "$INSTALL_DIR"
 mkdir -p "$INSTALL_DIR"
 
 # Download OpenCV if not cached
