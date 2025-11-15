@@ -156,15 +156,19 @@ QVector<FaceDetection> FaceDetector::postprocessDetections(const cv::Mat &output
     if (output.dims == 3) {
         qDebug() << "  3D Tensor shape: [" << output.size[0] << "," << output.size[1] << "," << output.size[2] << "]";
 
-        // YuNet output is typically [1, N, 15] where N is number of detections
+        // YuNet output can be [1, N, 15] or [1, N, 10]
         int numDetections = output.size[1];
         int numFeatures = output.size[2];
 
         qDebug() << "  Number of detections:" << numDetections;
         qDebug() << "  Features per detection:" << numFeatures;
 
-        if (numFeatures != 15) {
-            qWarning() << "  ✗ Unexpected number of features:" << numFeatures << "(expected 15)";
+        // Support both 10-feature and 15-feature formats
+        bool is10Feature = (numFeatures == 10);  // [x, y, w, h, score, x1, y1, x2, y2, x3, y3]
+        bool is15Feature = (numFeatures == 15);  // [x, y, w, h, x1, y1, x2, y2, x3, y3, x4, y4, x5, y5, score]
+
+        if (!is10Feature && !is15Feature) {
+            qWarning() << "  ✗ Unexpected number of features:" << numFeatures << "(expected 10 or 15)";
             return detections;
         }
 
@@ -175,7 +179,8 @@ QVector<FaceDetection> FaceDetector::postprocessDetections(const cv::Mat &output
             // Access 3D tensor: output.at<float>(batch, detection, feature)
             const float *row = output.ptr<float>(0, i);  // batch=0, detection=i
 
-            float score = row[14];
+            // Score position depends on format
+            float score = is10Feature ? row[4] : row[14];
 
             if (score > maxScore) {
                 maxScore = score;
@@ -198,11 +203,26 @@ QVector<FaceDetection> FaceDetector::postprocessDetections(const cv::Mat &output
                 detection.bbox = QRectF(x, y, w, h);
                 detection.confidence = score;
 
-                // 5 landmarks (normalize to 0-1)
-                for (int j = 0; j < 5; j++) {
-                    float lx = row[4 + j*2] / imageSize.width();
-                    float ly = row[5 + j*2] / imageSize.height();
-                    detection.landmarks.append(QPointF(lx, ly));
+                // Landmarks position depends on format
+                if (is10Feature) {
+                    // Format: [x, y, w, h, score, x1, y1, x2, y2, x3]
+                    // Only 2.5 landmarks available in 10-feature format
+                    // We'll extract what we can: right_eye, left_eye, nose (partial)
+                    for (int j = 0; j < 2; j++) {  // Only 2 complete landmarks
+                        float lx = row[5 + j*2] / imageSize.width();
+                        float ly = row[6 + j*2] / imageSize.height();
+                        detection.landmarks.append(QPointF(lx, ly));
+                    }
+                    // Add nose x coordinate (incomplete)
+                    float nose_x = row[9] / imageSize.width();
+                    detection.landmarks.append(QPointF(nose_x, 0.0f));
+                } else {
+                    // 15-feature format: [x, y, w, h, x1, y1, x2, y2, x3, y3, x4, y4, x5, y5, score]
+                    for (int j = 0; j < 5; j++) {
+                        float lx = row[4 + j*2] / imageSize.width();
+                        float ly = row[5 + j*2] / imageSize.height();
+                        detection.landmarks.append(QPointF(lx, ly));
+                    }
                 }
 
                 detections.append(detection);
