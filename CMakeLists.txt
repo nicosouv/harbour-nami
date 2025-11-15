@@ -102,11 +102,11 @@ target_link_libraries(${PROJECT_NAME}
 )
 
 # Set RPATH so the app can find bundled libraries at runtime
-set_target_properties(${PROJECT_NAME} PROPERTIES
-    INSTALL_RPATH "\$ORIGIN/../lib64/harbour-nami:\$ORIGIN/../lib/harbour-nami"
-    BUILD_WITH_INSTALL_RPATH TRUE
-    LINK_FLAGS "-Wl,--enable-new-dtags"
-)
+# Use CMAKE variables instead of set_target_properties for better mb2 compatibility
+set(CMAKE_SKIP_BUILD_RPATH FALSE)
+set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
+set(CMAKE_INSTALL_RPATH "\$ORIGIN/../lib64/harbour-nami:\$ORIGIN/../lib/harbour-nami")
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH FALSE)
 
 # Installation
 install(TARGETS ${PROJECT_NAME}
