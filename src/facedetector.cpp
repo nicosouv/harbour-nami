@@ -129,7 +129,7 @@ QVector<FaceDetection> FaceDetector::detect(const cv::Mat &image, float confiden
             qDebug() << "No faces detected";
         }
 
-        qDebug() << "=== Detection Complete: Found" << detections.size() << "faces ===\";
+        qDebug() << "=== Detection Complete: Found" << detections.size() << "faces ===";
 
         return detections;
     }
