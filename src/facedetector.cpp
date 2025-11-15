@@ -194,11 +194,43 @@ QVector<FaceDetection> FaceDetector::postprocessDetections(const cv::Mat &output
             if (score >= confidenceThreshold) {
                 FaceDetection detection;
 
-                // Bounding box (normalize to 0-1)
-                float x = row[0] / imageSize.width();
-                float y = row[1] / imageSize.height();
-                float w = row[2] / imageSize.width();
-                float h = row[3] / imageSize.height();
+                // Bounding box - format depends on YuNet version
+                float x, y, w, h;
+
+                if (is10Feature) {
+                    // 10-feature format outputs coordinates relative to INPUT TENSOR size (320x320)
+                    // NOT relative to original image size
+                    // Values are in pixels of the 320x320 resized input
+                    float px = row[0];  // x in 320x320 space
+                    float py = row[1];  // y in 320x320 space
+                    float pw = row[2];  // width in 320x320 space
+                    float ph = row[3];  // height in 320x320 space
+
+                    qDebug() << "    Raw bbox (10-feat, 320x320 pixels):" << px << py << pw << ph;
+
+                    // Convert from 320x320 space to normalized [0-1] range
+                    // by dividing by the INPUT size (320), not the original image size
+                    x = px / m_inputSize.width();   // Normalize to [0-1]
+                    y = py / m_inputSize.height();
+                    w = pw / m_inputSize.width();
+                    h = ph / m_inputSize.height();
+
+                    qDebug() << "    Normalized to [0-1]:" << x << y << w << h;
+
+                    // Clamp to valid range [0, 1] to handle out-of-bounds predictions
+                    x = std::max(0.0f, std::min(1.0f, x));
+                    y = std::max(0.0f, std::min(1.0f, y));
+                    w = std::max(0.0f, std::min(1.0f - x, w));  // Ensure doesn't extend past image
+                    h = std::max(0.0f, std::min(1.0f - y, h));  // Ensure doesn't extend past image
+
+                    qDebug() << "    Clamped bbox:" << x << y << w << h;
+                } else {
+                    // 15-feature format outputs pixel coordinates
+                    x = row[0] / imageSize.width();
+                    y = row[1] / imageSize.height();
+                    w = row[2] / imageSize.width();
+                    h = row[3] / imageSize.height();
+                }
 
                 detection.bbox = QRectF(x, y, w, h);
                 detection.confidence = score;
@@ -206,15 +238,17 @@ QVector<FaceDetection> FaceDetector::postprocessDetections(const cv::Mat &output
                 // Landmarks position depends on format
                 if (is10Feature) {
                     // Format: [x, y, w, h, score, x1, y1, x2, y2, x3]
-                    // Only 2.5 landmarks available in 10-feature format
-                    // We'll extract what we can: right_eye, left_eye, nose (partial)
+                    // Coordinates relative to 320x320 input - normalize by input size
                     for (int j = 0; j < 2; j++) {  // Only 2 complete landmarks
-                        float lx = row[5 + j*2] / imageSize.width();
-                        float ly = row[6 + j*2] / imageSize.height();
+                        float lx = row[5 + j*2] / m_inputSize.width();
+                        float ly = row[6 + j*2] / m_inputSize.height();
+                        lx = std::max(0.0f, std::min(1.0f, lx));
+                        ly = std::max(0.0f, std::min(1.0f, ly));
                         detection.landmarks.append(QPointF(lx, ly));
                     }
                     // Add nose x coordinate (incomplete)
-                    float nose_x = row[9] / imageSize.width();
+                    float nose_x = row[9] / m_inputSize.width();
+                    nose_x = std::max(0.0f, std::min(1.0f, nose_x));
                     detection.landmarks.append(QPointF(nose_x, 0.0f));
                 } else {
                     // 15-feature format: [x, y, w, h, x1, y1, x2, y2, x3, y3, x4, y4, x5, y5, score]
