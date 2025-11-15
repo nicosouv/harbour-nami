@@ -9,7 +9,7 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 ROOT_DIR="$SCRIPT_DIR/.."
 BUILD_DIR="$ROOT_DIR/build-opencv"
 INSTALL_DIR="$ROOT_DIR/3rdparty/opencv"
-OPENCV_VERSION="4.5.5"
+OPENCV_VERSION="4.8.0"
 
 echo "========================================"
 echo "Building OpenCV Minimal for Sailfish OS"
