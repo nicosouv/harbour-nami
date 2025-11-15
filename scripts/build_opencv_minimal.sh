@@ -16,7 +16,7 @@ echo "Building OpenCV Minimal for Sailfish OS"
 echo "========================================"
 echo "Version: $OPENCV_VERSION"
 echo "Target: aarch64 (Jolla C2)"
-echo "Modules: core, imgproc, dnn"
+echo "Modules: core, imgproc, dnn, objdetect"
 echo ""
 
 # Clean previous builds
@@ -63,7 +63,7 @@ $CMAKE_CMD \
     -DBUILD_SHARED_LIBS=ON \
     \
     `# Minimal module selection` \
-    -DBUILD_LIST=core,imgproc,dnn \
+    -DBUILD_LIST=core,imgproc,dnn,objdetect \
     \
     `# Disable everything else` \
     -DBUILD_opencv_apps=OFF \
@@ -140,5 +140,5 @@ echo ""
 echo "✓ OpenCV minimal build complete!"
 echo ""
 echo "Installed to: $INSTALL_DIR"
-echo "Modules: core, imgproc, dnn"
+echo "Modules: core, imgproc, dnn, objdetect"
 echo ""
