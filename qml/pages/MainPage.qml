@@ -1,15 +1,13 @@
 import QtQuick 2.0
 import Sailfish.Silica 1.0
-import "../components"
 
 Page {
     id: page
 
     allowedOrientations: Orientation.All
 
-    // Access global face recognition manager from C++ backend
+    // Access global face pipeline from C++ backend
     // facePipeline is exposed via QML context in main.cpp
-    property var faceManager: facePipeline
 
     // People model
     ListModel {
@@ -18,29 +16,25 @@ Page {
 
     // Refresh people list
     function refreshPeople() {
-        if (!faceManager || !faceManager.ready) return
+        if (!facePipeline || !facePipeline.initialized) return
 
-        faceManager.getAllPeople(function(people) {
-            peopleModel.clear()
-            for (var i = 0; i < people.length; i++) {
-                peopleModel.append(people[i])
-            }
-        })
+        peopleModel.clear()
+        var people = facePipeline.getAllPeople()
+        for (var i = 0; i < people.length; i++) {
+            peopleModel.append(people[i])
+        }
     }
 
     Component.onCompleted: {
-        // Wait for face manager to be ready
-        if (faceManager && faceManager.ready) {
+        // Wait for face pipeline to be ready
+        if (facePipeline && facePipeline.initialized) {
             refreshPeople()
         }
     }
 
     Connections {
-        target: faceManager
-        onInitialized: refreshPeople()
+        target: facePipeline
         onScanCompleted: refreshPeople()
-        onPersonCreated: refreshPeople()
-        onPersonDeleted: refreshPeople()
     }
 
     SilicaListView {
@@ -60,20 +54,15 @@ Page {
             }
             MenuItem {
                 text: qsTr("Review Unknown Faces")
-                enabled: faceManager && faceManager.ready
+                enabled: facePipeline && facePipeline.initialized
                 onClicked: pageStack.push(Qt.resolvedUrl("UnknownFacesPage.qml"))
             }
             MenuItem {
                 text: qsTr("Scan Gallery")
-                enabled: faceManager && faceManager.ready && !faceManager.processing
+                enabled: facePipeline && facePipeline.initialized && !facePipeline.processing
                 onClicked: {
-                    // Get gallery path from system
-                    var galleryPath = StandardPaths.pictures
-
-                    // Show scanning page
-                    pageStack.push(Qt.resolvedUrl("ScanningPage.qml"), {
-                        galleryPath: galleryPath
-                    })
+                    // Start gallery scan
+                    facePipeline.scanGallery(defaultGalleryPath, true)
                 }
             }
         }
@@ -118,9 +107,6 @@ Page {
                 text: qsTr("People")
             }
         }
-
-        // Model will be populated with detected faces
-        model: 0
 
         delegate: ListItem {
             id: listItem
@@ -177,11 +163,15 @@ Page {
                 MenuItem {
                     text: qsTr("Rename")
                     onClicked: {
-                        var dialog = pageStack.push(Qt.resolvedUrl("../dialogs/RenamePersonDialog.qml"), {
-                            personId: model.person_id,
-                            currentName: model.name
+                        var dialog = pageStack.push("Sailfish.Silica.InputDialog", {
+                            acceptDestination: page,
+                            acceptDestinationAction: PageStackAction.Pop,
+                            title: qsTr("Rename Person"),
+                            placeholderText: qsTr("Enter name"),
+                            text: model.name
                         })
                         dialog.accepted.connect(function() {
+                            facePipeline.updatePersonName(model.person_id, dialog.value)
                             refreshPeople()
                         })
                     }
@@ -189,19 +179,20 @@ Page {
                 MenuItem {
                     text: qsTr("Delete")
                     onClicked: {
-                        var dialog = pageStack.push(Qt.resolvedUrl("../dialogs/ConfirmDialog.qml"), {
+                        var dialog = pageStack.push("Sailfish.Silica.RemorseDialog", {
                             title: qsTr("Delete person?"),
-                            message: qsTr("This will remove %1 and unlink all their photos. This action cannot be undone.").arg(model.name)
+                            text: qsTr("This will remove %1 and unlink all their photos").arg(model.name)
                         })
                         dialog.accepted.connect(function() {
-                            faceManager.deletePerson(model.person_id)
+                            facePipeline.deletePerson(model.person_id)
+                            refreshPeople()
                         })
                     }
                 }
             }
 
             onClicked: {
-                pageStack.push(Qt.resolvedUrl("PersonPage.qml"), {
+                pageStack.push(Qt.resolvedUrl("PersonDetailPage.qml"), {
                     personId: model.person_id,
                     personName: model.name
                 })

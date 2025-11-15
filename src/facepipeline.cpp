@@ -4,6 +4,7 @@
 #include <QImageReader>
 #include <QFileInfo>
 #include <QtConcurrent>
+#include <QSet>
 
 FacePipeline::FacePipeline(QObject *parent)
     : QObject(parent)
@@ -375,4 +376,104 @@ int FacePipeline::matchFaceToDatabase(const FaceEmbedding &embedding, float thre
     }
 
     return match.personId;
+}
+
+QVariantList FacePipeline::getAllPeople()
+{
+    QVariantList result;
+
+    if (!m_initialized || !m_database) {
+        return result;
+    }
+
+    QVector<Person> people = m_database->getAllPeople();
+
+    for (const Person &person : people) {
+        QVariantMap personMap;
+        personMap["person_id"] = person.id;
+        personMap["name"] = person.name;
+        personMap["photo_count"] = person.photoCount;
+        personMap["created_at"] = person.createdAt;
+        result.append(personMap);
+    }
+
+    return result;
+}
+
+QVariantList FacePipeline::getPersonPhotos(int personId)
+{
+    QVariantList result;
+
+    if (!m_initialized || !m_database) {
+        return result;
+    }
+
+    // Get all faces for this person
+    QVector<Face> faces = m_database->getFacesForPerson(personId);
+
+    // Collect unique photo IDs
+    QSet<int> photoIds;
+    for (const Face &face : faces) {
+        photoIds.insert(face.photoId);
+    }
+
+    // Get photo paths
+    for (int photoId : photoIds) {
+        Photo photo = m_database->getPhoto(photoId);
+        if (!photo.filePath.isEmpty()) {
+            QVariantMap photoMap;
+            photoMap["photo_id"] = photo.id;
+            photoMap["file_path"] = photo.filePath;
+            photoMap["date_taken"] = photo.dateTaken;
+            result.append(photoMap);
+        }
+    }
+
+    return result;
+}
+
+bool FacePipeline::deletePerson(int personId)
+{
+    if (!m_initialized || !m_database) {
+        return false;
+    }
+
+    return m_database->deletePerson(personId);
+}
+
+bool FacePipeline::updatePersonName(int personId, const QString &name)
+{
+    if (!m_initialized || !m_database) {
+        return false;
+    }
+
+    return m_database->updatePersonName(personId, name);
+}
+
+QVariantList FacePipeline::getUnmappedFaces()
+{
+    QVariantList result;
+
+    if (!m_initialized || !m_database) {
+        return result;
+    }
+
+    QVector<Face> faces = m_database->getUnmappedFaces();
+
+    for (const Face &face : faces) {
+        Photo photo = m_database->getPhoto(face.photoId);
+
+        QVariantMap faceMap;
+        faceMap["face_id"] = face.id;
+        faceMap["photo_id"] = face.photoId;
+        faceMap["photo_path"] = photo.filePath;
+        faceMap["bbox_x"] = face.bbox.x();
+        faceMap["bbox_y"] = face.bbox.y();
+        faceMap["bbox_width"] = face.bbox.width();
+        faceMap["bbox_height"] = face.bbox.height();
+        faceMap["confidence"] = face.confidence;
+        result.append(faceMap);
+    }
+
+    return result;
 }

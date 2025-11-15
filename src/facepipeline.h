@@ -89,6 +89,40 @@ public:
      */
     Q_INVOKABLE void cancel();
 
+    /**
+     * @brief Get all people from database
+     * @return List of people as QVariantList
+     */
+    Q_INVOKABLE QVariantList getAllPeople();
+
+    /**
+     * @brief Get photos for a specific person
+     * @param personId Person ID
+     * @return List of photo paths as QVariantList
+     */
+    Q_INVOKABLE QVariantList getPersonPhotos(int personId);
+
+    /**
+     * @brief Delete a person and unmap their faces
+     * @param personId Person ID
+     * @return true if successful
+     */
+    Q_INVOKABLE bool deletePerson(int personId);
+
+    /**
+     * @brief Update person's name
+     * @param personId Person ID
+     * @param name New name
+     * @return true if successful
+     */
+    Q_INVOKABLE bool updatePersonName(int personId, const QString &name);
+
+    /**
+     * @brief Get all unmapped faces
+     * @return List of faces as QVariantList
+     */
+    Q_INVOKABLE QVariantList getUnmappedFaces();
+
     // === Property getters ===
 
     bool isInitialized() const { return m_initialized; }
