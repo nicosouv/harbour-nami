@@ -103,8 +103,8 @@ target_link_libraries(${PROJECT_NAME}
 
 # Set RPATH so the app can find bundled libraries at runtime
 set_target_properties(${PROJECT_NAME} PROPERTIES
-    INSTALL_RPATH "\$ORIGIN/../lib64/harbour-nami"
-    BUILD_WITH_INSTALL_RPATH FALSE
+    INSTALL_RPATH "\$ORIGIN/../lib64/harbour-nami:\$ORIGIN/../lib/harbour-nami"
+    BUILD_WITH_INSTALL_RPATH TRUE
     LINK_FLAGS "-Wl,--enable-new-dtags"
 )
 
