@@ -1,6 +1,6 @@
 #!/bin/bash
 # Cross-compile minimal OpenCV for Sailfish OS (aarch64)
-# Builds only: core, imgproc, dnn modules
+# Builds: core, imgproc, dnn, objdetect modules
 # Target: Jolla C2 (aarch64)
 
 set -e
