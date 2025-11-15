@@ -1,50 +1,44 @@
-import QtQuick 2.0
+import QtQuick 2.6
 import Sailfish.Silica 1.0
 
 Page {
     id: page
-
-    property string galleryPath
-    property var faceManager: facePipeline
-
     allowedOrientations: Orientation.All
 
-    // Scanning state
-    property bool scanning: false
+    // State
     property int currentPhoto: 0
     property int totalPhotos: 0
-    property int detectedFaces: 0
+    property int facesDetected: 0
+    property bool scanning: true
 
     Component.onCompleted: {
-        startScanning()
+        // Start scanning
+        facePipeline.scanGallery(defaultGalleryPath, true)
     }
 
     Connections {
-        target: faceManager
+        target: facePipeline
 
         onScanProgress: {
-            currentPhoto = progress.current
-            totalPhotos = progress.total
+            currentPhoto = current
+            totalPhotos = total
         }
 
         onScanCompleted: {
             scanning = false
-            detectedFaces = summary.total_faces
+            facesDetected = facesDetected
+            // Refresh main page
+            pageStack.pop()
         }
     }
 
-    function startScanning() {
-        if (!faceManager || !faceManager.ready) {
-            console.error("Face manager not ready")
-            return
+    // Gradient background
+    Rectangle {
+        anchors.fill: parent
+        gradient: Gradient {
+            GradientStop { position: 0.0; color: "#0a192f" }
+            GradientStop { position: 1.0; color: "#172a45" }
         }
-
-        scanning = true
-        currentPhoto = 0
-        totalPhotos = 0
-        detectedFaces = 0
-
-        faceManager.scanGallery(galleryPath)
     }
 
     SilicaFlickable {
@@ -53,116 +47,215 @@ Page {
 
         Column {
             id: column
-            width: page.width
-            spacing: Theme.paddingLarge
+            width: parent.width
+            spacing: Theme.paddingLarge * 2
 
-            PageHeader {
-                title: scanning ? qsTr("Scanning Gallery") : qsTr("Scan Complete")
+            // Spacer
+            Item {
+                width: parent.width
+                height: Theme.paddingLarge * 4
             }
 
+            // Animated circle progress
+            Item {
+                width: parent.width
+                height: Theme.itemSizeHuge * 2
+
+                // Outer glow circle
+                Rectangle {
+                    anchors.centerIn: parent
+                    width: Theme.itemSizeHuge * 1.8
+                    height: width
+                    radius: width / 2
+                    color: "transparent"
+                    border.color: "#64ffda"
+                    border.width: 2
+                    opacity: 0.3
+
+                    SequentialAnimation on opacity {
+                        running: scanning
+                        loops: Animation.Infinite
+                        NumberAnimation { to: 0.8; duration: 1000; easing.type: Easing.InOutQuad }
+                        NumberAnimation { to: 0.3; duration: 1000; easing.type: Easing.InOutQuad }
+                    }
+
+                    SequentialAnimation on scale {
+                        running: scanning
+                        loops: Animation.Infinite
+                        NumberAnimation { to: 1.1; duration: 1000; easing.type: Easing.InOutQuad }
+                        NumberAnimation { to: 1.0; duration: 1000; easing.type: Easing.InOutQuad }
+                    }
+                }
+
+                // Main circle
+                Rectangle {
+                    id: mainCircle
+                    anchors.centerIn: parent
+                    width: Theme.itemSizeHuge * 1.5
+                    height: width
+                    radius: width / 2
+                    color: Qt.rgba(0.39, 1, 0.85, 0.1)
+                    border.color: "#64ffda"
+                    border.width: 3
+
+                    // Progress arc (simulated with rotation)
+                    Rectangle {
+                        anchors.centerIn: parent
+                        width: parent.width - 20
+                        height: width
+                        radius: width / 2
+                        color: "transparent"
+                        border.color: "#64ffda"
+                        border.width: 8
+                        opacity: 0.6
+
+                        rotation: totalPhotos > 0 ? (currentPhoto / totalPhotos) * 360 : 0
+
+                        Behavior on rotation {
+                            NumberAnimation { duration: 200; easing.type: Easing.OutQuad }
+                        }
+                    }
+
+                    // Center content
+                    Column {
+                        anchors.centerIn: parent
+                        spacing: Theme.paddingSmall
+
+                        Label {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            text: totalPhotos > 0 ? currentPhoto : "0"
+                            font.pixelSize: Theme.fontSizeHuge * 1.5
+                            font.bold: true
+                            color: "#64ffda"
+                        }
+
+                        Label {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            text: totalPhotos > 0 ? "/ " + totalPhotos : "..."
+                            font.pixelSize: Theme.fontSizeLarge
+                            color: "#8892b0"
+                        }
+                    }
+                }
+            }
+
+            // Title
+            Label {
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: scanning ? qsTr("Scanning Gallery") : qsTr("Scan Complete")
+                font.pixelSize: Theme.fontSizeExtraLarge
+                font.bold: true
+                color: "#ccd6f6"
+            }
+
+            // Subtitle
+            Label {
+                anchors.horizontalCenter: parent.horizontalCenter
+                width: parent.width - Theme.horizontalPageMargin * 4
+                horizontalAlignment: Text.AlignHCenter
+                wrapMode: Text.WordWrap
+                text: scanning ?
+                      qsTr("Detecting faces in your photos") :
+                      qsTr("Found %n face(s)", "", facesDetected)
+                font.pixelSize: Theme.fontSizeMedium
+                color: "#8892b0"
+            }
+
+            // Stats
+            Item {
+                width: parent.width
+                height: Theme.paddingLarge
+            }
+
+            Row {
+                anchors.horizontalCenter: parent.horizontalCenter
+                spacing: Theme.paddingLarge * 3
+
+                Column {
+                    spacing: Theme.paddingSmall
+
+                    Label {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        text: currentPhoto
+                        font.pixelSize: Theme.fontSizeHuge
+                        font.bold: true
+                        color: "#64ffda"
+                    }
+
+                    Label {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        text: qsTr("Photos")
+                        font.pixelSize: Theme.fontSizeSmall
+                        color: "#8892b0"
+                    }
+                }
+
+                Rectangle {
+                    width: 1
+                    height: Theme.itemSizeSmall
+                    color: "#8892b0"
+                    opacity: 0.3
+                }
+
+                Column {
+                    spacing: Theme.paddingSmall
+
+                    Label {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        text: facesDetected
+                        font.pixelSize: Theme.fontSizeHuge
+                        font.bold: true
+                        color: "#64ffda"
+                    }
+
+                    Label {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        text: qsTr("Faces")
+                        font.pixelSize: Theme.fontSizeSmall
+                        color: "#8892b0"
+                    }
+                }
+            }
+
+            // Progress percentage
+            Label {
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: totalPhotos > 0 ? Math.round((currentPhoto / totalPhotos) * 100) + "%" : "0%"
+                font.pixelSize: Theme.fontSizeExtraLarge
+                font.bold: true
+                color: "#64ffda"
+                opacity: 0.8
+                visible: scanning
+            }
+
+            // Cancel button (if needed)
             Item {
                 width: parent.width
                 height: Theme.paddingLarge * 2
             }
 
-            // Progress indicator
-            BusyIndicator {
+            BackgroundItem {
+                width: Theme.buttonWidthMedium
+                height: Theme.itemSizeSmall
                 anchors.horizontalCenter: parent.horizontalCenter
-                size: BusyIndicatorSize.Large
-                running: scanning
-                visible: scanning
-            }
-
-            // Success icon
-            Image {
-                anchors.horizontalCenter: parent.horizontalCenter
-                source: "image://theme/icon-l-accept"
                 visible: !scanning
-                width: Theme.iconSizeLarge
-                height: Theme.iconSizeLarge
-            }
 
-            Item {
-                width: parent.width
-                height: Theme.paddingLarge
-            }
+                Rectangle {
+                    anchors.fill: parent
+                    radius: Theme.paddingSmall
+                    color: "#64ffda"
+                    opacity: parent.pressed ? 0.6 : 0.8
 
-            // Progress text
-            Label {
-                anchors.horizontalCenter: parent.horizontalCenter
-                text: scanning ?
-                      qsTr("Processing photos...") :
-                      qsTr("Gallery scan completed!")
-                color: Theme.highlightColor
-                font.pixelSize: Theme.fontSizeLarge
-            }
-
-            Label {
-                anchors.horizontalCenter: parent.horizontalCenter
-                text: totalPhotos > 0 ?
-                      qsTr("%1 of %2 photos").arg(currentPhoto).arg(totalPhotos) :
-                      qsTr("Preparing...")
-                color: Theme.secondaryHighlightColor
-                font.pixelSize: Theme.fontSizeMedium
-                visible: scanning
-            }
-
-            // Progress bar
-            ProgressBar {
-                width: parent.width - 2 * Theme.horizontalPageMargin
-                anchors.horizontalCenter: parent.horizontalCenter
-                minimumValue: 0
-                maximumValue: totalPhotos > 0 ? totalPhotos : 100
-                value: currentPhoto
-                indeterminate: totalPhotos === 0
-                visible: scanning
-            }
-
-            Item {
-                width: parent.width
-                height: Theme.paddingLarge
-            }
-
-            // Results
-            SectionHeader {
-                text: qsTr("Results")
-                visible: !scanning
-            }
-
-            DetailItem {
-                label: qsTr("Photos scanned")
-                value: totalPhotos
-                visible: !scanning
-            }
-
-            DetailItem {
-                label: qsTr("Faces detected")
-                value: detectedFaces
-                visible: !scanning
-            }
-
-            Item {
-                width: parent.width
-                height: Theme.paddingLarge
-            }
-
-            // Actions
-            Button {
-                anchors.horizontalCenter: parent.horizontalCenter
-                text: qsTr("Review Unknown Faces")
-                visible: !scanning && detectedFaces > 0
-                onClicked: {
-                    pageStack.replace(Qt.resolvedUrl("UnknownFacesPage.qml"))
+                    Label {
+                        anchors.centerIn: parent
+                        text: qsTr("Done")
+                        color: "#0a192f"
+                        font.bold: true
+                        font.pixelSize: Theme.fontSizeMedium
+                    }
                 }
-            }
 
-            Button {
-                anchors.horizontalCenter: parent.horizontalCenter
-                text: qsTr("Done")
-                visible: !scanning
-                onClicked: {
-                    pageStack.pop()
-                }
+                onClicked: pageStack.pop()
             }
         }
     }

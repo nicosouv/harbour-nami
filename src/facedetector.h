@@ -42,11 +42,11 @@ public:
     /**
      * @brief Detect faces in an image
      * @param image Input image (QImage or cv::Mat)
-     * @param confidenceThreshold Minimum confidence (default: 0.6)
+     * @param confidenceThreshold Minimum confidence (default: 0.3)
      * @return Vector of detected faces
      */
-    QVector<FaceDetection> detect(const QImage &image, float confidenceThreshold = 0.6f);
-    QVector<FaceDetection> detect(const cv::Mat &image, float confidenceThreshold = 0.6f);
+    QVector<FaceDetection> detect(const QImage &image, float confidenceThreshold = 0.3f);
+    QVector<FaceDetection> detect(const cv::Mat &image, float confidenceThreshold = 0.3f);
 
     /**
      * @brief Check if model is loaded

@@ -45,7 +45,9 @@ bool FaceDetector::loadModel(const QString &modelPath)
 
 QVector<FaceDetection> FaceDetector::detect(const QImage &image, float confidenceThreshold)
 {
+    qDebug() << "QImage detection requested - size:" << image.width() << "x" << image.height();
     cv::Mat mat = qImageToCvMat(image);
+    qDebug() << "Converted to cv::Mat - size:" << mat.cols << "x" << mat.rows;
     return detect(mat, confidenceThreshold);
 }
 
@@ -61,24 +63,34 @@ QVector<FaceDetection> FaceDetector::detect(const cv::Mat &image, float confiden
         return QVector<FaceDetection>();
     }
 
+    qDebug() << "=== Face Detection Start ===";
+    qDebug() << "Input image size:" << image.cols << "x" << image.rows << "channels:" << image.channels();
+    qDebug() << "Confidence threshold:" << confidenceThreshold;
+
     try {
         // Preprocess image
+        qDebug() << "Preprocessing image...";
         cv::Mat blob = preprocessImage(image);
+        qDebug() << "Blob created - size:" << blob.size[2] << "x" << blob.size[3] << "channels:" << blob.size[1];
 
         // Set input
+        qDebug() << "Setting network input...";
         m_net.setInput(blob);
 
         // Forward pass
+        qDebug() << "Running forward pass...";
         cv::Mat output = m_net.forward();
+        qDebug() << "Network output shape: rows=" << output.rows << "cols=" << output.cols << "dims=" << output.dims;
 
         // Post-process detections
+        qDebug() << "Post-processing detections...";
         QVector<FaceDetection> detections = postprocessDetections(
             output,
             QSize(image.cols, image.rows),
             confidenceThreshold
         );
 
-        qDebug() << "Detected" << detections.size() << "faces with confidence >" << confidenceThreshold;
+        qDebug() << "=== Detection Complete: Found" << detections.size() << "faces (threshold=" << confidenceThreshold << ") ===";
 
         return detections;
     }
@@ -133,10 +145,24 @@ QVector<FaceDetection> FaceDetector::postprocessDetections(const cv::Mat &output
     // [x, y, w, h, x_re, y_re, x_le, y_le, x_nt, y_nt, x_rcm, y_rcm, x_lcm, y_lcm, score]
     // where: re = right eye, le = left eye, nt = nose tip, rcm = right corner mouth, lcm = left corner mouth
 
+    qDebug() << "Post-processing" << output.rows << "potential detections";
+
+    int rejectedCount = 0;
+    float maxScore = -1.0f;
+
     for (int i = 0; i < output.rows; i++) {
         const float *row = output.ptr<float>(i);
 
         float score = row[14];
+
+        if (score > maxScore) {
+            maxScore = score;
+        }
+
+        if (i < 5) {  // Log first 5 detections
+            qDebug() << "  Detection" << i << "- score:" << score
+                     << "bbox: [" << row[0] << row[1] << row[2] << row[3] << "]";
+        }
 
         if (score >= confidenceThreshold) {
             FaceDetection detection;
@@ -158,8 +184,14 @@ QVector<FaceDetection> FaceDetector::postprocessDetections(const cv::Mat &output
             }
 
             detections.append(detection);
+            qDebug() << "  ✓ Accepted detection" << i << "with score" << score;
+        } else {
+            rejectedCount++;
         }
     }
+
+    qDebug() << "Rejected" << rejectedCount << "detections below threshold" << confidenceThreshold;
+    qDebug() << "Max score found:" << maxScore;
 
     return detections;
 }

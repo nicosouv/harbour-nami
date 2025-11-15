@@ -61,8 +61,8 @@ Page {
                 text: qsTr("Scan Gallery")
                 enabled: facePipeline && facePipeline.initialized && !facePipeline.processing
                 onClicked: {
-                    // Start gallery scan
-                    facePipeline.scanGallery(defaultGalleryPath, true)
+                    // Open scanning page
+                    pageStack.push(Qt.resolvedUrl("ScanningPage.qml"))
                 }
             }
         }

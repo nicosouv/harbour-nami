@@ -142,58 +142,88 @@ PhotoProcessingResult FacePipeline::processPhotoInternal(const QString &photoPat
     result.facesMatched = 0;
     result.success = false;
 
+    qDebug() << "";
+    qDebug() << "╔═══════════════════════════════════════════════════════════════╗";
+    qDebug() << "║ Processing photo:" << photoPath;
+    qDebug() << "╚═══════════════════════════════════════════════════════════════╝";
+
     // Load image
+    qDebug() << "→ Loading image...";
     QImage image = loadImage(photoPath);
     if (image.isNull()) {
+        qWarning() << "✗ Failed to load image";
         result.errorMessage = "Failed to load image";
         return result;
     }
+    qDebug() << "✓ Image loaded:" << image.width() << "x" << image.height() << "format:" << image.format();
 
     // Get or create photo record
     QFileInfo fileInfo(photoPath);
     QDateTime dateTaken = fileInfo.lastModified();  // Could use EXIF data
 
+    qDebug() << "→ Adding photo to database...";
     int photoId = m_database->addPhoto(photoPath, dateTaken, image.width(), image.height());
     if (photoId < 0) {
+        qWarning() << "✗ Failed to add photo to database";
         result.errorMessage = "Failed to add photo to database";
         return result;
     }
+    qDebug() << "✓ Photo added to DB with ID:" << photoId;
 
     result.photoId = photoId;
 
     // Detect faces
+    qDebug() << "→ Starting face detection...";
     QVector<FaceDetection> detections = m_detector->detect(image);
     result.facesDetected = detections.size();
 
-    qDebug() << "Processing" << photoPath << "- detected" << detections.size() << "faces";
+    qDebug() << "✓ Face detection complete:" << detections.size() << "faces found";
+
+    if (detections.isEmpty()) {
+        qDebug() << "⚠ No faces detected in this image";
+    }
 
     // Process each detected face
-    for (const FaceDetection &detection : detections) {
+    for (int i = 0; i < detections.size(); i++) {
+        const FaceDetection &detection = detections[i];
+        qDebug() << "  → Processing face" << (i+1) << "/" << detections.size()
+                 << "- confidence:" << detection.confidence;
+
         // Extract face region
         cv::Mat cvImage = m_detector->qImageToCvMat(image);
         cv::Mat faceRegion = extractFaceRegion(cvImage, detection.bbox, detection.landmarks);
+        qDebug() << "    ✓ Face region extracted:" << faceRegion.cols << "x" << faceRegion.rows;
 
         // Extract embedding
+        qDebug() << "    → Extracting face embedding...";
         FaceEmbedding embedding = m_recognizer->extractEmbedding(faceRegion);
 
         if (embedding.empty()) {
-            qWarning() << "Failed to extract embedding for face";
+            qWarning() << "    ✗ Failed to extract embedding for face";
             continue;
         }
+        qDebug() << "    ✓ Embedding extracted (size:" << embedding.size() << ")";
 
         // Match against database
+        qDebug() << "    → Matching against database...";
         int matchedPersonId = matchFaceToDatabase(embedding);
 
         if (matchedPersonId >= 0) {
             result.facesMatched++;
+            qDebug() << "    ✓ Matched to person ID:" << matchedPersonId;
+        } else {
+            qDebug() << "    ○ No match found (new face)";
         }
 
         // Store in database
+        qDebug() << "    → Storing face in database...";
         int faceId = m_database->addFace(photoId, detection.bbox, detection.confidence,
                                          embedding, matchedPersonId);
 
         if (faceId < 0) {
-            qWarning() << "Failed to add face to database";
+            qWarning() << "    ✗ Failed to add face to database";
+        } else {
+            qDebug() << "    ✓ Face stored with ID:" << faceId;
         }
     }
 
@@ -201,6 +231,13 @@ PhotoProcessingResult FacePipeline::processPhotoInternal(const QString &photoPat
     m_database->markPhotoProcessed(photoId);
 
     result.success = true;
+    qDebug() << "═══════════════════════════════════════════════════════════════";
+    qDebug() << "Photo processing summary:";
+    qDebug() << "  Faces detected:" << result.facesDetected;
+    qDebug() << "  Faces matched:" << result.facesMatched;
+    qDebug() << "═══════════════════════════════════════════════════════════════";
+    qDebug() << "";
+
     return result;
 }
 
