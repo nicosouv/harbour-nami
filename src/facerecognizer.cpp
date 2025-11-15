@@ -38,12 +38,13 @@ bool FaceRecognizer::loadModel(const QString &modelPath)
             return false;
         }
 
-        m_inputNames.push_back(m_session->GetInputNameAllocated(0, allocator).get());
+        m_inputNames.push_back(std::string(m_session->GetInputNameAllocated(0, allocator).get()));
 
         Ort::TypeInfo inputTypeInfo = m_session->GetInputTypeInfo(0);
         auto tensorInfo = inputTypeInfo.GetTensorTypeAndShapeInfo();
         m_inputShape = tensorInfo.GetShape();
 
+        qDebug() << "Input name:" << m_inputNames[0].c_str();
         qDebug() << "Input shape:" << m_inputShape[0] << m_inputShape[1]
                  << m_inputShape[2] << m_inputShape[3];
 
@@ -54,7 +55,7 @@ bool FaceRecognizer::loadModel(const QString &modelPath)
             return false;
         }
 
-        m_outputNames.push_back(m_session->GetOutputNameAllocated(0, allocator).get());
+        m_outputNames.push_back(std::string(m_session->GetOutputNameAllocated(0, allocator).get()));
 
         Ort::TypeInfo outputTypeInfo = m_session->GetOutputTypeInfo(0);
         auto outputTensorInfo = outputTypeInfo.GetTensorTypeAndShapeInfo();
@@ -120,13 +121,23 @@ FaceEmbedding FaceRecognizer::extractEmbedding(const cv::Mat &faceImage)
             inputShape.size()
         );
 
+        // Convert string names to const char* arrays for ONNX Runtime
+        std::vector<const char*> inputNamePtrs;
+        std::vector<const char*> outputNamePtrs;
+        for (const auto& name : m_inputNames) {
+            inputNamePtrs.push_back(name.c_str());
+        }
+        for (const auto& name : m_outputNames) {
+            outputNamePtrs.push_back(name.c_str());
+        }
+
         // Run inference
         std::vector<Ort::Value> outputTensors = m_session->Run(
             Ort::RunOptions{nullptr},
-            m_inputNames.data(),
+            inputNamePtrs.data(),
             &inputOrtTensor,
             1,
-            m_outputNames.data(),
+            outputNamePtrs.data(),
             1
         );
 

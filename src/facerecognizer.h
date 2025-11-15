@@ -93,8 +93,8 @@ private:
     Ort::SessionOptions m_sessionOptions;
     bool m_modelLoaded;
 
-    std::vector<const char*> m_inputNames;
-    std::vector<const char*> m_outputNames;
+    std::vector<std::string> m_inputNames;
+    std::vector<std::string> m_outputNames;
     std::vector<int64_t> m_inputShape;
     std::vector<int64_t> m_outputShape;
 
