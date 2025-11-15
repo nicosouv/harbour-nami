@@ -104,12 +104,20 @@ FaceEmbedding FaceRecognizer::extractEmbedding(const cv::Mat &faceImage)
         Ort::MemoryInfo memoryInfo = Ort::MemoryInfo::CreateCpu(
             OrtAllocatorType::OrtArenaAllocator, OrtMemType::OrtMemTypeDefault);
 
+        // Create concrete shape (replace -1 with actual batch size)
+        std::vector<int64_t> inputShape = m_inputShape;
+        for (size_t i = 0; i < inputShape.size(); i++) {
+            if (inputShape[i] == -1) {
+                inputShape[i] = 1;  // Batch size = 1
+            }
+        }
+
         Ort::Value inputOrtTensor = Ort::Value::CreateTensor<float>(
             memoryInfo,
             inputTensor.data(),
             inputTensorSize,
-            m_inputShape.data(),
-            m_inputShape.size()
+            inputShape.data(),
+            inputShape.size()
         );
 
         // Run inference
@@ -124,7 +132,8 @@ FaceEmbedding FaceRecognizer::extractEmbedding(const cv::Mat &faceImage)
 
         // Get output
         float* outputData = outputTensors[0].GetTensorMutableData<float>();
-        size_t outputSize = m_outputShape[1];  // Should be 512
+        // Get actual output size (handle -1 in shape)
+        size_t outputSize = (m_outputShape[1] == -1) ? 512 : m_outputShape[1];
 
         FaceEmbedding embedding(outputData, outputData + outputSize);
 
