@@ -7,6 +7,12 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
+# Set RPATH configuration BEFORE add_executable
+set(CMAKE_SKIP_BUILD_RPATH FALSE)
+set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
+set(CMAKE_INSTALL_RPATH "\$ORIGIN/../lib64/harbour-nami:\$ORIGIN/../lib/harbour-nami")
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH FALSE)
+
 # Find Qt5
 find_package(Qt5 REQUIRED COMPONENTS Core Gui Qml Quick Sql Concurrent)
 
@@ -100,13 +106,6 @@ target_link_libraries(${PROJECT_NAME}
     ${OpenCV_LIBS}
     ${ONNXRUNTIME_LIB}
 )
-
-# Set RPATH so the app can find bundled libraries at runtime
-# Use CMAKE variables instead of set_target_properties for better mb2 compatibility
-set(CMAKE_SKIP_BUILD_RPATH FALSE)
-set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
-set(CMAKE_INSTALL_RPATH "\$ORIGIN/../lib64/harbour-nami:\$ORIGIN/../lib/harbour-nami")
-set(CMAKE_INSTALL_RPATH_USE_LINK_PATH FALSE)
 
 # Installation
 install(TARGETS ${PROJECT_NAME}
