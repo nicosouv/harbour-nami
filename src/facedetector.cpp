@@ -145,53 +145,128 @@ QVector<FaceDetection> FaceDetector::postprocessDetections(const cv::Mat &output
     // [x, y, w, h, x_re, y_re, x_le, y_le, x_nt, y_nt, x_rcm, y_rcm, x_lcm, y_lcm, score]
     // where: re = right eye, le = left eye, nt = nose tip, rcm = right corner mouth, lcm = left corner mouth
 
-    qDebug() << "Post-processing" << output.rows << "potential detections";
+    qDebug() << "Post-processing output:";
+    qDebug() << "  Dims:" << output.dims;
+    qDebug() << "  Rows:" << output.rows;
+    qDebug() << "  Cols:" << output.cols;
+    qDebug() << "  Type:" << output.type();
+    qDebug() << "  Channels:" << output.channels();
 
-    int rejectedCount = 0;
-    float maxScore = -1.0f;
+    // For 3D tensor, need to access shape differently
+    if (output.dims == 3) {
+        qDebug() << "  3D Tensor shape: [" << output.size[0] << "," << output.size[1] << "," << output.size[2] << "]";
 
-    for (int i = 0; i < output.rows; i++) {
-        const float *row = output.ptr<float>(i);
+        // YuNet output is typically [1, N, 15] where N is number of detections
+        int numDetections = output.size[1];
+        int numFeatures = output.size[2];
 
-        float score = row[14];
+        qDebug() << "  Number of detections:" << numDetections;
+        qDebug() << "  Features per detection:" << numFeatures;
 
-        if (score > maxScore) {
-            maxScore = score;
+        if (numFeatures != 15) {
+            qWarning() << "  ✗ Unexpected number of features:" << numFeatures << "(expected 15)";
+            return detections;
         }
 
-        if (i < 5) {  // Log first 5 detections
-            qDebug() << "  Detection" << i << "- score:" << score
-                     << "bbox: [" << row[0] << row[1] << row[2] << row[3] << "]";
-        }
+        int rejectedCount = 0;
+        float maxScore = -1.0f;
 
-        if (score >= confidenceThreshold) {
-            FaceDetection detection;
+        for (int i = 0; i < numDetections; i++) {
+            // Access 3D tensor: output.at<float>(batch, detection, feature)
+            const float *row = output.ptr<float>(0, i);  // batch=0, detection=i
 
-            // Bounding box (normalize to 0-1)
-            float x = row[0] / imageSize.width();
-            float y = row[1] / imageSize.height();
-            float w = row[2] / imageSize.width();
-            float h = row[3] / imageSize.height();
+            float score = row[14];
 
-            detection.bbox = QRectF(x, y, w, h);
-            detection.confidence = score;
-
-            // 5 landmarks (normalize to 0-1)
-            for (int j = 0; j < 5; j++) {
-                float lx = row[4 + j*2] / imageSize.width();
-                float ly = row[5 + j*2] / imageSize.height();
-                detection.landmarks.append(QPointF(lx, ly));
+            if (score > maxScore) {
+                maxScore = score;
             }
 
-            detections.append(detection);
-            qDebug() << "  ✓ Accepted detection" << i << "with score" << score;
-        } else {
-            rejectedCount++;
-        }
-    }
+            if (i < 5) {  // Log first 5 detections
+                qDebug() << "    Detection" << i << "- score:" << score
+                         << "bbox: [" << row[0] << row[1] << row[2] << row[3] << "]";
+            }
 
-    qDebug() << "Rejected" << rejectedCount << "detections below threshold" << confidenceThreshold;
-    qDebug() << "Max score found:" << maxScore;
+            if (score >= confidenceThreshold) {
+                FaceDetection detection;
+
+                // Bounding box (normalize to 0-1)
+                float x = row[0] / imageSize.width();
+                float y = row[1] / imageSize.height();
+                float w = row[2] / imageSize.width();
+                float h = row[3] / imageSize.height();
+
+                detection.bbox = QRectF(x, y, w, h);
+                detection.confidence = score;
+
+                // 5 landmarks (normalize to 0-1)
+                for (int j = 0; j < 5; j++) {
+                    float lx = row[4 + j*2] / imageSize.width();
+                    float ly = row[5 + j*2] / imageSize.height();
+                    detection.landmarks.append(QPointF(lx, ly));
+                }
+
+                detections.append(detection);
+                qDebug() << "    ✓ Accepted detection" << i << "with score" << score;
+            } else {
+                rejectedCount++;
+            }
+        }
+
+        qDebug() << "  Rejected" << rejectedCount << "detections below threshold" << confidenceThreshold;
+        qDebug() << "  Max score found:" << maxScore;
+
+    } else if (output.dims == 2) {
+        // 2D output format [num_detections, 15]
+        qDebug() << "  2D Matrix format";
+
+        int rejectedCount = 0;
+        float maxScore = -1.0f;
+
+        for (int i = 0; i < output.rows; i++) {
+            const float *row = output.ptr<float>(i);
+
+            float score = row[14];
+
+            if (score > maxScore) {
+                maxScore = score;
+            }
+
+            if (i < 5) {  // Log first 5 detections
+                qDebug() << "    Detection" << i << "- score:" << score
+                         << "bbox: [" << row[0] << row[1] << row[2] << row[3] << "]";
+            }
+
+            if (score >= confidenceThreshold) {
+                FaceDetection detection;
+
+                // Bounding box (normalize to 0-1)
+                float x = row[0] / imageSize.width();
+                float y = row[1] / imageSize.height();
+                float w = row[2] / imageSize.width();
+                float h = row[3] / imageSize.height();
+
+                detection.bbox = QRectF(x, y, w, h);
+                detection.confidence = score;
+
+                // 5 landmarks (normalize to 0-1)
+                for (int j = 0; j < 5; j++) {
+                    float lx = row[4 + j*2] / imageSize.width();
+                    float ly = row[5 + j*2] / imageSize.height();
+                    detection.landmarks.append(QPointF(lx, ly));
+                }
+
+                detections.append(detection);
+                qDebug() << "    ✓ Accepted detection" << i << "with score" << score;
+            } else {
+                rejectedCount++;
+            }
+        }
+
+        qDebug() << "  Rejected" << rejectedCount << "detections below threshold" << confidenceThreshold;
+        qDebug() << "  Max score found:" << maxScore;
+    } else {
+        qWarning() << "  ✗ Unsupported output dimensions:" << output.dims;
+    }
 
     return detections;
 }
