@@ -4,7 +4,7 @@
 FaceDetector::FaceDetector(QObject *parent)
     : QObject(parent)
     , m_modelLoaded(false)
-    , m_inputSize(320, 320)  // Default YuNet input size
+    , m_inputSize(640, 640)  // Fixed YuNet input size (good balance for mobile)
 {
 }
 
@@ -37,7 +37,8 @@ bool FaceDetector::loadModel(const QString &modelPath)
 
         m_modelLoaded = true;
         qDebug() << "YuNet model loaded successfully";
-        qDebug() << "Input size:" << m_inputSize.width() << "x" << m_inputSize.height();
+        qDebug() << "Fixed input size:" << m_inputSize.width() << "x" << m_inputSize.height()
+                 << "(all images will be resized to this)";
 
         return true;
     }
@@ -74,34 +75,24 @@ QVector<FaceDetection> FaceDetector::detect(const cv::Mat &image, float confiden
     qDebug() << "Confidence threshold:" << confidenceThreshold;
 
     try {
-        // YuNet works best with consistent input sizes
-        // Downscale large images for faster detection
-        cv::Mat processImage = image;
-        float scale = 1.0f;
-        const int maxDim = 1280;  // Max dimension for detection
+        // YuNet requires fixed input size - resize all images to model input size
+        cv::Mat resizedImage;
+        cv::resize(image, resizedImage, cv::Size(m_inputSize.width(), m_inputSize.height()));
 
-        if (image.cols > maxDim || image.rows > maxDim) {
-            float scaleW = static_cast<float>(maxDim) / image.cols;
-            float scaleH = static_cast<float>(maxDim) / image.rows;
-            scale = std::min(scaleW, scaleH);
+        // Calculate scale factors to convert detections back to original image coordinates
+        float scaleX = static_cast<float>(image.cols) / m_inputSize.width();
+        float scaleY = static_cast<float>(image.rows) / m_inputSize.height();
 
-            int newWidth = static_cast<int>(image.cols * scale);
-            int newHeight = static_cast<int>(image.rows * scale);
-
-            qDebug() << "Downscaling image for detection:" << newWidth << "x" << newHeight << "(scale:" << scale << ")";
-            cv::resize(image, processImage, cv::Size(newWidth, newHeight));
-        }
-
-        // Set input size to match the processing image
-        m_detector->setInputSize(cv::Size(processImage.cols, processImage.rows));
+        qDebug() << "Resized to" << m_inputSize.width() << "x" << m_inputSize.height()
+                 << "scale:" << scaleX << "x" << scaleY;
 
         // Set score threshold
         m_detector->setScoreThreshold(confidenceThreshold);
 
-        // Detect faces
+        // Detect faces on resized image
         cv::Mat faces;
         qDebug() << "Running YuNet detector...";
-        m_detector->detect(processImage, faces);
+        m_detector->detect(resizedImage, faces);
 
         qDebug() << "Detection complete - faces matrix: rows=" << faces.rows << "cols=" << faces.cols << "type=" << faces.type();
 
@@ -123,13 +114,13 @@ QVector<FaceDetection> FaceDetector::detect(const cv::Mat &image, float confiden
                 float h = faces.at<float>(i, 3);
                 float score = faces.at<float>(i, 14);
 
-                qDebug() << "  Face" << i << "- bbox (pixels in scaled image):" << x << y << w << h << "score:" << score;
+                qDebug() << "  Face" << i << "- bbox (pixels in 640x640):" << x << y << w << h << "score:" << score;
 
                 // Scale coordinates back to original image size
-                float origX = x / scale;
-                float origY = y / scale;
-                float origW = w / scale;
-                float origH = h / scale;
+                float origX = x * scaleX;
+                float origY = y * scaleY;
+                float origW = w * scaleX;
+                float origH = h * scaleY;
 
                 qDebug() << "  Face" << i << "- bbox (pixels in original image):" << origX << origY << origW << origH;
 
@@ -144,8 +135,8 @@ QVector<FaceDetection> FaceDetector::detect(const cv::Mat &image, float confiden
 
                 // Extract 5 landmarks and normalize (also scale back to original)
                 for (int j = 0; j < 5; j++) {
-                    float lx = (faces.at<float>(i, 4 + j*2) / scale) / image.cols;
-                    float ly = (faces.at<float>(i, 5 + j*2) / scale) / image.rows;
+                    float lx = (faces.at<float>(i, 4 + j*2) * scaleX) / image.cols;
+                    float ly = (faces.at<float>(i, 5 + j*2) * scaleY) / image.rows;
                     detection.landmarks.append(QPointF(lx, ly));
                 }
 
