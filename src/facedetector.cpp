@@ -17,17 +17,23 @@ bool FaceDetector::loadModel(const QString &modelPath)
     try {
         qDebug() << "Loading YuNet face detection model from:" << modelPath;
 
-        // Load ONNX model using OpenCV DNN
-        m_net = cv::dnn::readNetFromONNX(modelPath.toStdString());
+        // Create FaceDetectorYN with OpenCV API
+        // Parameters: model_path, config_path, input_size, score_threshold, nms_threshold, top_k, backend_id, target_id
+        m_detector = cv::FaceDetectorYN::create(
+            modelPath.toStdString(),  // model path
+            "",                        // config path (empty for ONNX)
+            cv::Size(m_inputSize.width(), m_inputSize.height()),  // input size
+            0.3f,                      // score threshold (will be overridden in detect())
+            0.3f,                      // NMS threshold
+            5000,                      // top_k
+            cv::dnn::DNN_BACKEND_OPENCV,   // backend
+            cv::dnn::DNN_TARGET_CPU        // target
+        );
 
-        if (m_net.empty()) {
-            emit error("Failed to load YuNet model: empty network");
+        if (m_detector.empty()) {
+            emit error("Failed to create YuNet detector");
             return false;
         }
-
-        // Set backend and target (CPU for Sailfish OS)
-        m_net.setPreferableBackend(cv::dnn::DNN_BACKEND_OPENCV);
-        m_net.setPreferableTarget(cv::dnn::DNN_TARGET_CPU);
 
         m_modelLoaded = true;
         qDebug() << "YuNet model loaded successfully";
@@ -68,29 +74,62 @@ QVector<FaceDetection> FaceDetector::detect(const cv::Mat &image, float confiden
     qDebug() << "Confidence threshold:" << confidenceThreshold;
 
     try {
-        // Preprocess image
-        qDebug() << "Preprocessing image...";
-        cv::Mat blob = preprocessImage(image);
-        qDebug() << "Blob created - size:" << blob.size[2] << "x" << blob.size[3] << "channels:" << blob.size[1];
+        // Set input size to match the actual image
+        m_detector->setInputSize(cv::Size(image.cols, image.rows));
 
-        // Set input
-        qDebug() << "Setting network input...";
-        m_net.setInput(blob);
+        // Set score threshold
+        m_detector->setScoreThreshold(confidenceThreshold);
 
-        // Forward pass
-        qDebug() << "Running forward pass...";
-        cv::Mat output = m_net.forward();
-        qDebug() << "Network output shape: rows=" << output.rows << "cols=" << output.cols << "dims=" << output.dims;
+        // Detect faces
+        cv::Mat faces;
+        qDebug() << "Running YuNet detector...";
+        m_detector->detect(image, faces);
 
-        // Post-process detections
-        qDebug() << "Post-processing detections...";
-        QVector<FaceDetection> detections = postprocessDetections(
-            output,
-            QSize(image.cols, image.rows),
-            confidenceThreshold
-        );
+        qDebug() << "Detection complete - faces matrix: rows=" << faces.rows << "cols=" << faces.cols << "type=" << faces.type();
 
-        qDebug() << "=== Detection Complete: Found" << detections.size() << "faces (threshold=" << confidenceThreshold << ") ===";
+        // Convert results
+        QVector<FaceDetection> detections;
+
+        if (faces.rows > 0) {
+            qDebug() << "Found" << faces.rows << "faces";
+
+            for (int i = 0; i < faces.rows; i++) {
+                FaceDetection detection;
+
+                // YuNet output format per row: [x, y, w, h, x_re, y_re, x_le, y_le, x_nt, y_nt, x_rcm, y_rcm, x_lcm, y_lcm, score]
+                // Coordinates are in pixels
+
+                float x = faces.at<float>(i, 0);
+                float y = faces.at<float>(i, 1);
+                float w = faces.at<float>(i, 2);
+                float h = faces.at<float>(i, 3);
+                float score = faces.at<float>(i, 14);
+
+                qDebug() << "  Face" << i << "- bbox (pixels):" << x << y << w << h << "score:" << score;
+
+                // Normalize to [0-1]
+                detection.bbox = QRectF(
+                    x / image.cols,
+                    y / image.rows,
+                    w / image.cols,
+                    h / image.rows
+                );
+                detection.confidence = score;
+
+                // Extract 5 landmarks and normalize
+                for (int j = 0; j < 5; j++) {
+                    float lx = faces.at<float>(i, 4 + j*2) / image.cols;
+                    float ly = faces.at<float>(i, 5 + j*2) / image.rows;
+                    detection.landmarks.append(QPointF(lx, ly));
+                }
+
+                detections.append(detection);
+            }
+        } else {
+            qDebug() << "No faces detected";
+        }
+
+        qDebug() << "=== Detection Complete: Found" << detections.size() << "faces ===\";
 
         return detections;
     }
@@ -111,216 +150,4 @@ cv::Mat FaceDetector::qImageToCvMat(const QImage &image)
 
     // Clone to ensure data persistence
     return mat.clone();
-}
-
-cv::Mat FaceDetector::preprocessImage(const cv::Mat &image)
-{
-    // YuNet expects RGB image, 320x320, normalized [0, 1]
-    cv::Mat resized;
-    cv::resize(image, resized, cv::Size(m_inputSize.width(), m_inputSize.height()));
-
-    // Convert BGR to RGB if needed
-    cv::Mat rgb;
-    if (image.channels() == 3) {
-        cv::cvtColor(resized, rgb, cv::COLOR_BGR2RGB);
-    } else {
-        rgb = resized;
-    }
-
-    // Create blob: [1, 3, H, W], normalized [0, 1]
-    cv::Mat blob = cv::dnn::blobFromImage(rgb, 1.0/255.0,
-                                          cv::Size(m_inputSize.width(), m_inputSize.height()),
-                                          cv::Scalar(0, 0, 0), false, false);
-
-    return blob;
-}
-
-QVector<FaceDetection> FaceDetector::postprocessDetections(const cv::Mat &output,
-                                                            const QSize &imageSize,
-                                                            float confidenceThreshold)
-{
-    QVector<FaceDetection> detections;
-
-    // YuNet output format: [num_detections, 15]
-    // [x, y, w, h, x_re, y_re, x_le, y_le, x_nt, y_nt, x_rcm, y_rcm, x_lcm, y_lcm, score]
-    // where: re = right eye, le = left eye, nt = nose tip, rcm = right corner mouth, lcm = left corner mouth
-
-    qDebug() << "Post-processing output:";
-    qDebug() << "  Dims:" << output.dims;
-    qDebug() << "  Rows:" << output.rows;
-    qDebug() << "  Cols:" << output.cols;
-    qDebug() << "  Type:" << output.type();
-    qDebug() << "  Channels:" << output.channels();
-
-    // For 3D tensor, need to access shape differently
-    if (output.dims == 3) {
-        qDebug() << "  3D Tensor shape: [" << output.size[0] << "," << output.size[1] << "," << output.size[2] << "]";
-
-        // YuNet output can be [1, N, 15] or [1, N, 10]
-        int numDetections = output.size[1];
-        int numFeatures = output.size[2];
-
-        qDebug() << "  Number of detections:" << numDetections;
-        qDebug() << "  Features per detection:" << numFeatures;
-
-        // Support both 10-feature and 15-feature formats
-        bool is10Feature = (numFeatures == 10);  // [x, y, w, h, score, x1, y1, x2, y2, x3, y3]
-        bool is15Feature = (numFeatures == 15);  // [x, y, w, h, x1, y1, x2, y2, x3, y3, x4, y4, x5, y5, score]
-
-        if (!is10Feature && !is15Feature) {
-            qWarning() << "  ✗ Unexpected number of features:" << numFeatures << "(expected 10 or 15)";
-            return detections;
-        }
-
-        int rejectedCount = 0;
-        float maxScore = -1.0f;
-
-        for (int i = 0; i < numDetections; i++) {
-            // Access 3D tensor: output.at<float>(batch, detection, feature)
-            const float *row = output.ptr<float>(0, i);  // batch=0, detection=i
-
-            // Score position depends on format
-            float score = is10Feature ? row[4] : row[14];
-
-            if (score > maxScore) {
-                maxScore = score;
-            }
-
-            if (i < 5) {  // Log first 5 detections
-                qDebug() << "    Detection" << i << "- score:" << score
-                         << "bbox: [" << row[0] << row[1] << row[2] << row[3] << "]";
-            }
-
-            if (score >= confidenceThreshold) {
-                FaceDetection detection;
-
-                // Bounding box - format depends on YuNet version
-                float x, y, w, h;
-
-                if (is10Feature) {
-                    // 10-feature format outputs coordinates relative to INPUT TENSOR size (320x320)
-                    // NOT relative to original image size
-                    // Values are in pixels of the 320x320 resized input
-                    float px = row[0];  // x in 320x320 space
-                    float py = row[1];  // y in 320x320 space
-                    float pw = row[2];  // width in 320x320 space
-                    float ph = row[3];  // height in 320x320 space
-
-                    qDebug() << "    Raw bbox (10-feat, 320x320 pixels):" << px << py << pw << ph;
-
-                    // Convert from 320x320 space to normalized [0-1] range
-                    // by dividing by the INPUT size (320), not the original image size
-                    x = px / m_inputSize.width();   // Normalize to [0-1]
-                    y = py / m_inputSize.height();
-                    w = pw / m_inputSize.width();
-                    h = ph / m_inputSize.height();
-
-                    qDebug() << "    Normalized to [0-1]:" << x << y << w << h;
-
-                    // Clamp to valid range [0, 1] to handle out-of-bounds predictions
-                    x = std::max(0.0f, std::min(1.0f, x));
-                    y = std::max(0.0f, std::min(1.0f, y));
-                    w = std::max(0.0f, std::min(1.0f - x, w));  // Ensure doesn't extend past image
-                    h = std::max(0.0f, std::min(1.0f - y, h));  // Ensure doesn't extend past image
-
-                    qDebug() << "    Clamped bbox:" << x << y << w << h;
-                } else {
-                    // 15-feature format outputs pixel coordinates
-                    x = row[0] / imageSize.width();
-                    y = row[1] / imageSize.height();
-                    w = row[2] / imageSize.width();
-                    h = row[3] / imageSize.height();
-                }
-
-                detection.bbox = QRectF(x, y, w, h);
-                detection.confidence = score;
-
-                // Landmarks position depends on format
-                if (is10Feature) {
-                    // Format: [x, y, w, h, score, x1, y1, x2, y2, x3]
-                    // Coordinates relative to 320x320 input - normalize by input size
-                    for (int j = 0; j < 2; j++) {  // Only 2 complete landmarks
-                        float lx = row[5 + j*2] / m_inputSize.width();
-                        float ly = row[6 + j*2] / m_inputSize.height();
-                        lx = std::max(0.0f, std::min(1.0f, lx));
-                        ly = std::max(0.0f, std::min(1.0f, ly));
-                        detection.landmarks.append(QPointF(lx, ly));
-                    }
-                    // Add nose x coordinate (incomplete)
-                    float nose_x = row[9] / m_inputSize.width();
-                    nose_x = std::max(0.0f, std::min(1.0f, nose_x));
-                    detection.landmarks.append(QPointF(nose_x, 0.0f));
-                } else {
-                    // 15-feature format: [x, y, w, h, x1, y1, x2, y2, x3, y3, x4, y4, x5, y5, score]
-                    for (int j = 0; j < 5; j++) {
-                        float lx = row[4 + j*2] / imageSize.width();
-                        float ly = row[5 + j*2] / imageSize.height();
-                        detection.landmarks.append(QPointF(lx, ly));
-                    }
-                }
-
-                detections.append(detection);
-                qDebug() << "    ✓ Accepted detection" << i << "with score" << score;
-            } else {
-                rejectedCount++;
-            }
-        }
-
-        qDebug() << "  Rejected" << rejectedCount << "detections below threshold" << confidenceThreshold;
-        qDebug() << "  Max score found:" << maxScore;
-
-    } else if (output.dims == 2) {
-        // 2D output format [num_detections, 15]
-        qDebug() << "  2D Matrix format";
-
-        int rejectedCount = 0;
-        float maxScore = -1.0f;
-
-        for (int i = 0; i < output.rows; i++) {
-            const float *row = output.ptr<float>(i);
-
-            float score = row[14];
-
-            if (score > maxScore) {
-                maxScore = score;
-            }
-
-            if (i < 5) {  // Log first 5 detections
-                qDebug() << "    Detection" << i << "- score:" << score
-                         << "bbox: [" << row[0] << row[1] << row[2] << row[3] << "]";
-            }
-
-            if (score >= confidenceThreshold) {
-                FaceDetection detection;
-
-                // Bounding box (normalize to 0-1)
-                float x = row[0] / imageSize.width();
-                float y = row[1] / imageSize.height();
-                float w = row[2] / imageSize.width();
-                float h = row[3] / imageSize.height();
-
-                detection.bbox = QRectF(x, y, w, h);
-                detection.confidence = score;
-
-                // 5 landmarks (normalize to 0-1)
-                for (int j = 0; j < 5; j++) {
-                    float lx = row[4 + j*2] / imageSize.width();
-                    float ly = row[5 + j*2] / imageSize.height();
-                    detection.landmarks.append(QPointF(lx, ly));
-                }
-
-                detections.append(detection);
-                qDebug() << "    ✓ Accepted detection" << i << "with score" << score;
-            } else {
-                rejectedCount++;
-            }
-        }
-
-        qDebug() << "  Rejected" << rejectedCount << "detections below threshold" << confidenceThreshold;
-        qDebug() << "  Max score found:" << maxScore;
-    } else {
-        qWarning() << "  ✗ Unsupported output dimensions:" << output.dims;
-    }
-
-    return detections;
 }

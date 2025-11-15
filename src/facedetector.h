@@ -8,6 +8,7 @@
 #include <QString>
 #include <opencv2/opencv.hpp>
 #include <opencv2/dnn.hpp>
+#include <opencv2/objdetect.hpp>
 
 /**
  * @brief Face detection result
@@ -67,17 +68,9 @@ signals:
     void error(const QString &message);
 
 private:
-    cv::dnn::Net m_net;
+    cv::Ptr<cv::FaceDetectorYN> m_detector;
     bool m_modelLoaded;
     QSize m_inputSize;
-
-    // Helper: Preprocess image for YuNet
-    cv::Mat preprocessImage(const cv::Mat &image);
-
-    // Helper: Post-process YuNet output
-    QVector<FaceDetection> postprocessDetections(const cv::Mat &output,
-                                                  const QSize &imageSize,
-                                                  float confidenceThreshold);
 };
 
 #endif // FACEDETECTOR_H
