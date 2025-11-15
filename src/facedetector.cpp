@@ -74,8 +74,26 @@ QVector<FaceDetection> FaceDetector::detect(const cv::Mat &image, float confiden
     qDebug() << "Confidence threshold:" << confidenceThreshold;
 
     try {
-        // Set input size to match the actual image
-        m_detector->setInputSize(cv::Size(image.cols, image.rows));
+        // YuNet works best with consistent input sizes
+        // Downscale large images for faster detection
+        cv::Mat processImage = image;
+        float scale = 1.0f;
+        const int maxDim = 1280;  // Max dimension for detection
+
+        if (image.cols > maxDim || image.rows > maxDim) {
+            float scaleW = static_cast<float>(maxDim) / image.cols;
+            float scaleH = static_cast<float>(maxDim) / image.rows;
+            scale = std::min(scaleW, scaleH);
+
+            int newWidth = static_cast<int>(image.cols * scale);
+            int newHeight = static_cast<int>(image.rows * scale);
+
+            qDebug() << "Downscaling image for detection:" << newWidth << "x" << newHeight << "(scale:" << scale << ")";
+            cv::resize(image, processImage, cv::Size(newWidth, newHeight));
+        }
+
+        // Set input size to match the processing image
+        m_detector->setInputSize(cv::Size(processImage.cols, processImage.rows));
 
         // Set score threshold
         m_detector->setScoreThreshold(confidenceThreshold);
@@ -83,7 +101,7 @@ QVector<FaceDetection> FaceDetector::detect(const cv::Mat &image, float confiden
         // Detect faces
         cv::Mat faces;
         qDebug() << "Running YuNet detector...";
-        m_detector->detect(image, faces);
+        m_detector->detect(processImage, faces);
 
         qDebug() << "Detection complete - faces matrix: rows=" << faces.rows << "cols=" << faces.cols << "type=" << faces.type();
 
@@ -105,21 +123,29 @@ QVector<FaceDetection> FaceDetector::detect(const cv::Mat &image, float confiden
                 float h = faces.at<float>(i, 3);
                 float score = faces.at<float>(i, 14);
 
-                qDebug() << "  Face" << i << "- bbox (pixels):" << x << y << w << h << "score:" << score;
+                qDebug() << "  Face" << i << "- bbox (pixels in scaled image):" << x << y << w << h << "score:" << score;
 
-                // Normalize to [0-1]
+                // Scale coordinates back to original image size
+                float origX = x / scale;
+                float origY = y / scale;
+                float origW = w / scale;
+                float origH = h / scale;
+
+                qDebug() << "  Face" << i << "- bbox (pixels in original image):" << origX << origY << origW << origH;
+
+                // Normalize to [0-1] based on original image size
                 detection.bbox = QRectF(
-                    x / image.cols,
-                    y / image.rows,
-                    w / image.cols,
-                    h / image.rows
+                    origX / image.cols,
+                    origY / image.rows,
+                    origW / image.cols,
+                    origH / image.rows
                 );
                 detection.confidence = score;
 
-                // Extract 5 landmarks and normalize
+                // Extract 5 landmarks and normalize (also scale back to original)
                 for (int j = 0; j < 5; j++) {
-                    float lx = faces.at<float>(i, 4 + j*2) / image.cols;
-                    float ly = faces.at<float>(i, 5 + j*2) / image.rows;
+                    float lx = (faces.at<float>(i, 4 + j*2) / scale) / image.cols;
+                    float ly = (faces.at<float>(i, 5 + j*2) / scale) / image.rows;
                     detection.landmarks.append(QPointF(lx, ly));
                 }
 
