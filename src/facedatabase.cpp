@@ -128,6 +128,19 @@ bool FaceDatabase::initializeSchema()
 int FaceDatabase::addPhoto(const QString &filePath, const QDateTime &dateTaken,
                            int width, int height)
 {
+    qDebug() << "  → Attempting to insert photo:" << filePath;
+
+    // Check if photo already exists
+    QSqlQuery checkQuery(m_db);
+    checkQuery.prepare("SELECT id FROM photos WHERE file_path = :file_path");
+    checkQuery.bindValue(":file_path", filePath);
+
+    if (checkQuery.exec() && checkQuery.next()) {
+        int existingId = checkQuery.value(0).toInt();
+        qDebug() << "  ℹ Photo already exists in DB with ID:" << existingId;
+        return existingId;  // Return existing photo ID
+    }
+
     QSqlQuery query(m_db);
     query.prepare(R"(
         INSERT INTO photos (file_path, date_taken, width, height)
@@ -139,11 +152,17 @@ int FaceDatabase::addPhoto(const QString &filePath, const QDateTime &dateTaken,
     query.bindValue(":height", height);
 
     if (!query.exec()) {
-        emit error("Failed to add photo: " + query.lastError().text());
+        QString errorMsg = "Failed to add photo: " + query.lastError().text();
+        qWarning() << "  ✗ SQL Error:" << errorMsg;
+        qWarning() << "  ✗ Query:" << query.lastQuery();
+        qWarning() << "  ✗ File path:" << filePath;
+        emit error(errorMsg);
         return -1;
     }
 
-    return query.lastInsertId().toInt();
+    int newId = query.lastInsertId().toInt();
+    qDebug() << "  ✓ Photo inserted with ID:" << newId;
+    return newId;
 }
 
 Photo FaceDatabase::getPhoto(int photoId)
