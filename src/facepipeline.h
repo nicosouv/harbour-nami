@@ -155,6 +155,11 @@ private:
     bool m_cancelRequested;
     int m_totalPhotos;
     int m_processedPhotos;
+    int m_totalFacesDetected;
+    QStringList m_pendingFiles;
+
+    // Helper: Batch processing
+    void processBatch();
 
     // Helper: Find image files in directory
     QStringList findImageFiles(const QString &directory, bool recursive);

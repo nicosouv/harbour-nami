@@ -24,12 +24,18 @@ Page {
             totalPhotos = total
         }
 
+        onPhotoProcessed: {
+            if (result.success) {
+                facesDetected += result.facesDetected
+            }
+        }
+
         onScanCompleted: {
             scanning = false
             facesDetected = facesDetected
             // Navigate to results page
             pageStack.replace(Qt.resolvedUrl("ScanResultsPage.qml"), {
-                photosProcessed: currentPhoto,
+                photosProcessed: photosProcessed,
                 facesDetected: facesDetected
             })
         }
@@ -158,7 +164,7 @@ Page {
                 horizontalAlignment: Text.AlignHCenter
                 wrapMode: Text.WordWrap
                 text: scanning ?
-                      qsTr("Detecting faces in your photos") :
+                      (totalPhotos > 0 ? qsTr("%1 files processed out of %2 files").arg(currentPhoto).arg(totalPhotos) : qsTr("Preparing...")) :
                       qsTr("Found %n face(s)", "", facesDetected)
                 font.pixelSize: Theme.fontSizeMedium
                 color: "#8892b0"

@@ -82,47 +82,65 @@ void FacePipeline::scanGallery(const QString &galleryPath, bool recursive)
     qDebug() << "Scanning gallery:" << galleryPath << "(recursive:" << recursive << ")";
 
     // Find all image files
-    QStringList imageFiles = findImageFiles(galleryPath, recursive);
-    m_totalPhotos = imageFiles.size();
+    m_pendingFiles = findImageFiles(galleryPath, recursive);
+    m_totalPhotos = m_pendingFiles.size();
     m_processedPhotos = 0;
+    m_totalFacesDetected = 0;
 
     emit totalPhotosChanged();
     emit scanStarted(m_totalPhotos);
 
     qDebug() << "Found" << m_totalPhotos << "image files";
 
-    int facesDetected = 0;
+    // Start batch processing with timer to keep UI responsive
+    processBatch();
+}
 
-    // Process each photo
-    for (const QString &filePath : imageFiles) {
-        if (m_cancelRequested) {
-            qDebug() << "Scan cancelled by user";
-            break;
-        }
+void FacePipeline::processBatch()
+{
+    const int BATCH_SIZE = 5;  // Process 5 photos per batch
+    const int BATCH_DELAY_MS = 50;  // 50ms delay between batches to keep UI responsive
+
+    if (m_cancelRequested) {
+        qDebug() << "Scan cancelled by user";
+        m_processing = false;
+        emit processingChanged();
+        emit scanFailed("Cancelled by user");
+        return;
+    }
+
+    if (m_pendingFiles.isEmpty()) {
+        // All photos processed
+        m_processing = false;
+        emit processingChanged();
+        emit scanCompleted(m_processedPhotos, m_totalFacesDetected);
+        qDebug() << "Scan completed:" << m_processedPhotos << "photos," << m_totalFacesDetected << "faces";
+        return;
+    }
+
+    // Process a batch of photos
+    int processed = 0;
+    while (processed < BATCH_SIZE && !m_pendingFiles.isEmpty()) {
+        QString filePath = m_pendingFiles.takeFirst();
 
         emit scanProgress(m_processedPhotos + 1, m_totalPhotos, filePath);
 
         PhotoProcessingResult result = processPhotoInternal(filePath);
 
         if (result.success) {
-            facesDetected += result.facesDetected;
+            m_totalFacesDetected += result.facesDetected;
         }
 
         emit photoProcessed(result);
 
         m_processedPhotos++;
         emit processedPhotosChanged();
+
+        processed++;
     }
 
-    m_processing = false;
-    emit processingChanged();
-
-    if (m_cancelRequested) {
-        emit scanFailed("Cancelled by user");
-    } else {
-        emit scanCompleted(m_processedPhotos, facesDetected);
-        qDebug() << "Scan completed:" << m_processedPhotos << "photos," << facesDetected << "faces";
-    }
+    // Schedule next batch with a small delay to keep UI responsive
+    QTimer::singleShot(BATCH_DELAY_MS, this, &FacePipeline::processBatch);
 }
 
 PhotoProcessingResult FacePipeline::processPhoto(const QString &photoPath)
