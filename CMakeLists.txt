@@ -73,6 +73,7 @@ set(QML_FILES
     qml/pages/MainPage.qml
     qml/pages/PhotoGridPage.qml
     qml/pages/PersonDetailPage.qml
+    qml/pages/PhotoViewerPage.qml
     qml/pages/UnknownFacesPage.qml
     qml/pages/IdentifyFacesPage.qml
     qml/pages/SettingsPage.qml

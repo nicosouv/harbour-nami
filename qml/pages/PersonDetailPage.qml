@@ -157,8 +157,9 @@ Page {
                         }
 
                         onClicked: {
-                            // TODO: Open full-screen photo viewer
-                            console.log("Photo clicked:", model.file_path)
+                            pageStack.push(Qt.resolvedUrl("PhotoViewerPage.qml"), {
+                                photoPath: model.file_path
+                            })
                         }
                     }
                 }
