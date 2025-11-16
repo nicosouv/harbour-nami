@@ -131,9 +131,9 @@ Page {
                 onClicked: pageStack.push(Qt.resolvedUrl("EventsPage.qml"))
             }
             MenuItem {
-                text: qsTr("Review Unknown Faces")
+                text: qsTr("Identify Faces")
                 enabled: facePipeline && facePipeline.initialized
-                onClicked: pageStack.push(Qt.resolvedUrl("UnknownFacesPage.qml"))
+                onClicked: pageStack.push(Qt.resolvedUrl("IdentifyFacesPage.qml"))
             }
             MenuItem {
                 text: qsTr("Scan Gallery")

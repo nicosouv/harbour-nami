@@ -74,11 +74,14 @@ set(QML_FILES
     qml/pages/PhotoGridPage.qml
     qml/pages/PersonDetailPage.qml
     qml/pages/UnknownFacesPage.qml
+    qml/pages/IdentifyFacesPage.qml
     qml/pages/SettingsPage.qml
     qml/pages/ScanningPage.qml
     qml/pages/ScanResultsPage.qml
     qml/pages/EventsPage.qml
     qml/pages/MemoriesPage.qml
+    qml/dialogs/IdentifyFaceDialog.qml
+    qml/dialogs/SelectPersonDialog.qml
     qml/components/FaceRecognitionManager.qml
     qml/components/PhotoThumbnail.qml
     qml/components/FaceThumbnail.qml
