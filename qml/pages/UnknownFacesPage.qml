@@ -163,7 +163,11 @@ Page {
                                     id: faceImage
                                     source: model.photo_path ? "file://" + model.photo_path : ""
                                     asynchronous: true
-                                    cache: false
+                                    cache: true
+
+                                    // Limit source size to reduce memory usage
+                                    sourceSize.width: 640
+                                    sourceSize.height: 640
 
                                     // Calculate scale to fit the face bbox into the thumbnail
                                     property real imgWidth: sourceSize.width > 0 ? sourceSize.width : 1

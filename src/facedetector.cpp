@@ -23,7 +23,7 @@ bool FaceDetector::loadModel(const QString &modelPath)
             modelPath.toStdString(),  // model path
             "",                        // config path (empty for ONNX)
             cv::Size(m_inputSize.width(), m_inputSize.height()),  // input size
-            0.3f,                      // score threshold (will be overridden in detect())
+            0.6f,                      // score threshold (will be overridden in detect())
             0.3f,                      // NMS threshold
             5000,                      // top_k
             cv::dnn::DNN_BACKEND_OPENCV,   // backend
