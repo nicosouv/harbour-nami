@@ -44,16 +44,14 @@ Page {
         }
     }
 
-    Component.onCompleted: {
-        loadUnmappedFaces()
-    }
-
     // People model for selection
     ListModel {
         id: peopleModel
     }
 
     Component.onCompleted: {
+        loadUnmappedFaces()
+
         // Load existing people
         if (facePipeline && facePipeline.initialized) {
             var people = facePipeline.getAllPeople()
