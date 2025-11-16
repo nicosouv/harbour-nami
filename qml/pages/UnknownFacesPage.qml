@@ -8,6 +8,28 @@ Page {
 
     allowedOrientations: Orientation.All
 
+    // Timer to avoid pageStack push during transitions
+    Timer {
+        id: pushTimer
+        interval: 10
+        repeat: false
+
+        property int faceId
+        property string photoPath
+        property rect faceBbox
+
+        onTriggered: {
+            var dialog = pageStack.push(Qt.resolvedUrl("../dialogs/IdentifyFaceDialog.qml"), {
+                faceId: faceId,
+                photoPath: photoPath,
+                faceBbox: faceBbox
+            })
+            dialog.accepted.connect(function() {
+                refreshUnmappedFaces()
+            })
+        }
+    }
+
     // Unmapped faces model
     ListModel {
         id: unmappedFacesModel
@@ -123,43 +145,20 @@ Page {
                             border.color: Theme.rgba(Theme.highlightColor, 0.2)
                             border.width: 1
 
-                            // Face image (cropped from photo)
-                            Image {
-                                id: faceImage
+                            // Face image placeholder
+                            Item {
                                 anchors.fill: parent
                                 anchors.margins: 1
-                                source: model.photo_path ? "file://" + model.photo_path : ""
-                                fillMode: Image.PreserveAspectCrop
-                                asynchronous: true
-                                clip: true
 
-                                // Crop to face region using sourceClipRect
-                                property int imgWidth: sourceSize.width
-                                property int imgHeight: sourceSize.height
-
-                                // Calculate crop rectangle
-                                sourceClipRect: Qt.rect(
-                                    model.bbox_x * imgWidth,
-                                    model.bbox_y * imgHeight,
-                                    model.bbox_width * imgWidth,
-                                    model.bbox_height * imgHeight
-                                )
-
-                                BusyIndicator {
-                                    anchors.centerIn: parent
-                                    size: BusyIndicatorSize.Small
-                                    running: parent.status === Image.Loading
-                                }
-
-                                // Error state
                                 Rectangle {
                                     anchors.fill: parent
                                     color: Theme.rgba(Theme.highlightBackgroundColor, 0.1)
-                                    visible: parent.status === Image.Error
 
                                     Image {
                                         anchors.centerIn: parent
-                                        source: "image://theme/icon-m-person"
+                                        source: "image://theme/icon-m-contact"
+                                        width: Theme.iconSizeLarge
+                                        height: Theme.iconSizeLarge
                                         opacity: 0.3
                                     }
                                 }
@@ -182,20 +181,15 @@ Page {
                                     : (model.confidence > 0.5
                                         ? Theme.rgba("#FFC107", 0.9)  // Yellow
                                         : Theme.rgba("#F44336", 0.9))  // Red
-
-                                visible: faceImage.status === Image.Ready
                             }
                         }
 
                         onClicked: {
-                            var dialog = pageStack.push(Qt.resolvedUrl("../dialogs/IdentifyFaceDialog.qml"), {
-                                faceId: model.face_id,
-                                photoPath: model.photo_path,
-                                faceBbox: Qt.rect(model.bbox_x, model.bbox_y, model.bbox_width, model.bbox_height)
-                            })
-                            dialog.accepted.connect(function() {
-                                refreshUnmappedFaces()
-                            })
+                            // Use timer to avoid "Cannot push while operation is in progress"
+                            pushTimer.faceId = model.face_id
+                            pushTimer.photoPath = model.photo_path
+                            pushTimer.faceBbox = Qt.rect(model.bbox_x, model.bbox_y, model.bbox_width, model.bbox_height)
+                            pushTimer.start()
                         }
                     }
                 }
