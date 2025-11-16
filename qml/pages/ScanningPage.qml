@@ -27,8 +27,11 @@ Page {
         onScanCompleted: {
             scanning = false
             facesDetected = facesDetected
-            // Refresh main page
-            pageStack.pop()
+            // Navigate to results page
+            pageStack.replace(Qt.resolvedUrl("ScanResultsPage.qml"), {
+                photosProcessed: currentPhoto,
+                facesDetected: facesDetected
+            })
         }
     }
 
