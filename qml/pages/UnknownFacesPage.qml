@@ -14,14 +14,13 @@ Page {
     }
 
     function refreshUnmappedFaces() {
-        if (!faceManager || !faceManager.ready) return
+        if (!faceManager || !faceManager.initialized) return
 
-        faceManager.getUnmappedFaces(function(faces) {
-            unmappedFacesModel.clear()
-            for (var i = 0; i < faces.length; i++) {
-                unmappedFacesModel.append(faces[i])
-            }
-        })
+        unmappedFacesModel.clear()
+        var faces = faceManager.getUnmappedFaces()
+        for (var i = 0; i < faces.length; i++) {
+            unmappedFacesModel.append(faces[i])
+        }
     }
 
     Component.onCompleted: {
@@ -30,8 +29,7 @@ Page {
 
     Connections {
         target: faceManager
-        onFaceAssigned: refreshUnmappedFaces()
-        onPersonCreated: refreshUnmappedFaces()
+        onScanCompleted: refreshUnmappedFaces()
     }
 
     SilicaGridView {
@@ -81,10 +79,10 @@ Page {
 
                 // Overlay to show face region
                 Rectangle {
-                    x: Math.max(0, model.bbox[0] * parent.paintedWidth / parent.sourceSize.width)
-                    y: Math.max(0, model.bbox[1] * parent.paintedHeight / parent.sourceSize.height)
-                    width: Math.min(parent.width, model.bbox[2] * parent.paintedWidth / parent.sourceSize.width)
-                    height: Math.min(parent.height, model.bbox[3] * parent.paintedHeight / parent.sourceSize.height)
+                    x: model.bbox_x * parent.paintedWidth
+                    y: model.bbox_y * parent.paintedHeight
+                    width: model.bbox_width * parent.paintedWidth
+                    height: model.bbox_height * parent.paintedHeight
                     color: "transparent"
                     border.color: Theme.highlightColor
                     border.width: 2
