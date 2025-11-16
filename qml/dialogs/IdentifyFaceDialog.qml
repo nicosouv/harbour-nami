@@ -6,10 +6,11 @@ Dialog {
 
     property int faceId
     property string photoPath
+    property rect faceBbox
 
-    property var faceManager: appWindow.faceRecognition
+    property var faceManager: facePipeline
     property int selectedPersonId: -1
-    property bool createNew: false
+    property bool createNew: true  // Default to creating new person
 
     canAccept: (selectedPersonId > 0) || (createNew && newNameField.text.trim().length > 0)
 
@@ -17,10 +18,10 @@ Dialog {
         if (createNew) {
             // Create new person from face
             var newName = newNameField.text.trim()
-            faceManager.createPerson(faceId, newName, null)
+            facePipeline.identifyFace(faceId, -1, newName)
         } else if (selectedPersonId > 0) {
             // Assign to existing person
-            faceManager.assignFaceToPerson(faceId, selectedPersonId)
+            facePipeline.identifyFace(faceId, selectedPersonId, "")
         }
     }
 
@@ -31,12 +32,12 @@ Dialog {
 
     Component.onCompleted: {
         // Load existing people
-        faceManager.getAllPeople(function(people) {
-            peopleModel.clear()
+        if (facePipeline && facePipeline.initialized) {
+            var people = facePipeline.getAllPeople()
             for (var i = 0; i < people.length; i++) {
                 peopleModel.append(people[i])
             }
-        })
+        }
     }
 
     SilicaFlickable {
@@ -49,7 +50,7 @@ Dialog {
             spacing: Theme.paddingLarge
 
             DialogHeader {
-                acceptText: qsTr("Confirm")
+                acceptText: qsTr("Identify")
                 cancelText: qsTr("Cancel")
             }
 
@@ -62,61 +63,100 @@ Dialog {
                 wrapMode: Text.WordWrap
             }
 
-            // Photo preview
-            Image {
+            // Face preview (cropped)
+            Item {
                 anchors.horizontalCenter: parent.horizontalCenter
-                width: parent.width - 2 * Theme.horizontalPageMargin
+                width: parent.width * 0.6
                 height: width
-                source: "image://nothumb/" + photoPath
-                fillMode: Image.PreserveAspectFit
-                asynchronous: true
+
+                Rectangle {
+                    anchors.fill: parent
+                    radius: Theme.paddingSmall
+                    color: Theme.rgba(Theme.highlightBackgroundColor, 0.05)
+                    border.color: Theme.rgba(Theme.highlightColor, 0.2)
+                    border.width: 1
+
+                    Image {
+                        id: faceImage
+                        anchors.fill: parent
+                        anchors.margins: 2
+                        source: photoPath ? "file://" + photoPath : ""
+                        fillMode: Image.PreserveAspectCrop
+                        asynchronous: true
+                        clip: true
+
+                        // Crop to face
+                        property int imgWidth: sourceSize.width
+                        property int imgHeight: sourceSize.height
+
+                        sourceClipRect: Qt.rect(
+                            faceBbox.x * imgWidth,
+                            faceBbox.y * imgHeight,
+                            faceBbox.width * imgWidth,
+                            faceBbox.height * imgHeight
+                        )
+
+                        BusyIndicator {
+                            anchors.centerIn: parent
+                            running: parent.status === Image.Loading
+                        }
+                    }
+                }
             }
 
-            SectionHeader {
-                text: qsTr("Select Person")
+            // Create new person (default)
+            Item {
+                width: parent.width
+                height: Theme.paddingMedium
             }
 
-            // Create new person option
-            TextSwitch {
-                id: createNewSwitch
-                text: qsTr("Create new person")
-                description: qsTr("This is someone new")
-                checked: createNew
-                onCheckedChanged: {
-                    createNew = checked
-                    if (checked) {
+            TextField {
+                id: newNameField
+                width: parent.width
+                label: qsTr("Person name")
+                placeholderText: qsTr("Enter name (e.g., John, Mom, Friend)")
+                focus: true
+
+                EnterKey.enabled: text.trim().length > 0
+                EnterKey.iconSource: "image://theme/icon-m-enter-accept"
+                EnterKey.onClicked: {
+                    if (canAccept) dialog.accept()
+                }
+
+                onTextChanged: {
+                    if (text.trim().length > 0) {
+                        createNew = true
                         selectedPersonId = -1
                     }
                 }
             }
 
-            // New person name field
-            TextField {
-                id: newNameField
-                width: parent.width
-                visible: createNew
-                label: qsTr("Name")
-                placeholderText: qsTr("Enter person name")
-
-                EnterKey.enabled: text.trim().length > 0
-                EnterKey.iconSource: "image://theme/icon-m-enter-accept"
-                EnterKey.onClicked: dialog.accept()
+            // Separator
+            Rectangle {
+                width: parent.width - 2 * Theme.horizontalPageMargin
+                height: 1
+                x: Theme.horizontalPageMargin
+                color: Theme.rgba(Theme.highlightColor, 0.1)
+                visible: peopleModel.count > 0
             }
 
-            // Existing people list
-            SectionHeader {
-                text: qsTr("Existing People")
-                visible: !createNew && peopleModel.count > 0
+            // Existing people section
+            Label {
+                x: Theme.horizontalPageMargin
+                width: parent.width - 2 * Theme.horizontalPageMargin
+                text: qsTr("Or assign to existing person:")
+                color: Theme.secondaryHighlightColor
+                font.pixelSize: Theme.fontSizeSmall
+                wrapMode: Text.WordWrap
+                visible: peopleModel.count > 0
             }
 
             Repeater {
                 model: peopleModel
-                visible: !createNew
 
-                delegate: ListItem {
+                delegate: BackgroundItem {
                     width: column.width
-                    contentHeight: Theme.itemSizeSmall
-
+                    height: Theme.itemSizeSmall
                     highlighted: selectedPersonId === model.person_id
 
                     Row {
@@ -129,39 +169,61 @@ Dialog {
                         }
                         spacing: Theme.paddingMedium
 
+                        // Avatar
                         Rectangle {
                             width: Theme.iconSizeMedium
                             height: Theme.iconSizeMedium
-                            radius: Theme.iconSizeMedium / 2
-                            color: Theme.rgba(Theme.highlightBackgroundColor, 0.2)
+                            radius: width / 2
+                            color: Theme.rgba(Theme.highlightBackgroundColor, selectedPersonId === model.person_id ? 0.3 : 0.1)
 
                             Image {
                                 anchors.centerIn: parent
-                                source: "image://theme/icon-m-contact"
+                                source: "image://theme/icon-m-person"
                                 width: Theme.iconSizeSmall
                                 height: Theme.iconSizeSmall
                             }
                         }
 
-                        Label {
-                            text: model.name
-                            color: selectedPersonId === model.person_id ?
-                                   Theme.highlightColor : Theme.primaryColor
+                        Column {
                             anchors.verticalCenter: parent.verticalCenter
+                            width: parent.width - Theme.iconSizeMedium - Theme.paddingMedium
+
+                            Label {
+                                text: model.name
+                                color: selectedPersonId === model.person_id ?
+                                       Theme.highlightColor : Theme.primaryColor
+                                truncationMode: TruncationMode.Fade
+                                width: parent.width
+                            }
+
+                            Label {
+                                text: model.photo_count + " " + (model.photo_count === 1 ? qsTr("photo") : qsTr("photos"))
+                                color: Theme.secondaryColor
+                                font.pixelSize: Theme.fontSizeExtraSmall
+                                truncationMode: TruncationMode.Fade
+                                width: parent.width
+                            }
                         }
                     }
 
                     onClicked: {
                         selectedPersonId = model.person_id
                         createNew = false
+                        newNameField.text = ""  // Clear name field
                     }
                 }
             }
 
+            // Empty state for existing people
             ViewPlaceholder {
-                enabled: !createNew && peopleModel.count === 0
+                enabled: peopleModel.count === 0
                 text: qsTr("No people yet")
-                hintText: qsTr("Create a new person to get started")
+                hintText: qsTr("Enter a name above to create the first person")
+            }
+
+            Item {
+                width: parent.width
+                height: Theme.paddingLarge
             }
         }
 

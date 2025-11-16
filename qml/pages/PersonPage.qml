@@ -17,14 +17,13 @@ Page {
     }
 
     function refreshPhotos() {
-        if (!faceManager || !faceManager.ready) return
+        if (!faceManager || !faceManager.initialized) return
 
-        faceManager.getPersonPhotos(personId, function(photos) {
-            photosModel.clear()
-            for (var i = 0; i < photos.length; i++) {
-                photosModel.append(photos[i])
-            }
-        })
+        photosModel.clear()
+        var photos = faceManager.getPersonPhotos(personId)
+        for (var i = 0; i < photos.length; i++) {
+            photosModel.append(photos[i])
+        }
     }
 
     Component.onCompleted: {
@@ -41,7 +40,7 @@ Page {
         model: photosModel
 
         header: PageHeader {
-            title: personName
+            title: personName || qsTr("Unknown")
         }
 
         delegate: BackgroundItem {
@@ -49,14 +48,15 @@ Page {
             height: gridView.cellHeight
 
             Image {
+                id: photoImage
                 anchors.fill: parent
-                anchors.margins: Theme.paddingSmall
-                source: "image://nothumb/" + model.path
+                anchors.margins: Theme.paddingSmall / 2
+                source: model.file_path ? "file://" + model.file_path : ""
                 fillMode: Image.PreserveAspectCrop
                 clip: true
                 asynchronous: true
 
-                // Fallback for missing images
+                // Error state
                 Rectangle {
                     anchors.fill: parent
                     color: Theme.rgba(Theme.highlightBackgroundColor, 0.1)
@@ -77,18 +77,15 @@ Page {
             }
 
             onClicked: {
-                // Open photo viewer
-                pageStack.push(Qt.resolvedUrl("PhotoViewPage.qml"), {
-                    photoPath: model.path,
-                    photoId: model.id
-                })
+                // TODO: Open full image viewer
+                console.log("Open photo:", model.file_path)
             }
         }
 
         ViewPlaceholder {
             enabled: gridView.count === 0
             text: qsTr("No photos")
-            hintText: qsTr("This person has no photos yet")
+            hintText: qsTr("This person has no associated photos yet")
         }
 
         VerticalScrollDecorator {}
