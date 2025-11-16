@@ -76,6 +76,32 @@ Page {
 
         model: photosModel
 
+        PullDownMenu {
+            MenuItem {
+                text: qsTr("Share All Photos")
+                enabled: totalPhotos > 0
+                onClicked: {
+                    // Collect all photo paths
+                    var photoPaths = []
+                    for (var i = 0; i < photosModel.count; i++) {
+                        var photo = photosModel.get(i)
+                        if (photo.file_path) {
+                            photoPaths.push(photo.file_path)
+                        }
+                    }
+
+                    // Open Sailfish OS share dialog
+                    if (photoPaths.length > 0) {
+                        pageStack.push("Sailfish.TransferEngine.SharePage", {
+                            content: photoPaths,
+                            mimeType: "image/jpeg",
+                            serviceFilter: ["sharing", "e-mail"]
+                        })
+                    }
+                }
+            }
+        }
+
         header: Column {
             width: parent.width
             spacing: 0
