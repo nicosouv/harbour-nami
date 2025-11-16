@@ -32,117 +32,181 @@ Page {
         onScanCompleted: refreshUnmappedFaces()
     }
 
-    SilicaGridView {
-        id: gridView
+    SilicaFlickable {
         anchors.fill: parent
+        contentHeight: column.height
 
-        cellWidth: width / 3
-        cellHeight: cellWidth
+        VerticalScrollDecorator {}
 
-        model: unmappedFacesModel
-
-        header: Column {
+        Column {
+            id: column
             width: parent.width
+            spacing: Theme.paddingLarge
 
             PageHeader {
                 title: qsTr("Unknown Faces")
             }
 
+            // Info banner
+            Item {
+                width: parent.width
+                height: infoBanner.height
+
+                Rectangle {
+                    id: infoBanner
+                    width: parent.width - 2 * Theme.horizontalPageMargin
+                    height: infoColumn.height + 2 * Theme.paddingMedium
+                    x: Theme.horizontalPageMargin
+                    radius: Theme.paddingSmall
+                    color: Theme.rgba(Theme.highlightBackgroundColor, 0.1)
+
+                    Column {
+                        id: infoColumn
+                        width: parent.width - 2 * Theme.paddingMedium
+                        anchors.centerIn: parent
+                        spacing: Theme.paddingSmall
+
+                        Label {
+                            width: parent.width
+                            text: qsTr("Identify people")
+                            font.pixelSize: Theme.fontSizeMedium
+                            color: Theme.highlightColor
+                            wrapMode: Text.WordWrap
+                        }
+
+                        Label {
+                            width: parent.width
+                            text: qsTr("Tap on a face to give it a name. Faces from the same person will be grouped together automatically.")
+                            font.pixelSize: Theme.fontSizeSmall
+                            color: Theme.secondaryHighlightColor
+                            wrapMode: Text.WordWrap
+                        }
+                    }
+                }
+            }
+
+            // Face count
             Label {
                 x: Theme.horizontalPageMargin
                 width: parent.width - 2 * Theme.horizontalPageMargin
-                text: qsTr("Tap a face to identify the person")
-                color: Theme.secondaryHighlightColor
+                text: unmappedFacesModel.count === 0
+                    ? qsTr("No faces to identify")
+                    : (unmappedFacesModel.count === 1
+                        ? qsTr("1 face found")
+                        : qsTr("%n faces found", "", unmappedFacesModel.count))
                 font.pixelSize: Theme.fontSizeSmall
-                wrapMode: Text.WordWrap
+                color: Theme.secondaryColor
+                visible: unmappedFacesModel.count > 0
             }
 
-            Item {
+            // Grid of faces
+            Grid {
+                id: faceGrid
                 width: parent.width
-                height: Theme.paddingLarge
-            }
-        }
+                columns: 3
+                spacing: Theme.paddingSmall
 
-        delegate: BackgroundItem {
-            id: delegate
-            width: gridView.cellWidth
-            height: gridView.cellHeight
+                Repeater {
+                    model: unmappedFacesModel
 
-            Image {
-                id: photoImage
-                anchors.fill: parent
-                anchors.margins: Theme.paddingSmall
-                source: "image://nothumb/" + model.photo_path
-                fillMode: Image.PreserveAspectCrop
-                clip: true
-                asynchronous: true
+                    delegate: BackgroundItem {
+                        id: faceItem
+                        width: faceGrid.width / 3
+                        height: width
 
-                // Overlay to show face region
-                Rectangle {
-                    x: model.bbox_x * parent.paintedWidth
-                    y: model.bbox_y * parent.paintedHeight
-                    width: model.bbox_width * parent.paintedWidth
-                    height: model.bbox_height * parent.paintedHeight
-                    color: "transparent"
-                    border.color: Theme.highlightColor
-                    border.width: 2
-                    visible: photoImage.status === Image.Ready
-                }
+                        // Card-like container
+                        Rectangle {
+                            anchors.fill: parent
+                            anchors.margins: Theme.paddingSmall / 2
+                            radius: Theme.paddingSmall
+                            color: Theme.rgba(Theme.highlightBackgroundColor, faceItem.highlighted ? 0.2 : 0.05)
+                            border.color: Theme.rgba(Theme.highlightColor, 0.2)
+                            border.width: 1
 
-                Rectangle {
-                    anchors.fill: parent
-                    color: Theme.rgba(Theme.highlightBackgroundColor, 0.1)
-                    visible: parent.status === Image.Error
+                            // Face image (cropped from photo)
+                            Image {
+                                id: faceImage
+                                anchors.fill: parent
+                                anchors.margins: 1
+                                source: model.photo_path ? "file://" + model.photo_path : ""
+                                fillMode: Image.PreserveAspectCrop
+                                asynchronous: true
+                                clip: true
 
-                    Image {
-                        anchors.centerIn: parent
-                        source: "image://theme/icon-m-image"
-                        opacity: 0.3
+                                // Crop to face region using sourceClipRect
+                                property int imgWidth: sourceSize.width
+                                property int imgHeight: sourceSize.height
+
+                                // Calculate crop rectangle
+                                sourceClipRect: Qt.rect(
+                                    model.bbox_x * imgWidth,
+                                    model.bbox_y * imgHeight,
+                                    model.bbox_width * imgWidth,
+                                    model.bbox_height * imgHeight
+                                )
+
+                                BusyIndicator {
+                                    anchors.centerIn: parent
+                                    size: BusyIndicatorSize.Small
+                                    running: parent.status === Image.Loading
+                                }
+
+                                // Error state
+                                Rectangle {
+                                    anchors.fill: parent
+                                    color: Theme.rgba(Theme.highlightBackgroundColor, 0.1)
+                                    visible: parent.status === Image.Error
+
+                                    Image {
+                                        anchors.centerIn: parent
+                                        source: "image://theme/icon-m-person"
+                                        opacity: 0.3
+                                    }
+                                }
+                            }
+
+                            // Detection quality indicator (subtle)
+                            Rectangle {
+                                anchors {
+                                    top: parent.top
+                                    right: parent.right
+                                    margins: Theme.paddingSmall
+                                }
+                                width: Theme.iconSizeExtraSmall
+                                height: width
+                                radius: width / 2
+
+                                // Color based on confidence: green > 0.7, yellow > 0.5, red otherwise
+                                color: model.confidence > 0.7
+                                    ? Theme.rgba("#4CAF50", 0.9)  // Green
+                                    : (model.confidence > 0.5
+                                        ? Theme.rgba("#FFC107", 0.9)  // Yellow
+                                        : Theme.rgba("#F44336", 0.9))  // Red
+
+                                visible: faceImage.status === Image.Ready
+                            }
+                        }
+
+                        onClicked: {
+                            var dialog = pageStack.push(Qt.resolvedUrl("../dialogs/IdentifyFaceDialog.qml"), {
+                                faceId: model.face_id,
+                                photoPath: model.photo_path,
+                                faceBbox: Qt.rect(model.bbox_x, model.bbox_y, model.bbox_width, model.bbox_height)
+                            })
+                            dialog.accepted.connect(function() {
+                                refreshUnmappedFaces()
+                            })
+                        }
                     }
                 }
-
-                BusyIndicator {
-                    anchors.centerIn: parent
-                    size: BusyIndicatorSize.Small
-                    running: parent.status === Image.Loading
-                }
             }
 
-            // Confidence badge
-            Rectangle {
-                anchors {
-                    bottom: parent.bottom
-                    right: parent.right
-                    margins: Theme.paddingSmall
-                }
-                width: confLabel.width + Theme.paddingSmall
-                height: confLabel.height + Theme.paddingSmall / 2
-                radius: Theme.paddingSmall / 2
-                color: Theme.rgba(Theme.highlightBackgroundColor, 0.8)
-
-                Label {
-                    id: confLabel
-                    anchors.centerIn: parent
-                    text: Math.round(model.confidence * 100) + "%"
-                    font.pixelSize: Theme.fontSizeExtraSmall
-                    color: Theme.primaryColor
-                }
-            }
-
-            onClicked: {
-                var dialog = pageStack.push(Qt.resolvedUrl("../dialogs/IdentifyFaceDialog.qml"), {
-                    faceId: model.face_id,
-                    photoPath: model.photo_path
-                })
+            // Empty state
+            ViewPlaceholder {
+                enabled: unmappedFacesModel.count === 0
+                text: qsTr("No unknown faces")
+                hintText: qsTr("All detected faces have been identified")
             }
         }
-
-        ViewPlaceholder {
-            enabled: gridView.count === 0
-            text: qsTr("No unknown faces")
-            hintText: qsTr("All detected faces have been identified")
-        }
-
-        VerticalScrollDecorator {}
     }
 }
