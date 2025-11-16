@@ -16,13 +16,50 @@ Page {
         id: photosModel
     }
 
+    // Statistics
+    property int totalPhotos: 0
+    property string firstPhotoDate: ""
+    property string lastPhotoDate: ""
+
     function refreshPhotos() {
         if (!faceManager || !faceManager.initialized) return
 
         photosModel.clear()
         var photos = faceManager.getPersonPhotos(personId)
-        for (var i = 0; i < photos.length; i++) {
-            photosModel.append(photos[i])
+
+        totalPhotos = photos.length
+
+        // Calculate date range
+        if (photos.length > 0) {
+            var firstTimestamp = null
+            var lastTimestamp = null
+
+            for (var i = 0; i < photos.length; i++) {
+                photosModel.append(photos[i])
+
+                // Assuming photos have a timestamp or date field
+                // For now, we'll use file modification time if available
+                if (photos[i].timestamp) {
+                    var ts = photos[i].timestamp
+                    if (firstTimestamp === null || ts < firstTimestamp) {
+                        firstTimestamp = ts
+                    }
+                    if (lastTimestamp === null || ts > lastTimestamp) {
+                        lastTimestamp = ts
+                    }
+                }
+            }
+
+            // Format dates (basic formatting for now)
+            if (firstTimestamp) {
+                var firstDate = new Date(firstTimestamp * 1000)
+                firstPhotoDate = Qt.formatDate(firstDate, "MMM yyyy")
+                var lastDate = new Date(lastTimestamp * 1000)
+                lastPhotoDate = Qt.formatDate(lastDate, "MMM yyyy")
+            }
+        } else {
+            firstPhotoDate = ""
+            lastPhotoDate = ""
         }
     }
 
@@ -39,8 +76,88 @@ Page {
 
         model: photosModel
 
-        header: PageHeader {
-            title: personName || qsTr("Unknown")
+        header: Column {
+            width: parent.width
+            spacing: 0
+
+            PageHeader {
+                title: personName || qsTr("Unknown")
+            }
+
+            // Statistics card
+            Item {
+                width: parent.width
+                height: statsCard.height + Theme.paddingLarge
+                visible: totalPhotos > 0
+
+                Rectangle {
+                    id: statsCard
+                    width: parent.width - 2 * Theme.horizontalPageMargin
+                    height: statsColumn.height + 2 * Theme.paddingMedium
+                    x: Theme.horizontalPageMargin
+                    radius: Theme.paddingSmall
+                    color: Theme.rgba(Theme.highlightBackgroundColor, 0.1)
+
+                    Column {
+                        id: statsColumn
+                        width: parent.width - 2 * Theme.paddingMedium
+                        anchors.centerIn: parent
+                        spacing: Theme.paddingMedium
+
+                        // Photo count
+                        Row {
+                            width: parent.width
+                            spacing: Theme.paddingSmall
+
+                            Image {
+                                anchors.verticalCenter: parent.verticalCenter
+                                source: "image://theme/icon-m-image"
+                                width: Theme.iconSizeSmall
+                                height: Theme.iconSizeSmall
+                            }
+
+                            Label {
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: totalPhotos + " " + (totalPhotos === 1 ? qsTr("photo") : qsTr("photos"))
+                                font.pixelSize: Theme.fontSizeMedium
+                                color: Theme.highlightColor
+                            }
+                        }
+
+                        // Date range
+                        Row {
+                            width: parent.width
+                            spacing: Theme.paddingSmall
+                            visible: firstPhotoDate !== "" && lastPhotoDate !== ""
+
+                            Image {
+                                anchors.verticalCenter: parent.verticalCenter
+                                source: "image://theme/icon-m-date"
+                                width: Theme.iconSizeSmall
+                                height: Theme.iconSizeSmall
+                            }
+
+                            Label {
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: {
+                                    if (firstPhotoDate === lastPhotoDate) {
+                                        return firstPhotoDate
+                                    } else {
+                                        return firstPhotoDate + " - " + lastPhotoDate
+                                    }
+                                }
+                                font.pixelSize: Theme.fontSizeSmall
+                                color: Theme.secondaryHighlightColor
+                            }
+                        }
+                    }
+                }
+            }
+
+            SectionHeader {
+                text: qsTr("Photos")
+                visible: totalPhotos > 0
+            }
         }
 
         delegate: BackgroundItem {
