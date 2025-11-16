@@ -19,14 +19,21 @@ Page {
         property rect faceBbox
 
         onTriggered: {
-            var dialog = pageStack.push(Qt.resolvedUrl("../dialogs/IdentifyFaceDialog.qml"), {
+            pageStack.push(Qt.resolvedUrl("../dialogs/IdentifyFaceDialog.qml"), {
                 faceId: faceId,
                 photoPath: photoPath,
                 faceBbox: faceBbox
             })
-            dialog.accepted.connect(function() {
+        }
+    }
+
+    Connections {
+        target: pageStack
+        onCurrentPageChanged: {
+            // Refresh when coming back from IdentifyFaceDialog
+            if (pageStack.currentPage === page) {
                 refreshUnmappedFaces()
-            })
+            }
         }
     }
 
@@ -144,15 +151,49 @@ Page {
                             color: Theme.rgba(Theme.highlightBackgroundColor, faceItem.highlighted ? 0.2 : 0.05)
                             border.color: Theme.rgba(Theme.highlightColor, 0.2)
                             border.width: 1
+                            clip: true
 
-                            // Face image placeholder
+                            // Face image (cropped using clipping)
                             Item {
                                 anchors.fill: parent
                                 anchors.margins: 1
+                                clip: true
 
+                                Image {
+                                    id: faceImage
+                                    source: model.photo_path ? "file://" + model.photo_path : ""
+                                    asynchronous: true
+                                    cache: false
+
+                                    // Calculate scale to fit the face bbox into the thumbnail
+                                    property real imgWidth: sourceSize.width > 0 ? sourceSize.width : 1
+                                    property real imgHeight: sourceSize.height > 0 ? sourceSize.height : 1
+                                    property real faceBboxWidth: model.bbox_width * imgWidth
+                                    property real faceBboxHeight: model.bbox_height * imgHeight
+                                    property real scaleX: parent.width / faceBboxWidth
+                                    property real scaleY: parent.height / faceBboxHeight
+                                    property real scale: Math.max(scaleX, scaleY)
+
+                                    // Position to center the face bbox
+                                    width: imgWidth * scale
+                                    height: imgHeight * scale
+                                    x: -(model.bbox_x * imgWidth * scale)
+                                    y: -(model.bbox_y * imgHeight * scale)
+
+                                    fillMode: Image.PreserveAspectFit
+
+                                    BusyIndicator {
+                                        anchors.centerIn: parent
+                                        running: parent.status === Image.Loading
+                                        size: BusyIndicatorSize.Small
+                                    }
+                                }
+
+                                // Fallback placeholder when image fails to load
                                 Rectangle {
                                     anchors.fill: parent
                                     color: Theme.rgba(Theme.highlightBackgroundColor, 0.1)
+                                    visible: faceImage.status === Image.Error || faceImage.status === Image.Null
 
                                     Image {
                                         anchors.centerIn: parent

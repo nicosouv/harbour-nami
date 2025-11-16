@@ -81,24 +81,19 @@ Dialog {
                         anchors.fill: parent
                         anchors.margins: 2
                         source: photoPath ? "file://" + photoPath : ""
-                        fillMode: Image.PreserveAspectCrop
+                        fillMode: Image.PreserveAspectFit
                         asynchronous: true
-                        clip: true
-
-                        // Crop to face
-                        property int imgWidth: sourceSize.width
-                        property int imgHeight: sourceSize.height
-
-                        sourceClipRect: Qt.rect(
-                            faceBbox.x * imgWidth,
-                            faceBbox.y * imgHeight,
-                            faceBbox.width * imgWidth,
-                            faceBbox.height * imgHeight
-                        )
 
                         BusyIndicator {
                             anchors.centerIn: parent
                             running: parent.status === Image.Loading
+                        }
+
+                        Rectangle {
+                            anchors.fill: parent
+                            color: "transparent"
+                            border.color: Theme.rgba(Theme.highlightColor, 0.3)
+                            border.width: 1
                         }
                     }
                 }
