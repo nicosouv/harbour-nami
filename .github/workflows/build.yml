@@ -31,8 +31,7 @@ jobs:
 
       - name: Prepare Build Directories
         run: |
-          # Create directories before chmod
-          mkdir -p 3rdparty/opencv
+          # Create onnxruntime directory (opencv may be restored from cache)
           mkdir -p 3rdparty/onnxruntime
 
           # Fix permissions for Docker container
