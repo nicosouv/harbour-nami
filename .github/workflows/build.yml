@@ -25,9 +25,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: 3rdparty/opencv
-          key: opencv-minimal-4.5.5-${{ matrix.arch }}-${{ hashFiles('scripts/build_opencv_minimal.sh') }}
+          key: opencv-minimal-4.8.0-${{ matrix.arch }}-${{ hashFiles('scripts/build_opencv_minimal.sh') }}
           restore-keys: |
-            opencv-minimal-4.5.5-${{ matrix.arch }}-
+            opencv-minimal-4.8.0-${{ matrix.arch }}-
 
       - name: Prepare Build Directories
         run: |
