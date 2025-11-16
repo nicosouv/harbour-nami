@@ -78,6 +78,7 @@ set(QML_FILES
     qml/pages/ScanningPage.qml
     qml/pages/ScanResultsPage.qml
     qml/pages/EventsPage.qml
+    qml/pages/MemoriesPage.qml
     qml/components/FaceRecognitionManager.qml
     qml/components/PhotoThumbnail.qml
     qml/components/FaceThumbnail.qml

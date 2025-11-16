@@ -121,6 +121,11 @@ Page {
                 onClicked: pageStack.push(Qt.resolvedUrl("SettingsPage.qml"))
             }
             MenuItem {
+                text: qsTr("Memories")
+                enabled: facePipeline && facePipeline.initialized
+                onClicked: pageStack.push(Qt.resolvedUrl("MemoriesPage.qml"))
+            }
+            MenuItem {
                 text: qsTr("Events")
                 enabled: facePipeline && facePipeline.initialized
                 onClicked: pageStack.push(Qt.resolvedUrl("EventsPage.qml"))
