@@ -9,10 +9,26 @@ Page {
     // Access global face pipeline from C++ backend
     // facePipeline is exposed via QML context in main.cpp
 
-    // People model
+    // People model (source data)
     ListModel {
         id: peopleModel
     }
+
+    // Filtered model (for search)
+    ListModel {
+        id: filteredPeopleModel
+    }
+
+    // Search query
+    property string searchQuery: ""
+
+    // Sort mode: "name" or "photos"
+    property string sortMode: "photos"
+
+    // Statistics
+    property int totalPeople: 0
+    property int totalPhotos: 0
+    property string topPerson: ""
 
     // Refresh people list
     function refreshPeople() {
@@ -20,8 +36,60 @@ Page {
 
         peopleModel.clear()
         var people = facePipeline.getAllPeople()
+
+        // Calculate statistics
+        totalPeople = people.length
+        totalPhotos = 0
+        var maxPhotos = 0
+        topPerson = ""
+
         for (var i = 0; i < people.length; i++) {
             peopleModel.append(people[i])
+            totalPhotos += people[i].photo_count
+
+            if (people[i].photo_count > maxPhotos) {
+                maxPhotos = people[i].photo_count
+                topPerson = people[i].name
+            }
+        }
+
+        // Apply filter and sort
+        filterAndSort()
+    }
+
+    // Filter and sort people
+    function filterAndSort() {
+        filteredPeopleModel.clear()
+
+        // Collect filtered items
+        var items = []
+        for (var i = 0; i < peopleModel.count; i++) {
+            var person = peopleModel.get(i)
+
+            // Filter by search query
+            if (searchQuery === "" || person.name.toLowerCase().indexOf(searchQuery.toLowerCase()) >= 0) {
+                items.push({
+                    person_id: person.person_id,
+                    name: person.name,
+                    photo_count: person.photo_count
+                })
+            }
+        }
+
+        // Sort items
+        if (sortMode === "name") {
+            items.sort(function(a, b) {
+                return a.name.toLowerCase().localeCompare(b.name.toLowerCase())
+            })
+        } else { // sortMode === "photos"
+            items.sort(function(a, b) {
+                return b.photo_count - a.photo_count
+            })
+        }
+
+        // Populate filtered model
+        for (var j = 0; j < items.length; j++) {
+            filteredPeopleModel.append(items[j])
         }
     }
 
@@ -41,7 +109,7 @@ Page {
         id: listView
         anchors.fill: parent
 
-        model: peopleModel
+        model: filteredPeopleModel
 
         PullDownMenu {
             MenuItem {
@@ -63,6 +131,16 @@ Page {
                 onClicked: {
                     // Open scanning page
                     pageStack.push(Qt.resolvedUrl("ScanningPage.qml"))
+                }
+            }
+        }
+
+        PushUpMenu {
+            MenuItem {
+                text: sortMode === "photos" ? qsTr("Sort by Name") : qsTr("Sort by Photos")
+                onClicked: {
+                    sortMode = (sortMode === "photos") ? "name" : "photos"
+                    filterAndSort()
                 }
             }
         }
@@ -103,8 +181,115 @@ Page {
                 height: Theme.paddingLarge
             }
 
+            // Statistics card
+            Item {
+                width: parent.width
+                height: statsCard.height
+                visible: totalPeople > 0
+
+                Rectangle {
+                    id: statsCard
+                    width: parent.width - 2 * Theme.horizontalPageMargin
+                    height: statsColumn.height + 2 * Theme.paddingMedium
+                    x: Theme.horizontalPageMargin
+                    radius: Theme.paddingSmall
+                    color: Theme.rgba(Theme.highlightBackgroundColor, 0.1)
+
+                    Column {
+                        id: statsColumn
+                        width: parent.width - 2 * Theme.paddingMedium
+                        anchors.centerIn: parent
+                        spacing: Theme.paddingSmall
+
+                        Row {
+                            width: parent.width
+                            spacing: Theme.paddingLarge
+
+                            Column {
+                                width: (parent.width - Theme.paddingLarge * 2) / 3
+                                spacing: Theme.paddingSmall / 2
+
+                                Label {
+                                    text: totalPeople
+                                    font.pixelSize: Theme.fontSizeHuge
+                                    font.bold: true
+                                    color: Theme.highlightColor
+                                }
+
+                                Label {
+                                    text: totalPeople === 1 ? qsTr("person") : qsTr("people")
+                                    font.pixelSize: Theme.fontSizeExtraSmall
+                                    color: Theme.secondaryColor
+                                }
+                            }
+
+                            Column {
+                                width: (parent.width - Theme.paddingLarge * 2) / 3
+                                spacing: Theme.paddingSmall / 2
+
+                                Label {
+                                    text: totalPhotos
+                                    font.pixelSize: Theme.fontSizeHuge
+                                    font.bold: true
+                                    color: Theme.highlightColor
+                                }
+
+                                Label {
+                                    text: totalPhotos === 1 ? qsTr("photo") : qsTr("photos")
+                                    font.pixelSize: Theme.fontSizeExtraSmall
+                                    color: Theme.secondaryColor
+                                }
+                            }
+
+                            Column {
+                                width: (parent.width - Theme.paddingLarge * 2) / 3
+                                spacing: Theme.paddingSmall / 2
+
+                                Label {
+                                    text: topPerson || "-"
+                                    font.pixelSize: Theme.fontSizeMedium
+                                    font.bold: true
+                                    color: Theme.highlightColor
+                                    truncationMode: TruncationMode.Fade
+                                    width: parent.width
+                                }
+
+                                Label {
+                                    text: qsTr("most photos")
+                                    font.pixelSize: Theme.fontSizeExtraSmall
+                                    color: Theme.secondaryColor
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            Item {
+                width: parent.width
+                height: Theme.paddingLarge
+                visible: totalPeople > 0
+            }
+
+            // Search field
+            SearchField {
+                id: searchField
+                width: parent.width
+                placeholderText: qsTr("Search people")
+                visible: totalPeople > 0
+
+                onTextChanged: {
+                    searchQuery = text
+                    filterAndSort()
+                }
+
+                EnterKey.iconSource: "image://theme/icon-m-enter-close"
+                EnterKey.onClicked: focus = false
+            }
+
             SectionHeader {
-                text: qsTr("People")
+                text: qsTr("People (%1)").arg(filteredPeopleModel.count)
+                visible: totalPeople > 0
             }
         }
 
