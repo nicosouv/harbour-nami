@@ -4,7 +4,19 @@ import Sailfish.Silica 1.0
 Page {
     id: page
 
+    property var stats: ({})
+
     allowedOrientations: Orientation.All
+
+    function loadStatistics() {
+        if (facePipeline && facePipeline.initialized) {
+            stats = facePipeline.getStatistics()
+        }
+    }
+
+    Component.onCompleted: {
+        loadStatistics()
+    }
 
     SilicaFlickable {
         anchors.fill: parent
@@ -63,17 +75,22 @@ Page {
 
             DetailItem {
                 label: qsTr("Detected faces")
-                value: "0"
+                value: stats.total_faces || 0
             }
 
             DetailItem {
                 label: qsTr("Named people")
-                value: "0"
+                value: stats.total_people || 0
             }
 
             DetailItem {
                 label: qsTr("Storage used")
-                value: "0 KB"
+                value: {
+                    var bytes = stats.db_size_bytes || 0
+                    if (bytes < 1024) return bytes + " B"
+                    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB"
+                    return (bytes / (1024 * 1024)).toFixed(1) + " MB"
+                }
             }
 
             SectionHeader {
@@ -83,22 +100,22 @@ Page {
             ButtonLayout {
                 Button {
                     text: qsTr("Export data")
+                    enabled: facePipeline && facePipeline.initialized
                     onClicked: {
-                        // Export face recognition data
-                        // TODO: Implement GDPR data export
+                        pageStack.push(Qt.resolvedUrl("../components/NotificationBanner.qml"), {
+                            "text": qsTr("Export feature coming soon")
+                        })
                     }
                 }
 
                 Button {
                     text: qsTr("Clear all data")
+                    enabled: facePipeline && facePipeline.initialized
                     onClicked: {
-                        var dialog = pageStack.push(Qt.resolvedUrl("../dialogs/ConfirmDialog.qml"), {
-                            "title": qsTr("Clear all data?"),
-                            "message": qsTr("This will delete all detected faces and names. This action cannot be undone.")
-                        })
-                        dialog.accepted.connect(function() {
-                            // Clear all face recognition data
-                            // TODO: Implement data deletion
+                        var remorse = Remorse.popupAction(page, qsTr("Deleting all data"), function() {
+                            if (facePipeline.deleteAllData()) {
+                                loadStatistics()
+                            }
                         })
                     }
                 }

@@ -592,3 +592,27 @@ QVariantList FacePipeline::getUnmappedFaces()
 
     return result;
 }
+
+QVariantMap FacePipeline::getStatistics()
+{
+    QVariantMap stats;
+
+    if (!m_initialized || !m_database) {
+        stats["total_photos"] = 0;
+        stats["total_faces"] = 0;
+        stats["total_people"] = 0;
+        stats["db_size_bytes"] = 0;
+        return stats;
+    }
+
+    return m_database->getStatistics();
+}
+
+bool FacePipeline::deleteAllData()
+{
+    if (!m_initialized || !m_database) {
+        return false;
+    }
+
+    return m_database->deleteAllData();
+}

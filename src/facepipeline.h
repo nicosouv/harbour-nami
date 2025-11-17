@@ -130,6 +130,18 @@ public:
      */
     Q_INVOKABLE bool removeFaceFromPerson(int faceId);
 
+    /**
+     * @brief Get database statistics
+     * @return QVariantMap with stats (total_photos, total_faces, total_people, db_size_bytes)
+     */
+    Q_INVOKABLE QVariantMap getStatistics();
+
+    /**
+     * @brief Delete all face recognition data
+     * @return true if successful
+     */
+    Q_INVOKABLE bool deleteAllData();
+
     // === Property getters ===
 
     bool isInitialized() const { return m_initialized; }
