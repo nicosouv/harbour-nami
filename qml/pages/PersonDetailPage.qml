@@ -165,17 +165,19 @@ Page {
                                 anchors.top: parent.top
                                 anchors.right: parent.right
                                 anchors.margins: Theme.paddingSmall
-                                width: Theme.iconSizeExtraSmall
-                                height: Theme.iconSizeExtraSmall
+                                width: Theme.iconSizeSmall
+                                height: Theme.iconSizeSmall
                                 radius: width / 2
-                                color: Theme.rgba(Theme.secondaryHighlightColor, 0.9)
+                                color: Theme.rgba("#4CAF50", 0.95)
+                                border.color: "white"
+                                border.width: 2
 
                                 Label {
                                     anchors.centerIn: parent
                                     text: "✓"
-                                    font.pixelSize: Theme.fontSizeTiny
+                                    font.pixelSize: Theme.fontSizeSmall
                                     font.bold: true
-                                    color: Theme.primaryColor
+                                    color: "white"
                                 }
                             }
 
