@@ -83,6 +83,8 @@ bool FaceDatabase::initializeSchema()
             confidence REAL NOT NULL,
             embedding BLOB NOT NULL,
             person_id INTEGER DEFAULT -1,
+            similarity_score REAL DEFAULT 0.0,
+            verified INTEGER DEFAULT 0,
             detected_at TEXT DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (photo_id) REFERENCES photos(id) ON DELETE CASCADE
         )
@@ -90,6 +92,10 @@ bool FaceDatabase::initializeSchema()
         emit error("Failed to create faces table: " + query.lastError().text());
         return false;
     }
+
+    // Migrate existing database if needed (add new columns if they don't exist)
+    query.exec("ALTER TABLE faces ADD COLUMN similarity_score REAL DEFAULT 0.0");
+    query.exec("ALTER TABLE faces ADD COLUMN verified INTEGER DEFAULT 0");
 
     // People table
     if (!query.exec(R"(
@@ -219,14 +225,15 @@ bool FaceDatabase::markPhotoProcessed(int photoId)
 // === Face operations ===
 
 int FaceDatabase::addFace(int photoId, const QRectF &bbox, float confidence,
-                          const FaceEmbedding &embedding, int personId)
+                          const FaceEmbedding &embedding, int personId,
+                          float similarityScore, bool verified)
 {
     QSqlQuery query(m_db);
     query.prepare(R"(
         INSERT INTO faces (photo_id, bbox_x, bbox_y, bbox_width, bbox_height,
-                          confidence, embedding, person_id)
+                          confidence, embedding, person_id, similarity_score, verified)
         VALUES (:photo_id, :bbox_x, :bbox_y, :bbox_width, :bbox_height,
-                :confidence, :embedding, :person_id)
+                :confidence, :embedding, :person_id, :similarity_score, :verified)
     )");
     query.bindValue(":photo_id", photoId);
     query.bindValue(":bbox_x", bbox.x());
@@ -236,6 +243,8 @@ int FaceDatabase::addFace(int photoId, const QRectF &bbox, float confidence,
     query.bindValue(":confidence", confidence);
     query.bindValue(":embedding", serializeEmbedding(embedding));
     query.bindValue(":person_id", personId);
+    query.bindValue(":similarity_score", similarityScore);
+    query.bindValue(":verified", verified ? 1 : 0);
 
     if (!query.exec()) {
         emit error("Failed to add face: " + query.lastError().text());
@@ -264,11 +273,13 @@ Face FaceDatabase::getFace(int faceId)
         face.confidence = query.value("confidence").toFloat();
         face.embedding = deserializeEmbedding(query.value("embedding").toByteArray());
         face.personId = query.value("person_id").toInt();
+        face.similarityScore = query.value("similarity_score").toFloat();
+        face.verified = query.value("verified").toInt() == 1;
         face.detectedAt = QDateTime::fromString(query.value("detected_at").toString(), Qt::ISODate);
         return face;
     }
 
-    return Face{-1, -1, QRectF(), 0.0f, FaceEmbedding(), -1, QDateTime()};
+    return Face{-1, -1, QRectF(), 0.0f, FaceEmbedding(), -1, 0.0f, false, QDateTime()};
 }
 
 QVector<Face> FaceDatabase::getFacesForPhoto(int photoId)
@@ -292,6 +303,8 @@ QVector<Face> FaceDatabase::getFacesForPhoto(int photoId)
             face.confidence = query.value("confidence").toFloat();
             face.embedding = deserializeEmbedding(query.value("embedding").toByteArray());
             face.personId = query.value("person_id").toInt();
+            face.similarityScore = query.value("similarity_score").toFloat();
+            face.verified = query.value("verified").toInt() == 1;
             face.detectedAt = QDateTime::fromString(query.value("detected_at").toString(), Qt::ISODate);
             faces.append(face);
         }
@@ -319,6 +332,8 @@ QVector<Face> FaceDatabase::getUnmappedFaces()
             face.confidence = query.value("confidence").toFloat();
             face.embedding = deserializeEmbedding(query.value("embedding").toByteArray());
             face.personId = query.value("person_id").toInt();
+            face.similarityScore = query.value("similarity_score").toFloat();
+            face.verified = query.value("verified").toInt() == 1;
             face.detectedAt = QDateTime::fromString(query.value("detected_at").toString(), Qt::ISODate);
             faces.append(face);
         }
@@ -332,6 +347,26 @@ bool FaceDatabase::updateFacePersonMapping(int faceId, int personId)
     QSqlQuery query(m_db);
     query.prepare("UPDATE faces SET person_id = :person_id WHERE id = :id");
     query.bindValue(":person_id", personId);
+    query.bindValue(":id", faceId);
+
+    return query.exec();
+}
+
+bool FaceDatabase::updateFaceMetadata(int faceId, float similarityScore, bool verified)
+{
+    QSqlQuery query(m_db);
+    query.prepare("UPDATE faces SET similarity_score = :similarity_score, verified = :verified WHERE id = :id");
+    query.bindValue(":similarity_score", similarityScore);
+    query.bindValue(":verified", verified ? 1 : 0);
+    query.bindValue(":id", faceId);
+
+    return query.exec();
+}
+
+bool FaceDatabase::removeFaceFromPerson(int faceId)
+{
+    QSqlQuery query(m_db);
+    query.prepare("UPDATE faces SET person_id = -1, verified = 0 WHERE id = :id");
     query.bindValue(":id", faceId);
 
     return query.exec();
@@ -461,6 +496,8 @@ QVector<Face> FaceDatabase::getFacesForPerson(int personId)
             face.confidence = query.value("confidence").toFloat();
             face.embedding = deserializeEmbedding(query.value("embedding").toByteArray());
             face.personId = query.value("person_id").toInt();
+            face.similarityScore = query.value("similarity_score").toFloat();
+            face.verified = query.value("verified").toInt() == 1;
             face.detectedAt = QDateTime::fromString(query.value("detected_at").toString(), Qt::ISODate);
             faces.append(face);
         }

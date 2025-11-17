@@ -41,6 +41,8 @@ struct Face {
     float confidence;
     FaceEmbedding embedding;
     int personId;  // -1 if unmapped
+    float similarityScore;  // Similarity score when matched (0.0-1.0)
+    bool verified;  // true if manually verified by user
     QDateTime detectedAt;
 };
 
@@ -110,7 +112,8 @@ public:
      * @return Face ID or -1 on error
      */
     int addFace(int photoId, const QRectF &bbox, float confidence,
-                const FaceEmbedding &embedding, int personId = -1);
+                const FaceEmbedding &embedding, int personId = -1,
+                float similarityScore = 0.0f, bool verified = false);
 
     /**
      * @brief Get face by ID
@@ -131,6 +134,16 @@ public:
      * @brief Update face's person mapping
      */
     bool updateFacePersonMapping(int faceId, int personId);
+
+    /**
+     * @brief Update face metadata (similarity score, verified status)
+     */
+    bool updateFaceMetadata(int faceId, float similarityScore, bool verified);
+
+    /**
+     * @brief Remove face from person (set person_id to -1)
+     */
+    bool removeFaceFromPerson(int faceId);
 
     // === Person operations ===
 

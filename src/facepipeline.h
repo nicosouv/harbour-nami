@@ -175,7 +175,7 @@ private:
     PhotoProcessingResult processPhotoInternal(const QString &photoPath);
 
     // Helper: Match face against database
-    int matchFaceToDatabase(const FaceEmbedding &embedding, float threshold = 0.6f);
+    FaceMatch matchFaceToDatabase(const FaceEmbedding &embedding, float threshold = 0.6f);
 };
 
 #endif // FACEPIPELINE_H

@@ -224,19 +224,20 @@ PhotoProcessingResult FacePipeline::processPhotoInternal(const QString &photoPat
 
         // Match against database
         qDebug() << "    → Matching against database...";
-        int matchedPersonId = matchFaceToDatabase(embedding);
+        FaceMatch match = matchFaceToDatabase(embedding);
 
-        if (matchedPersonId >= 0) {
+        if (match.personId >= 0) {
             result.facesMatched++;
-            qDebug() << "    ✓ Matched to person ID:" << matchedPersonId;
+            qDebug() << "    ✓ Matched to person ID:" << match.personId
+                     << "with similarity:" << match.similarity;
         } else {
             qDebug() << "    ○ No match found (new face)";
         }
 
-        // Store in database
+        // Store in database with similarity score
         qDebug() << "    → Storing face in database...";
         int faceId = m_database->addFace(photoId, detection.bbox, detection.confidence,
-                                         embedding, matchedPersonId);
+                                         embedding, match.personId, match.similarity, false);
 
         if (faceId < 0) {
             qWarning() << "    ✗ Failed to add face to database";
@@ -337,7 +338,12 @@ bool FacePipeline::identifyFace(int faceId, int personId, const QString &personN
     }
 
     // Update face mapping
-    return m_database->updateFacePersonMapping(faceId, personId);
+    if (!m_database->updateFacePersonMapping(faceId, personId)) {
+        return false;
+    }
+
+    // Mark as verified (manually identified by user)
+    return m_database->updateFaceMetadata(faceId, 1.0f, true);
 }
 
 void FacePipeline::cancel()
@@ -413,13 +419,13 @@ cv::Mat FacePipeline::extractFaceRegion(const cv::Mat &image, const QRectF &bbox
     return faceRegion;
 }
 
-int FacePipeline::matchFaceToDatabase(const FaceEmbedding &embedding, float threshold)
+FaceMatch FacePipeline::matchFaceToDatabase(const FaceEmbedding &embedding, float threshold)
 {
     // Get all person embeddings
     QVector<QPair<int, FaceEmbedding>> personEmbeddings = m_database->getAllPersonEmbeddings();
 
     if (personEmbeddings.isEmpty()) {
-        return -1;  // No people in database yet
+        return FaceMatch{-1, 0.0f};  // No people in database yet
     }
 
     // Match against database
@@ -430,7 +436,7 @@ int FacePipeline::matchFaceToDatabase(const FaceEmbedding &embedding, float thre
                  << "with similarity" << match.similarity;
     }
 
-    return match.personId;
+    return match;
 }
 
 QVariantList FacePipeline::getAllPeople()
