@@ -134,75 +134,60 @@ Page {
                         }
 
                         // Face bounding box overlay
-                        Rectangle {
+                        Item {
+                            anchors.fill: parent
                             visible: faceImage.status === Image.Ready && currentIndex < currentFaces.length
-                            color: "transparent"
-                            border.color: "#FF5252"  // Red
-                            border.width: 3
 
-                            // Calculate position and size based on image display
-                            property real imageDisplayWidth: faceImage.paintedWidth
-                            property real imageDisplayHeight: faceImage.paintedHeight
-                            property real imageOffsetX: (faceImage.width - imageDisplayWidth) / 2
-                            property real imageOffsetY: (faceImage.height - imageDisplayHeight) / 2
+                            Rectangle {
+                                color: "transparent"
+                                border.color: "#FF5252"
+                                border.width: 4
 
-                            // Scale factors
-                            property real scaleX: imageDisplayWidth / faceImage.sourceSize.width
-                            property real scaleY: imageDisplayHeight / faceImage.sourceSize.height
+                                // Calculate position and size based on image display
+                                property real imageDisplayWidth: faceImage.paintedWidth > 0 ? faceImage.paintedWidth : faceImage.width
+                                property real imageDisplayHeight: faceImage.paintedHeight > 0 ? faceImage.paintedHeight : faceImage.height
+                                property real imageOffsetX: (faceImage.width - imageDisplayWidth) / 2
+                                property real imageOffsetY: (faceImage.height - imageDisplayHeight) / 2
+                                property real srcWidth: faceImage.sourceSize.width > 0 ? faceImage.sourceSize.width : 1
+                                property real srcHeight: faceImage.sourceSize.height > 0 ? faceImage.sourceSize.height : 1
 
-                            x: currentIndex < currentFaces.length
-                               ? imageOffsetX + (currentFaces[currentIndex].bbox_x * scaleX)
-                               : 0
-                            y: currentIndex < currentFaces.length
-                               ? imageOffsetY + (currentFaces[currentIndex].bbox_y * scaleY)
-                               : 0
-                            width: currentIndex < currentFaces.length
-                                   ? currentFaces[currentIndex].bbox_width * scaleX
+                                // Scale factors
+                                property real scaleX: imageDisplayWidth / srcWidth
+                                property real scaleY: imageDisplayHeight / srcHeight
+
+                                x: currentIndex < currentFaces.length
+                                   ? imageOffsetX + (currentFaces[currentIndex].bbox_x * scaleX)
                                    : 0
-                            height: currentIndex < currentFaces.length
-                                    ? currentFaces[currentIndex].bbox_height * scaleY
-                                    : 0
+                                y: currentIndex < currentFaces.length
+                                   ? imageOffsetY + (currentFaces[currentIndex].bbox_y * scaleY)
+                                   : 0
+                                width: currentIndex < currentFaces.length
+                                       ? currentFaces[currentIndex].bbox_width * scaleX
+                                       : 0
+                                height: currentIndex < currentFaces.length
+                                        ? currentFaces[currentIndex].bbox_height * scaleY
+                                        : 0
 
-                            // Corner markers for better visibility
-                            Rectangle {
-                                anchors { left: parent.left; top: parent.top }
-                                width: 15; height: 3
-                                color: "#FF5252"
-                            }
-                            Rectangle {
-                                anchors { left: parent.left; top: parent.top }
-                                width: 3; height: 15
-                                color: "#FF5252"
-                            }
-                            Rectangle {
-                                anchors { right: parent.right; top: parent.top }
-                                width: 15; height: 3
-                                color: "#FF5252"
-                            }
-                            Rectangle {
-                                anchors { right: parent.right; top: parent.top }
-                                width: 3; height: 15
-                                color: "#FF5252"
-                            }
-                            Rectangle {
-                                anchors { left: parent.left; bottom: parent.bottom }
-                                width: 15; height: 3
-                                color: "#FF5252"
-                            }
-                            Rectangle {
-                                anchors { left: parent.left; bottom: parent.bottom }
-                                width: 3; height: 15
-                                color: "#FF5252"
-                            }
-                            Rectangle {
-                                anchors { right: parent.right; bottom: parent.bottom }
-                                width: 15; height: 3
-                                color: "#FF5252"
-                            }
-                            Rectangle {
-                                anchors { right: parent.right; bottom: parent.bottom }
-                                width: 3; height: 15
-                                color: "#FF5252"
+                                // Corner markers
+                                Repeater {
+                                    model: [
+                                        {x: 0, y: 0, w: 20, h: 4, a: "left", b: "top"},
+                                        {x: 0, y: 0, w: 4, h: 20, a: "left", b: "top"},
+                                        {x: 0, y: 0, w: 20, h: 4, a: "right", b: "top"},
+                                        {x: 0, y: 0, w: 4, h: 20, a: "right", b: "top"},
+                                        {x: 0, y: 0, w: 20, h: 4, a: "left", b: "bottom"},
+                                        {x: 0, y: 0, w: 4, h: 20, a: "left", b: "bottom"},
+                                        {x: 0, y: 0, w: 20, h: 4, a: "right", b: "bottom"},
+                                        {x: 0, y: 0, w: 4, h: 20, a: "right", b: "bottom"}
+                                    ]
+                                    Rectangle {
+                                        anchors[modelData.a]: parent[modelData.a]
+                                        anchors[modelData.b]: parent[modelData.b]
+                                        width: modelData.w
+                                        height: modelData.h
+                                        color: "#FF5252"
+                                    }
+                                }
                             }
                         }
                     }

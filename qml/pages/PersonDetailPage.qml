@@ -171,6 +171,7 @@ Page {
                                 color: Theme.rgba("#4CAF50", 0.95)
                                 border.color: "white"
                                 border.width: 2
+                                z: 100
 
                                 Label {
                                     anchors.centerIn: parent
@@ -191,6 +192,7 @@ Page {
                                 height: scoreLabel.height + Theme.paddingSmall / 2
                                 radius: Theme.paddingSmall / 2
                                 color: Theme.rgba(Theme.highlightBackgroundColor, 0.8)
+                                z: 100
 
                                 Label {
                                     id: scoreLabel
