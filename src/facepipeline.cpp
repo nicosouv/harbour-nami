@@ -472,20 +472,26 @@ QVariantList FacePipeline::getPersonPhotos(int personId)
     // Get all faces for this person
     QVector<Face> faces = m_database->getFacesForPerson(personId);
 
-    // Collect unique photo IDs
-    QSet<int> photoIds;
+    // Group faces by photo ID to get the best match per photo
+    QMap<int, Face> bestFacePerPhoto;
     for (const Face &face : faces) {
-        photoIds.insert(face.photoId);
+        if (!bestFacePerPhoto.contains(face.photoId) ||
+            face.similarityScore > bestFacePerPhoto[face.photoId].similarityScore) {
+            bestFacePerPhoto[face.photoId] = face;
+        }
     }
 
-    // Get photo paths
-    for (int photoId : photoIds) {
-        Photo photo = m_database->getPhoto(photoId);
+    // Get photo paths with face metadata
+    for (const Face &face : bestFacePerPhoto.values()) {
+        Photo photo = m_database->getPhoto(face.photoId);
         if (!photo.filePath.isEmpty()) {
             QVariantMap photoMap;
             photoMap["photo_id"] = photo.id;
+            photoMap["face_id"] = face.id;
             photoMap["file_path"] = photo.filePath;
             photoMap["date_taken"] = photo.dateTaken;
+            photoMap["similarity_score"] = face.similarityScore;
+            photoMap["verified"] = face.verified;
             result.append(photoMap);
         }
     }
@@ -509,6 +515,15 @@ bool FacePipeline::updatePersonName(int personId, const QString &name)
     }
 
     return m_database->updatePersonName(personId, name);
+}
+
+bool FacePipeline::removeFaceFromPerson(int faceId)
+{
+    if (!m_initialized || !m_database) {
+        return false;
+    }
+
+    return m_database->removeFaceFromPerson(faceId);
 }
 
 QVariantList FacePipeline::getUnmappedFaces()

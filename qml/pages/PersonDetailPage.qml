@@ -131,6 +131,7 @@ Page {
                         height: width
 
                         Image {
+                            id: photoImage
                             anchors.fill: parent
                             anchors.margins: Theme.paddingSmall / 2
                             source: model.file_path ? "file://" + model.file_path : ""
@@ -148,11 +149,52 @@ Page {
                                 size: BusyIndicatorSize.Small
                             }
 
+                            // Border with different color for verified vs auto-matched
                             Rectangle {
                                 anchors.fill: parent
                                 color: "transparent"
-                                border.color: Theme.rgba(Theme.highlightColor, 0.1)
-                                border.width: 1
+                                border.color: model.verified ? Theme.rgba(Theme.secondaryHighlightColor, 0.8) : Theme.rgba(Theme.highlightColor, 0.3)
+                                border.width: model.verified ? 2 : 1
+                            }
+
+                            // Verified badge (checkmark)
+                            Rectangle {
+                                visible: model.verified
+                                anchors.top: parent.top
+                                anchors.right: parent.right
+                                anchors.margins: Theme.paddingSmall
+                                width: Theme.iconSizeExtraSmall
+                                height: Theme.iconSizeExtraSmall
+                                radius: width / 2
+                                color: Theme.rgba(Theme.secondaryHighlightColor, 0.9)
+
+                                Label {
+                                    anchors.centerIn: parent
+                                    text: "✓"
+                                    font.pixelSize: Theme.fontSizeTiny
+                                    font.bold: true
+                                    color: Theme.primaryColor
+                                }
+                            }
+
+                            // Similarity score badge (for auto-matched)
+                            Rectangle {
+                                visible: !model.verified && model.similarity_score > 0
+                                anchors.bottom: parent.bottom
+                                anchors.right: parent.right
+                                anchors.margins: Theme.paddingSmall
+                                width: scoreLabel.width + Theme.paddingSmall
+                                height: scoreLabel.height + Theme.paddingSmall / 2
+                                radius: Theme.paddingSmall / 2
+                                color: Theme.rgba(Theme.highlightBackgroundColor, 0.8)
+
+                                Label {
+                                    id: scoreLabel
+                                    anchors.centerIn: parent
+                                    text: Math.round(model.similarity_score * 100) + "%"
+                                    font.pixelSize: Theme.fontSizeTiny
+                                    color: Theme.primaryColor
+                                }
                             }
                         }
 
@@ -160,6 +202,10 @@ Page {
                             pageStack.push(Qt.resolvedUrl("PhotoViewerPage.qml"), {
                                 photoPath: model.file_path
                             })
+                        }
+
+                        onPressAndHold: {
+                            contextMenu.open(model)
                         }
                     }
                 }
@@ -178,5 +224,47 @@ Page {
         }
 
         VerticalScrollDecorator {}
+    }
+
+    // Context menu for photo management
+    ContextMenu {
+        id: contextMenu
+
+        property var photoData: null
+
+        function open(data) {
+            photoData = data
+            active = true
+        }
+
+        MenuItem {
+            text: qsTr("Remove from person")
+            onClicked: {
+                if (contextMenu.photoData && contextMenu.photoData.face_id) {
+                    var remorse = Remorse.itemAction(page, qsTr("Removing photo"), function() {
+                        if (facePipeline.removeFaceFromPerson(contextMenu.photoData.face_id)) {
+                            // Remove from model
+                            for (var i = 0; i < photosModel.count; i++) {
+                                if (photosModel.get(i).face_id === contextMenu.photoData.face_id) {
+                                    photosModel.remove(i)
+                                    break
+                                }
+                            }
+                        }
+                    })
+                }
+            }
+        }
+
+        MenuItem {
+            text: qsTr("View full photo")
+            onClicked: {
+                if (contextMenu.photoData && contextMenu.photoData.file_path) {
+                    pageStack.push(Qt.resolvedUrl("PhotoViewerPage.qml"), {
+                        photoPath: contextMenu.photoData.file_path
+                    })
+                }
+            }
+        }
     }
 }

@@ -123,6 +123,13 @@ public:
      */
     Q_INVOKABLE QVariantList getUnmappedFaces();
 
+    /**
+     * @brief Remove face from person (unassign)
+     * @param faceId Face ID to remove from person
+     * @return true if successful
+     */
+    Q_INVOKABLE bool removeFaceFromPerson(int faceId);
+
     // === Property getters ===
 
     bool isInitialized() const { return m_initialized; }
