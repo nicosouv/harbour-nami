@@ -343,7 +343,46 @@ bool FacePipeline::identifyFace(int faceId, int personId, const QString &personN
     }
 
     // Mark as verified (manually identified by user)
-    return m_database->updateFaceMetadata(faceId, 1.0f, true);
+    if (!m_database->updateFaceMetadata(faceId, 1.0f, true)) {
+        return false;
+    }
+
+    // Automatic re-matching: After identifying a face, re-match unmapped faces
+    // against the updated person profile
+    qDebug() << "Re-matching unmapped faces against person" << personId;
+
+    // Get updated average embedding for this person
+    FaceEmbedding personEmbedding = m_database->getAverageEmbedding(personId);
+    if (personEmbedding.empty()) {
+        qDebug() << "Could not get average embedding for person" << personId;
+        return true;  // Still return success, re-matching is optional
+    }
+
+    // Get all unmapped faces
+    QVector<Face> unmappedFaces = m_database->getUnmappedFaces();
+    qDebug() << "Found" << unmappedFaces.size() << "unmapped faces to check";
+
+    // Match each unmapped face against the person
+    int autoMatched = 0;
+    for (const Face &face : unmappedFaces) {
+        float similarity = FaceRecognizer::computeSimilarity(face.embedding, personEmbedding);
+
+        // If similarity is above threshold, auto-assign to this person
+        if (similarity >= 0.7f) {
+            qDebug() << "Auto-matching face" << face.id << "to person" << personId
+                     << "with similarity" << similarity;
+
+            // Update face mapping with similarity score and verified=false (auto-matched)
+            if (m_database->updateFacePersonMapping(face.id, personId)) {
+                m_database->updateFaceMetadata(face.id, similarity, false);
+                autoMatched++;
+            }
+        }
+    }
+
+    qDebug() << "Auto-matched" << autoMatched << "faces to person" << personId;
+
+    return true;
 }
 
 void FacePipeline::cancel()

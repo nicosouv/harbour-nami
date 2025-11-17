@@ -62,12 +62,12 @@ public:
      * @brief Match face against database of embeddings
      * @param faceEmbedding Embedding to match
      * @param databaseEmbeddings Database of (personId, embedding) pairs
-     * @param threshold Minimum similarity threshold (default: 0.6)
+     * @param threshold Minimum similarity threshold (default: 0.7)
      * @return Best match or {-1, 0.0} if no match
      */
     static FaceMatch matchFace(const FaceEmbedding &faceEmbedding,
                                const QVector<QPair<int, FaceEmbedding>> &databaseEmbeddings,
-                               float threshold = 0.6f);
+                               float threshold = 0.7f);
 
     /**
      * @brief Normalize embedding to unit vector (L2 normalization)
