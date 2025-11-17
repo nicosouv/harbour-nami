@@ -132,6 +132,79 @@ Page {
                             anchors.centerIn: parent
                             running: parent.status === Image.Loading
                         }
+
+                        // Face bounding box overlay
+                        Rectangle {
+                            visible: faceImage.status === Image.Ready && currentIndex < currentFaces.length
+                            color: "transparent"
+                            border.color: "#FF5252"  // Red
+                            border.width: 3
+
+                            // Calculate position and size based on image display
+                            property real imageDisplayWidth: faceImage.paintedWidth
+                            property real imageDisplayHeight: faceImage.paintedHeight
+                            property real imageOffsetX: (faceImage.width - imageDisplayWidth) / 2
+                            property real imageOffsetY: (faceImage.height - imageDisplayHeight) / 2
+
+                            // Scale factors
+                            property real scaleX: imageDisplayWidth / faceImage.sourceSize.width
+                            property real scaleY: imageDisplayHeight / faceImage.sourceSize.height
+
+                            x: currentIndex < currentFaces.length
+                               ? imageOffsetX + (currentFaces[currentIndex].bbox_x * scaleX)
+                               : 0
+                            y: currentIndex < currentFaces.length
+                               ? imageOffsetY + (currentFaces[currentIndex].bbox_y * scaleY)
+                               : 0
+                            width: currentIndex < currentFaces.length
+                                   ? currentFaces[currentIndex].bbox_width * scaleX
+                                   : 0
+                            height: currentIndex < currentFaces.length
+                                    ? currentFaces[currentIndex].bbox_height * scaleY
+                                    : 0
+
+                            // Corner markers for better visibility
+                            Rectangle {
+                                anchors { left: parent.left; top: parent.top }
+                                width: 15; height: 3
+                                color: "#FF5252"
+                            }
+                            Rectangle {
+                                anchors { left: parent.left; top: parent.top }
+                                width: 3; height: 15
+                                color: "#FF5252"
+                            }
+                            Rectangle {
+                                anchors { right: parent.right; top: parent.top }
+                                width: 15; height: 3
+                                color: "#FF5252"
+                            }
+                            Rectangle {
+                                anchors { right: parent.right; top: parent.top }
+                                width: 3; height: 15
+                                color: "#FF5252"
+                            }
+                            Rectangle {
+                                anchors { left: parent.left; bottom: parent.bottom }
+                                width: 15; height: 3
+                                color: "#FF5252"
+                            }
+                            Rectangle {
+                                anchors { left: parent.left; bottom: parent.bottom }
+                                width: 3; height: 15
+                                color: "#FF5252"
+                            }
+                            Rectangle {
+                                anchors { right: parent.right; bottom: parent.bottom }
+                                width: 15; height: 3
+                                color: "#FF5252"
+                            }
+                            Rectangle {
+                                anchors { right: parent.right; bottom: parent.bottom }
+                                width: 3; height: 15
+                                color: "#FF5252"
+                            }
+                        }
                     }
 
                     // Confidence indicator

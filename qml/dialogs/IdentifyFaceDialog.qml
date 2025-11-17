@@ -89,6 +89,71 @@ Dialog {
                             running: parent.status === Image.Loading
                         }
 
+                        // Face bounding box overlay
+                        Rectangle {
+                            visible: faceImage.status === Image.Ready && faceBbox.width > 0
+                            color: "transparent"
+                            border.color: "#FF5252"  // Red
+                            border.width: 3
+
+                            // Calculate position and size based on image display
+                            property real imageDisplayWidth: faceImage.paintedWidth
+                            property real imageDisplayHeight: faceImage.paintedHeight
+                            property real imageOffsetX: (faceImage.width - imageDisplayWidth) / 2
+                            property real imageOffsetY: (faceImage.height - imageDisplayHeight) / 2
+
+                            // Scale factors
+                            property real scaleX: imageDisplayWidth / faceImage.sourceSize.width
+                            property real scaleY: imageDisplayHeight / faceImage.sourceSize.height
+
+                            x: imageOffsetX + (faceBbox.x * scaleX)
+                            y: imageOffsetY + (faceBbox.y * scaleY)
+                            width: faceBbox.width * scaleX
+                            height: faceBbox.height * scaleY
+
+                            // Corner markers for better visibility
+                            Rectangle {
+                                anchors { left: parent.left; top: parent.top }
+                                width: 12; height: 2
+                                color: "#FF5252"
+                            }
+                            Rectangle {
+                                anchors { left: parent.left; top: parent.top }
+                                width: 2; height: 12
+                                color: "#FF5252"
+                            }
+                            Rectangle {
+                                anchors { right: parent.right; top: parent.top }
+                                width: 12; height: 2
+                                color: "#FF5252"
+                            }
+                            Rectangle {
+                                anchors { right: parent.right; top: parent.top }
+                                width: 2; height: 12
+                                color: "#FF5252"
+                            }
+                            Rectangle {
+                                anchors { left: parent.left; bottom: parent.bottom }
+                                width: 12; height: 2
+                                color: "#FF5252"
+                            }
+                            Rectangle {
+                                anchors { left: parent.left; bottom: parent.bottom }
+                                width: 2; height: 12
+                                color: "#FF5252"
+                            }
+                            Rectangle {
+                                anchors { right: parent.right; bottom: parent.bottom }
+                                width: 12; height: 2
+                                color: "#FF5252"
+                            }
+                            Rectangle {
+                                anchors { right: parent.right; bottom: parent.bottom }
+                                width: 2; height: 12
+                                color: "#FF5252"
+                            }
+                        }
+
                         Rectangle {
                             anchors.fill: parent
                             color: "transparent"
