@@ -132,77 +132,80 @@ Page {
                         height: width
                         contentHeight: width
 
-                        Image {
-                            id: photoImage
-                            anchors.fill: parent
-                            anchors.margins: Theme.paddingSmall / 2
-                            source: model.file_path ? "file://" + model.file_path : ""
-                            fillMode: Image.PreserveAspectCrop
-                            asynchronous: true
-                            clip: true
-
-                            // Limit source size to save memory
-                            sourceSize.width: 400
-                            sourceSize.height: 400
-
-                            BusyIndicator {
-                                anchors.centerIn: parent
-                                running: parent.status === Image.Loading
-                                size: BusyIndicatorSize.Small
-                            }
-
-                            // Border with different color for verified vs auto-matched
-                            Rectangle {
+                        // Wrap content in Item to fix ContextMenu positioning
+                        contentItem.children: [
+                            Image {
+                                id: photoImage
                                 anchors.fill: parent
-                                color: "transparent"
-                                border.color: model.verified ? Theme.rgba(Theme.secondaryHighlightColor, 0.8) : Theme.rgba(Theme.highlightColor, 0.3)
-                                border.width: model.verified ? 2 : 1
-                            }
+                                anchors.margins: Theme.paddingSmall / 2
+                                source: model.file_path ? "file://" + model.file_path : ""
+                                fillMode: Image.PreserveAspectCrop
+                                asynchronous: true
+                                clip: true
 
-                            // Verified badge (checkmark)
-                            Rectangle {
-                                visible: model.verified
-                                anchors.top: parent.top
-                                anchors.right: parent.right
-                                anchors.margins: Theme.paddingSmall
-                                width: Theme.iconSizeSmall
-                                height: Theme.iconSizeSmall
-                                radius: width / 2
-                                color: Theme.rgba("#4CAF50", 0.95)
-                                border.color: "white"
-                                border.width: 2
-                                z: 100
+                                // Limit source size to save memory
+                                sourceSize.width: 400
+                                sourceSize.height: 400
 
-                                Label {
+                                BusyIndicator {
                                     anchors.centerIn: parent
-                                    text: "✓"
-                                    font.pixelSize: Theme.fontSizeSmall
-                                    font.bold: true
-                                    color: "white"
+                                    running: parent.status === Image.Loading
+                                    size: BusyIndicatorSize.Small
+                                }
+
+                                // Border with different color for verified vs auto-matched
+                                Rectangle {
+                                    anchors.fill: parent
+                                    color: "transparent"
+                                    border.color: model.verified ? Theme.rgba(Theme.secondaryHighlightColor, 0.8) : Theme.rgba(Theme.highlightColor, 0.3)
+                                    border.width: model.verified ? 2 : 1
+                                }
+
+                                // Verified badge (checkmark)
+                                Rectangle {
+                                    visible: model.verified
+                                    anchors.top: parent.top
+                                    anchors.right: parent.right
+                                    anchors.margins: Theme.paddingSmall
+                                    width: Theme.iconSizeSmall
+                                    height: Theme.iconSizeSmall
+                                    radius: width / 2
+                                    color: Theme.rgba("#4CAF50", 0.95)
+                                    border.color: "white"
+                                    border.width: 2
+                                    z: 100
+
+                                    Label {
+                                        anchors.centerIn: parent
+                                        text: "✓"
+                                        font.pixelSize: Theme.fontSizeSmall
+                                        font.bold: true
+                                        color: "white"
+                                    }
+                                }
+
+                                // Similarity score badge (for auto-matched)
+                                Rectangle {
+                                    visible: !model.verified && model.similarity_score > 0
+                                    anchors.bottom: parent.bottom
+                                    anchors.right: parent.right
+                                    anchors.margins: Theme.paddingSmall
+                                    width: scoreLabel.width + Theme.paddingSmall
+                                    height: scoreLabel.height + Theme.paddingSmall / 2
+                                    radius: Theme.paddingSmall / 2
+                                    color: Theme.rgba(Theme.highlightBackgroundColor, 0.8)
+                                    z: 100
+
+                                    Label {
+                                        id: scoreLabel
+                                        anchors.centerIn: parent
+                                        text: Math.round(model.similarity_score * 100) + "%"
+                                        font.pixelSize: Theme.fontSizeTiny
+                                        color: Theme.primaryColor
+                                    }
                                 }
                             }
-
-                            // Similarity score badge (for auto-matched)
-                            Rectangle {
-                                visible: !model.verified && model.similarity_score > 0
-                                anchors.bottom: parent.bottom
-                                anchors.right: parent.right
-                                anchors.margins: Theme.paddingSmall
-                                width: scoreLabel.width + Theme.paddingSmall
-                                height: scoreLabel.height + Theme.paddingSmall / 2
-                                radius: Theme.paddingSmall / 2
-                                color: Theme.rgba(Theme.highlightBackgroundColor, 0.8)
-                                z: 100
-
-                                Label {
-                                    id: scoreLabel
-                                    anchors.centerIn: parent
-                                    text: Math.round(model.similarity_score * 100) + "%"
-                                    font.pixelSize: Theme.fontSizeTiny
-                                    color: Theme.primaryColor
-                                }
-                            }
-                        }
+                        ]
 
                         onClicked: {
                             pageStack.push(Qt.resolvedUrl("PhotoViewerPage.qml"), {
