@@ -126,9 +126,11 @@ Page {
                 Repeater {
                     model: photosModel
 
-                    delegate: BackgroundItem {
+                    delegate: ListItem {
+                        id: photoItem
                         width: photoGrid.width / 3
                         height: width
+                        contentHeight: width
 
                         Image {
                             id: photoImage
@@ -204,8 +206,26 @@ Page {
                             })
                         }
 
-                        onPressAndHold: {
-                            contextMenu.open(model)
+                        menu: ContextMenu {
+                            MenuItem {
+                                text: qsTr("Remove from person")
+                                onClicked: {
+                                    photoItem.remorseAction(qsTr("Removing"), function() {
+                                        if (facePipeline.removeFaceFromPerson(model.face_id)) {
+                                            photosModel.remove(index)
+                                        }
+                                    })
+                                }
+                            }
+
+                            MenuItem {
+                                text: qsTr("View full photo")
+                                onClicked: {
+                                    pageStack.push(Qt.resolvedUrl("PhotoViewerPage.qml"), {
+                                        photoPath: model.file_path
+                                    })
+                                }
+                            }
                         }
                     }
                 }
@@ -224,47 +244,5 @@ Page {
         }
 
         VerticalScrollDecorator {}
-    }
-
-    // Context menu for photo management
-    ContextMenu {
-        id: contextMenu
-
-        property var photoData: null
-
-        function open(data) {
-            photoData = data
-            active = true
-        }
-
-        MenuItem {
-            text: qsTr("Remove from person")
-            onClicked: {
-                if (contextMenu.photoData && contextMenu.photoData.face_id) {
-                    var remorse = Remorse.itemAction(page, qsTr("Removing photo"), function() {
-                        if (facePipeline.removeFaceFromPerson(contextMenu.photoData.face_id)) {
-                            // Remove from model
-                            for (var i = 0; i < photosModel.count; i++) {
-                                if (photosModel.get(i).face_id === contextMenu.photoData.face_id) {
-                                    photosModel.remove(i)
-                                    break
-                                }
-                            }
-                        }
-                    })
-                }
-            }
-        }
-
-        MenuItem {
-            text: qsTr("View full photo")
-            onClicked: {
-                if (contextMenu.photoData && contextMenu.photoData.file_path) {
-                    pageStack.push(Qt.resolvedUrl("PhotoViewerPage.qml"), {
-                        photoPath: contextMenu.photoData.file_path
-                    })
-                }
-            }
-        }
     }
 }
