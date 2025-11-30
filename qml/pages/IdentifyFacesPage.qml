@@ -139,50 +139,47 @@ Page {
                             visible: faceImage.status === Image.Ready && currentIndex < currentFaces.length
 
                             Rectangle {
-                                color: "transparent"
-                                border.color: "#FF5252"
-                                border.width: 4
-
-                                // Calculate position and size based on image display
+                                // Position on the painted image area
                                 property real imageDisplayWidth: faceImage.paintedWidth > 0 ? faceImage.paintedWidth : faceImage.width
                                 property real imageDisplayHeight: faceImage.paintedHeight > 0 ? faceImage.paintedHeight : faceImage.height
                                 property real imageOffsetX: (faceImage.width - imageDisplayWidth) / 2
                                 property real imageOffsetY: (faceImage.height - imageDisplayHeight) / 2
-                                property real srcWidth: faceImage.sourceSize.width > 0 ? faceImage.sourceSize.width : 1
-                                property real srcHeight: faceImage.sourceSize.height > 0 ? faceImage.sourceSize.height : 1
 
-                                // Scale factors
-                                property real scaleX: imageDisplayWidth / srcWidth
-                                property real scaleY: imageDisplayHeight / srcHeight
+                                // Get bbox from current face (normalized to source image size)
+                                property real bboxX: currentIndex < currentFaces.length ? currentFaces[currentIndex].bbox_x : 0
+                                property real bboxY: currentIndex < currentFaces.length ? currentFaces[currentIndex].bbox_y : 0
+                                property real bboxW: currentIndex < currentFaces.length ? currentFaces[currentIndex].bbox_width : 0
+                                property real bboxH: currentIndex < currentFaces.length ? currentFaces[currentIndex].bbox_height : 0
 
-                                x: currentIndex < currentFaces.length
-                                   ? imageOffsetX + (currentFaces[currentIndex].bbox_x * scaleX)
-                                   : 0
-                                y: currentIndex < currentFaces.length
-                                   ? imageOffsetY + (currentFaces[currentIndex].bbox_y * scaleY)
-                                   : 0
-                                width: currentIndex < currentFaces.length
-                                       ? currentFaces[currentIndex].bbox_width * scaleX
-                                       : 0
-                                height: currentIndex < currentFaces.length
-                                        ? currentFaces[currentIndex].bbox_height * scaleY
-                                        : 0
+                                // Scale factors from loaded image size to displayed size
+                                // sourceSize gives us the size at which image was loaded (640x640 max)
+                                property real scaleX: imageDisplayWidth / (faceImage.sourceSize.width > 0 ? faceImage.sourceSize.width : 1)
+                                property real scaleY: imageDisplayHeight / (faceImage.sourceSize.height > 0 ? faceImage.sourceSize.height : 1)
 
-                                // Corner markers
+                                x: imageOffsetX + (bboxX * scaleX)
+                                y: imageOffsetY + (bboxY * scaleY)
+                                width: bboxW * scaleX
+                                height: bboxH * scaleY
+
+                                color: "transparent"
+                                border.color: "#FF5252"
+                                border.width: 3
+
+                                // Corner markers for better visibility
                                 Repeater {
                                     model: [
-                                        {x: 0, y: 0, w: 20, h: 4, a: "left", b: "top"},
-                                        {x: 0, y: 0, w: 4, h: 20, a: "left", b: "top"},
-                                        {x: 0, y: 0, w: 20, h: 4, a: "right", b: "top"},
-                                        {x: 0, y: 0, w: 4, h: 20, a: "right", b: "top"},
-                                        {x: 0, y: 0, w: 20, h: 4, a: "left", b: "bottom"},
-                                        {x: 0, y: 0, w: 4, h: 20, a: "left", b: "bottom"},
-                                        {x: 0, y: 0, w: 20, h: 4, a: "right", b: "bottom"},
-                                        {x: 0, y: 0, w: 4, h: 20, a: "right", b: "bottom"}
+                                        {ax: "left", ay: "top", w: 20, h: 3},
+                                        {ax: "left", ay: "top", w: 3, h: 20},
+                                        {ax: "right", ay: "top", w: 20, h: 3},
+                                        {ax: "right", ay: "top", w: 3, h: 20},
+                                        {ax: "left", ay: "bottom", w: 20, h: 3},
+                                        {ax: "left", ay: "bottom", w: 3, h: 20},
+                                        {ax: "right", ay: "bottom", w: 20, h: 3},
+                                        {ax: "right", ay: "bottom", w: 3, h: 20}
                                     ]
                                     Rectangle {
-                                        anchors[modelData.a]: parent[modelData.a]
-                                        anchors[modelData.b]: parent[modelData.b]
+                                        anchors[modelData.ax]: parent[modelData.ax]
+                                        anchors[modelData.ay]: parent[modelData.ay]
                                         width: modelData.w
                                         height: modelData.h
                                         color: "#FF5252"

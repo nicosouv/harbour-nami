@@ -161,9 +161,9 @@ Page {
                                     border.width: model.verified ? 2 : 1
                                 }
 
-                                // Verified badge (checkmark)
+                                // Verified badge (manual identification - checkmark)
                                 Rectangle {
-                                    visible: model.verified
+                                    visible: model.verified === true
                                     anchors.top: parent.top
                                     anchors.right: parent.right
                                     anchors.margins: Theme.paddingSmall
@@ -184,9 +184,32 @@ Page {
                                     }
                                 }
 
+                                // Auto-matched badge (AI icon)
+                                Rectangle {
+                                    visible: model.verified === false && model.similarity_score > 0
+                                    anchors.top: parent.top
+                                    anchors.right: parent.right
+                                    anchors.margins: Theme.paddingSmall
+                                    width: Theme.iconSizeSmall
+                                    height: Theme.iconSizeSmall
+                                    radius: width / 2
+                                    color: Theme.rgba("#2196F3", 0.9)
+                                    border.color: "white"
+                                    border.width: 2
+                                    z: 100
+
+                                    Label {
+                                        anchors.centerIn: parent
+                                        text: "✦"
+                                        font.pixelSize: Theme.fontSizeSmall
+                                        font.bold: true
+                                        color: "white"
+                                    }
+                                }
+
                                 // Similarity score badge (for auto-matched)
                                 Rectangle {
-                                    visible: !model.verified && model.similarity_score > 0
+                                    visible: model.verified === false && model.similarity_score > 0
                                     anchors.bottom: parent.bottom
                                     anchors.right: parent.right
                                     anchors.margins: Theme.paddingSmall
