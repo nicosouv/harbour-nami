@@ -372,6 +372,27 @@ Page {
                     }
                 }
                 MenuItem {
+                    text: qsTr("Merge into...")
+                    visible: peopleModel.count > 1
+                    onClicked: {
+                        var mergeSourceId = model.person_id
+                        var mergeSourceName = model.name
+                        var dialog = pageStack.push(Qt.resolvedUrl("../dialogs/SelectPersonDialog.qml"), {
+                            peopleModel: peopleModel,
+                            allowCreate: false,
+                            excludePersonId: mergeSourceId,
+                            titleText: qsTr("Merge %1 into...").arg(mergeSourceName),
+                            acceptLabel: qsTr("Merge")
+                        })
+                        dialog.accepted.connect(function() {
+                            if (dialog.selectedPersonId > 0) {
+                                facePipeline.mergePersons(mergeSourceId, dialog.selectedPersonId)
+                                refreshPeople()
+                            }
+                        })
+                    }
+                }
+                MenuItem {
                     text: qsTr("Delete")
                     onClicked: {
                         var dialog = pageStack.push("Sailfish.Silica.RemorseDialog", {

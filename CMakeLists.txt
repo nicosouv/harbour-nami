@@ -53,6 +53,7 @@ message(STATUS "ONNX Runtime lib: ${ONNXRUNTIME_LIB}")
 # Sources
 set(SOURCES
     src/main.cpp
+    src/logging.cpp
     src/facedetector.cpp
     src/facerecognizer.cpp
     src/facedatabase.cpp
@@ -61,6 +62,7 @@ set(SOURCES
 
 # Headers
 set(HEADERS
+    src/logging.h
     src/facedetector.h
     src/facerecognizer.h
     src/facedatabase.h

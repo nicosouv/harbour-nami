@@ -9,10 +9,16 @@ Dialog {
     property bool createNew: true
     property string personName: ""
 
-    canAccept: (selectedPersonId > 0) || (createNew && newNameField.text.trim().length > 0)
+    // Reusable for other flows (e.g. merging people)
+    property string titleText: qsTr("Who is this?")
+    property string acceptLabel: qsTr("Identify")
+    property bool allowCreate: true
+    property int excludePersonId: -1
+
+    canAccept: (selectedPersonId > 0) || (createNew && allowCreate && newNameField.text.trim().length > 0)
 
     onAccepted: {
-        if (createNew) {
+        if (createNew && allowCreate) {
             personName = newNameField.text.trim()
         }
     }
@@ -27,14 +33,14 @@ Dialog {
             spacing: Theme.paddingMedium
 
             DialogHeader {
-                acceptText: qsTr("Identify")
+                acceptText: dialog.acceptLabel
                 cancelText: qsTr("Cancel")
             }
 
             Label {
                 x: Theme.horizontalPageMargin
                 width: parent.width - 2 * Theme.horizontalPageMargin
-                text: qsTr("Who is this?")
+                text: dialog.titleText
                 color: Theme.highlightColor
                 font.pixelSize: Theme.fontSizeLarge
             }
@@ -50,7 +56,8 @@ Dialog {
                 width: parent.width
                 label: qsTr("New person")
                 placeholderText: qsTr("Enter name")
-                focus: true
+                focus: allowCreate
+                visible: allowCreate
 
                 EnterKey.enabled: text.trim().length > 0
                 EnterKey.iconSource: "image://theme/icon-m-enter-accept"
@@ -72,14 +79,14 @@ Dialog {
                 height: 1
                 x: Theme.horizontalPageMargin
                 color: Theme.rgba(Theme.highlightColor, 0.1)
-                visible: peopleModel && peopleModel.count > 0
+                visible: allowCreate && peopleModel && peopleModel.count > 0
             }
 
             // Existing people
             Label {
                 x: Theme.horizontalPageMargin
                 width: parent.width - 2 * Theme.horizontalPageMargin
-                text: qsTr("Or select existing:")
+                text: allowCreate ? qsTr("Or select existing:") : qsTr("Select person:")
                 color: Theme.secondaryHighlightColor
                 font.pixelSize: Theme.fontSizeSmall
                 visible: peopleModel && peopleModel.count > 0
@@ -91,6 +98,7 @@ Dialog {
                 delegate: BackgroundItem {
                     width: column.width
                     height: Theme.itemSizeSmall
+                    visible: model.person_id !== dialog.excludePersonId
                     highlighted: selectedPersonId === model.person_id
 
                     Row {

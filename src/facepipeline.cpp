@@ -1,5 +1,6 @@
 #include "facepipeline.h"
 #include <QDebug>
+#include "logging.h"
 #include <QDir>
 #include <QImageReader>
 #include <QFileInfo>
@@ -18,11 +19,19 @@ FacePipeline::FacePipeline(QObject *parent)
     , m_currentScanIsForced(false)
     , m_totalPhotos(0)
     , m_processedPhotos(0)
+    , m_personProtoCacheValid(false)
 {
+    connect(&m_extractionWatcher, &QFutureWatcher<PhotoExtraction>::finished,
+            this, &FacePipeline::onExtractionFinished);
 }
 
 FacePipeline::~FacePipeline()
 {
+    // The worker uses m_detector/m_recognizer; let it finish first
+    if (m_extractionWatcher.isRunning()) {
+        m_extractionWatcher.waitForFinished();
+    }
+
     delete m_detector;
     delete m_recognizer;
     delete m_database;
@@ -32,10 +41,10 @@ bool FacePipeline::initialize(const QString &detectorModelPath,
                               const QString &recognizerModelPath,
                               const QString &databasePath)
 {
-    qDebug() << "Initializing face pipeline...";
-    qDebug() << "  Detector model:" << detectorModelPath;
-    qDebug() << "  Recognizer model:" << recognizerModelPath;
-    qDebug() << "  Database:" << databasePath;
+    qCDebug(lcNami) << "Initializing face pipeline...";
+    qCDebug(lcNami) << "  Detector model:" << detectorModelPath;
+    qCDebug(lcNami) << "  Recognizer model:" << recognizerModelPath;
+    qCDebug(lcNami) << "  Database:" << databasePath;
 
     // Create detector
     m_detector = new FaceDetector(this);
@@ -72,7 +81,7 @@ bool FacePipeline::initialize(const QString &detectorModelPath,
     m_initialized = true;
     emit initializedChanged();
 
-    qDebug() << "Face pipeline initialized successfully";
+    qCDebug(lcNami) << "Face pipeline initialized successfully";
     return true;
 }
 
@@ -93,6 +102,7 @@ void FacePipeline::scanGallery(const QString &galleryPath, bool recursive, bool 
     if (m_needsRescan) {
         qWarning() << "Clearing face data computed with an outdated engine version";
         m_database->clearFaceData();
+        invalidatePersonPrototypes();
         forceRescan = true;
     }
 
@@ -101,7 +111,7 @@ void FacePipeline::scanGallery(const QString &galleryPath, bool recursive, bool 
     m_currentScanIsForced = forceRescan;
     emit processingChanged();
 
-    qDebug() << "Scanning gallery:" << galleryPath << "(recursive:" << recursive
+    qCDebug(lcNami) << "Scanning gallery:" << galleryPath << "(recursive:" << recursive
              << "force:" << forceRescan << ")";
 
     // Find all image files
@@ -117,7 +127,7 @@ void FacePipeline::scanGallery(const QString &galleryPath, bool recursive, bool 
                     newFiles.append(file);
                 }
             }
-            qDebug() << "Incremental scan:" << (m_pendingFiles.size() - newFiles.size())
+            qCDebug(lcNami) << "Incremental scan:" << (m_pendingFiles.size() - newFiles.size())
                      << "photos already processed," << newFiles.size() << "to process";
             m_pendingFiles = newFiles;
         }
@@ -130,63 +140,73 @@ void FacePipeline::scanGallery(const QString &galleryPath, bool recursive, bool 
     emit totalPhotosChanged();
     emit scanStarted(m_totalPhotos);
 
-    qDebug() << "Found" << m_totalPhotos << "image files";
+    qCDebug(lcNami) << "Found" << m_totalPhotos << "image files";
 
-    // Start batch processing with timer to keep UI responsive
-    processBatch();
+    processNextPhoto();
 }
 
-void FacePipeline::processBatch()
+void FacePipeline::processNextPhoto()
 {
-    const int BATCH_SIZE = 5;  // Process 5 photos per batch
-    const int BATCH_DELAY_MS = 50;  // 50ms delay between batches to keep UI responsive
-
     if (m_cancelRequested) {
-        qDebug() << "Scan cancelled by user";
-        m_processing = false;
-        emit processingChanged();
-        emit scanFailed("Cancelled by user");
+        finishScan(true);
         return;
     }
 
     if (m_pendingFiles.isEmpty()) {
-        // All photos processed; stored embeddings now match the engine
-        m_database->setSetting("embedding_version", QString::number(EMBEDDING_VERSION));
-        if (m_needsRescan) {
-            m_needsRescan = false;
-            emit needsRescanChanged();
-        }
-
-        m_processing = false;
-        emit processingChanged();
-        emit scanCompleted(m_processedPhotos, m_totalFacesDetected);
-        qDebug() << "Scan completed:" << m_processedPhotos << "photos," << m_totalFacesDetected << "faces";
+        finishScan(false);
         return;
     }
 
-    // Process a batch of photos
-    int processed = 0;
-    while (processed < BATCH_SIZE && !m_pendingFiles.isEmpty()) {
-        QString filePath = m_pendingFiles.takeFirst();
+    QString filePath = m_pendingFiles.takeFirst();
+    emit scanProgress(m_processedPhotos + 1, m_totalPhotos, filePath);
 
-        emit scanProgress(m_processedPhotos + 1, m_totalPhotos, filePath);
+    // Decode + detect + embed on a worker thread; the UI thread only does
+    // the DB commit in onExtractionFinished
+    m_extractionWatcher.setFuture(
+        QtConcurrent::run(this, &FacePipeline::extractPhotoData, filePath));
+}
 
-        PhotoProcessingResult result = processPhotoInternal(filePath, m_currentScanIsForced);
-
-        if (result.success) {
-            m_totalFacesDetected += result.facesDetected;
-        }
-
-        emit photoProcessed(result);
-
-        m_processedPhotos++;
-        emit processedPhotosChanged();
-
-        processed++;
+void FacePipeline::onExtractionFinished()
+{
+    if (!m_processing) {
+        return;
     }
 
-    // Schedule next batch with a small delay to keep UI responsive
-    QTimer::singleShot(BATCH_DELAY_MS, this, &FacePipeline::processBatch);
+    PhotoProcessingResult result = commitExtraction(m_extractionWatcher.result(),
+                                                    m_currentScanIsForced);
+
+    if (result.success) {
+        m_totalFacesDetected += result.facesDetected;
+    }
+
+    emit photoProcessed(result);
+
+    m_processedPhotos++;
+    emit processedPhotosChanged();
+
+    processNextPhoto();
+}
+
+void FacePipeline::finishScan(bool cancelled)
+{
+    m_processing = false;
+    emit processingChanged();
+
+    if (cancelled) {
+        qCDebug(lcNami) << "Scan cancelled by user";
+        emit scanFailed("Cancelled by user");
+        return;
+    }
+
+    // Stored embeddings now match the engine
+    m_database->setSetting("embedding_version", QString::number(EMBEDDING_VERSION));
+    if (m_needsRescan) {
+        m_needsRescan = false;
+        emit needsRescanChanged();
+    }
+
+    emit scanCompleted(m_processedPhotos, m_totalFacesDetected);
+    qCDebug(lcNami) << "Scan completed:" << m_processedPhotos << "photos," << m_totalFacesDetected << "faces";
 }
 
 PhotoProcessingResult FacePipeline::processPhoto(const QString &photoPath)
@@ -195,130 +215,124 @@ PhotoProcessingResult FacePipeline::processPhoto(const QString &photoPath)
         return PhotoProcessingResult{-1, photoPath, 0, 0, false, "Pipeline not initialized"};
     }
 
-    return processPhotoInternal(photoPath);
+    return commitExtraction(extractPhotoData(photoPath), false);
 }
 
-PhotoProcessingResult FacePipeline::processPhotoInternal(const QString &photoPath, bool reprocess)
+PhotoExtraction FacePipeline::extractPhotoData(const QString &photoPath)
+{
+    PhotoExtraction extraction;
+    extraction.filePath = photoPath;
+    extraction.loaded = false;
+    extraction.width = 0;
+    extraction.height = 0;
+
+    qCDebug(lcNami) << "Processing photo:" << photoPath;
+
+    QImage image = loadImage(photoPath);
+    if (image.isNull()) {
+        return extraction;
+    }
+
+    extraction.loaded = true;
+    extraction.width = image.width();
+    extraction.height = image.height();
+
+    QFileInfo fileInfo(photoPath);
+    extraction.dateTaken = fileInfo.lastModified();  // Could use EXIF data
+
+    QVector<FaceDetection> detections = m_detector->detect(image);
+    qCDebug(lcNami) << "Detected" << detections.size() << "faces";
+
+    if (detections.isEmpty()) {
+        return extraction;
+    }
+
+    // Convert once for all faces of this photo
+    cv::Mat cvImage = m_detector->qImageToCvMat(image);
+
+    for (const FaceDetection &detection : detections) {
+        cv::Mat faceRegion = alignFace(cvImage, detection);
+
+        FaceEmbedding embedding = m_recognizer->extractEmbedding(faceRegion);
+        if (embedding.empty()) {
+            qWarning() << "Failed to extract embedding for a face in" << photoPath;
+            continue;
+        }
+
+        ExtractedFace face;
+        face.bbox = detection.bbox;
+        face.confidence = detection.confidence;
+        face.embedding = embedding;
+        extraction.faces.append(face);
+    }
+
+    return extraction;
+}
+
+PhotoProcessingResult FacePipeline::commitExtraction(const PhotoExtraction &extraction,
+                                                     bool reprocess)
 {
     PhotoProcessingResult result;
-    result.filePath = photoPath;
+    result.photoId = -1;
+    result.filePath = extraction.filePath;
     result.facesDetected = 0;
     result.facesMatched = 0;
     result.success = false;
 
-    qDebug() << "";
-    qDebug() << "╔═══════════════════════════════════════════════════════════════╗";
-    qDebug() << "║ Processing photo:" << photoPath;
-    qDebug() << "╚═══════════════════════════════════════════════════════════════╝";
-
-    // Load image
-    qDebug() << "→ Loading image...";
-    QImage image = loadImage(photoPath);
-    if (image.isNull()) {
-        qWarning() << "✗ Failed to load image";
+    if (!extraction.loaded) {
+        qWarning() << "Failed to load image:" << extraction.filePath;
         result.errorMessage = "Failed to load image";
         return result;
     }
-    qDebug() << "✓ Image loaded:" << image.width() << "x" << image.height() << "format:" << image.format();
 
-    // Get or create photo record
-    QFileInfo fileInfo(photoPath);
-    QDateTime dateTaken = fileInfo.lastModified();  // Could use EXIF data
+    // All writes for one photo in a single transaction
+    m_database->beginTransaction();
 
-    qDebug() << "→ Adding photo to database...";
-    int photoId = m_database->addPhoto(photoPath, dateTaken, image.width(), image.height());
+    int photoId = m_database->addPhoto(extraction.filePath, extraction.dateTaken,
+                                       extraction.width, extraction.height);
     if (photoId < 0) {
-        qWarning() << "✗ Failed to add photo to database";
+        m_database->rollbackTransaction();
         result.errorMessage = "Failed to add photo to database";
         return result;
     }
-    qDebug() << "✓ Photo added to DB with ID:" << photoId;
 
     result.photoId = photoId;
 
     // The photo may already have faces from a previous scan; remove them
-    // before re-detecting, otherwise every scan duplicates all faces and
+    // before re-adding, otherwise every scan duplicates all faces and
     // identified people keep reappearing as unknown
     if (reprocess) {
         m_database->deleteFacesForPhoto(photoId);
     } else if (m_database->getPhoto(photoId).processedAt.isValid()) {
-        qDebug() << "ℹ Photo already processed, skipping";
+        qCDebug(lcNami) << "Photo already processed, skipping:" << extraction.filePath;
+        m_database->rollbackTransaction();
         result.success = true;
         return result;
     }
 
-    // Detect faces
-    qDebug() << "→ Starting face detection...";
-    QVector<FaceDetection> detections = m_detector->detect(image);
-    result.facesDetected = detections.size();
+    result.facesDetected = extraction.faces.size();
 
-    qDebug() << "✓ Face detection complete:" << detections.size() << "faces found";
-
-    if (detections.isEmpty()) {
-        qDebug() << "⚠ No faces detected in this image";
-    }
-
-    // Convert once for all faces of this photo
-    cv::Mat cvImage;
-    if (!detections.isEmpty()) {
-        cvImage = m_detector->qImageToCvMat(image);
-    }
-
-    // Process each detected face
-    for (int i = 0; i < detections.size(); i++) {
-        const FaceDetection &detection = detections[i];
-        qDebug() << "  → Processing face" << (i+1) << "/" << detections.size()
-                 << "- confidence:" << detection.confidence;
-
-        // Align face to the ArcFace template using the detected landmarks
-        cv::Mat faceRegion = alignFace(cvImage, detection);
-        qDebug() << "    ✓ Face aligned:" << faceRegion.cols << "x" << faceRegion.rows;
-
-        // Extract embedding
-        qDebug() << "    → Extracting face embedding...";
-        FaceEmbedding embedding = m_recognizer->extractEmbedding(faceRegion);
-
-        if (embedding.empty()) {
-            qWarning() << "    ✗ Failed to extract embedding for face";
-            continue;
-        }
-        qDebug() << "    ✓ Embedding extracted (size:" << embedding.size() << ")";
-
-        // Match against database
-        qDebug() << "    → Matching against database...";
-        FaceMatch match = matchFaceToDatabase(embedding);
+    for (const ExtractedFace &face : extraction.faces) {
+        FaceMatch match = matchFaceToDatabase(face.embedding);
 
         if (match.personId >= 0) {
             result.facesMatched++;
-            qDebug() << "    ✓ Matched to person ID:" << match.personId
-                     << "with similarity:" << match.similarity;
-        } else {
-            qDebug() << "    ○ No match found (new face)";
+            qCDebug(lcNami) << "Matched face to person" << match.personId
+                            << "with similarity" << match.similarity;
         }
 
-        // Store in database with similarity score
-        qDebug() << "    → Storing face in database...";
-        int faceId = m_database->addFace(photoId, detection.bbox, detection.confidence,
-                                         embedding, match.personId, match.similarity, false);
-
+        int faceId = m_database->addFace(photoId, face.bbox, face.confidence,
+                                         face.embedding, match.personId,
+                                         match.similarity, false);
         if (faceId < 0) {
-            qWarning() << "    ✗ Failed to add face to database";
-        } else {
-            qDebug() << "    ✓ Face stored with ID:" << faceId;
+            qWarning() << "Failed to add face to database for" << extraction.filePath;
         }
     }
 
-    // Mark photo as processed
     m_database->markPhotoProcessed(photoId);
+    m_database->commitTransaction();
 
     result.success = true;
-    qDebug() << "═══════════════════════════════════════════════════════════════";
-    qDebug() << "Photo processing summary:";
-    qDebug() << "  Faces detected:" << result.facesDetected;
-    qDebug() << "  Faces matched:" << result.facesMatched;
-    qDebug() << "═══════════════════════════════════════════════════════════════";
-    qDebug() << "";
-
     return result;
 }
 
@@ -329,10 +343,10 @@ int FacePipeline::groupUnknownFaces(float similarityThreshold)
         return 0;
     }
 
-    qDebug() << "Grouping unknown faces with threshold:" << similarityThreshold;
+    qCDebug(lcNami) << "Grouping unknown faces with threshold:" << similarityThreshold;
 
     QVector<Face> unmappedFaces = m_database->getUnmappedFaces();
-    qDebug() << "Found" << unmappedFaces.size() << "unmapped faces";
+    qCDebug(lcNami) << "Found" << unmappedFaces.size() << "unmapped faces";
 
     if (unmappedFaces.isEmpty()) {
         return 0;
@@ -379,7 +393,8 @@ int FacePipeline::groupUnknownFaces(float similarityThreshold)
         groupsCreated++;
     }
 
-    qDebug() << "Created" << groupsCreated << "groups";
+    qCDebug(lcNami) << "Created" << groupsCreated << "groups";
+    invalidatePersonPrototypes();
     return groupsCreated;
 }
 
@@ -409,20 +424,23 @@ bool FacePipeline::identifyFace(int faceId, int personId, const QString &personN
         return false;
     }
 
+    // Verified faces define the person prototype
+    invalidatePersonPrototypes();
+
     // Automatic re-matching: After identifying a face, re-match unmapped faces
     // against the updated person profile
-    qDebug() << "Re-matching unmapped faces against person" << personId;
+    qCDebug(lcNami) << "Re-matching unmapped faces against person" << personId;
 
     // Prototype built from user-verified faces (see getAverageEmbedding)
     FaceEmbedding personEmbedding = m_database->getAverageEmbedding(personId);
     if (personEmbedding.empty()) {
-        qDebug() << "Could not get average embedding for person" << personId;
+        qCDebug(lcNami) << "Could not get average embedding for person" << personId;
         return true;  // Still return success, re-matching is optional
     }
 
     // Get all unmapped faces (excludes ignored ones)
     QVector<Face> unmappedFaces = m_database->getUnmappedFaces();
-    qDebug() << "Found" << unmappedFaces.size() << "unmapped faces to check";
+    qCDebug(lcNami) << "Found" << unmappedFaces.size() << "unmapped faces to check";
 
     // Match each unmapped face against the person
     int autoMatched = 0;
@@ -436,7 +454,7 @@ bool FacePipeline::identifyFace(int faceId, int personId, const QString &personN
 
         // If similarity is above threshold, auto-assign to this person
         if (similarity >= AUTO_MATCH_THRESHOLD) {
-            qDebug() << "Auto-matching face" << face.id << "to person" << personId
+            qCDebug(lcNami) << "Auto-matching face" << face.id << "to person" << personId
                      << "with similarity" << similarity;
 
             // Update face mapping with similarity score and verified=false (auto-matched)
@@ -447,7 +465,7 @@ bool FacePipeline::identifyFace(int faceId, int personId, const QString &personN
         }
     }
 
-    qDebug() << "Auto-matched" << autoMatched << "faces to person" << personId;
+    qCDebug(lcNami) << "Auto-matched" << autoMatched << "faces to person" << personId;
 
     return true;
 }
@@ -567,22 +585,32 @@ cv::Mat FacePipeline::alignFace(const cv::Mat &image, const FaceDetection &detec
 
 FaceMatch FacePipeline::matchFaceToDatabase(const FaceEmbedding &embedding, float threshold)
 {
-    // Get all person embeddings
-    QVector<QPair<int, FaceEmbedding>> personEmbeddings = m_database->getAllPersonEmbeddings();
+    const QVector<QPair<int, FaceEmbedding>> &prototypes = personPrototypes();
 
-    if (personEmbeddings.isEmpty()) {
+    if (prototypes.isEmpty()) {
         return FaceMatch{-1, 0.0f};  // No people in database yet
     }
 
-    // Match against database
-    FaceMatch match = FaceRecognizer::matchFace(embedding, personEmbeddings, threshold);
+    return FaceRecognizer::matchFace(embedding, prototypes, threshold);
+}
 
-    if (match.personId >= 0) {
-        qDebug() << "Matched face to person" << match.personId
-                 << "with similarity" << match.similarity;
+const QVector<QPair<int, FaceEmbedding>> &FacePipeline::personPrototypes()
+{
+    // Prototypes only change when verified faces or people change
+    // (identify, remove, merge, delete); unverified auto-assigns during a
+    // scan don't affect them, so the cache stays valid for a whole scan
+    if (!m_personProtoCacheValid) {
+        m_personProtoCache = m_database->getAllPersonEmbeddings();
+        m_personProtoCacheValid = true;
+        qCDebug(lcNami) << "Person prototype cache rebuilt:" << m_personProtoCache.size() << "people";
     }
 
-    return match;
+    return m_personProtoCache;
+}
+
+void FacePipeline::invalidatePersonPrototypes()
+{
+    m_personProtoCacheValid = false;
 }
 
 QVariantList FacePipeline::getAllPeople()
@@ -651,6 +679,7 @@ bool FacePipeline::deletePerson(int personId)
         return false;
     }
 
+    invalidatePersonPrototypes();
     return m_database->deletePerson(personId);
 }
 
@@ -661,6 +690,20 @@ bool FacePipeline::updatePersonName(int personId, const QString &name)
     }
 
     return m_database->updatePersonName(personId, name);
+}
+
+bool FacePipeline::mergePersons(int fromPersonId, int intoPersonId)
+{
+    if (!m_initialized || !m_database) {
+        return false;
+    }
+
+    if (fromPersonId == intoPersonId || fromPersonId < 0 || intoPersonId < 0) {
+        return false;
+    }
+
+    invalidatePersonPrototypes();
+    return m_database->mergePersons(fromPersonId, intoPersonId);
 }
 
 bool FacePipeline::removeFaceFromPerson(int faceId)
@@ -676,6 +719,7 @@ bool FacePipeline::removeFaceFromPerson(int faceId)
         m_database->addNegativeMatch(faceId, face.personId);
     }
 
+    invalidatePersonPrototypes();
     return m_database->removeFaceFromPerson(faceId);
 }
 
@@ -737,5 +781,6 @@ bool FacePipeline::deleteAllData()
         return false;
     }
 
+    invalidatePersonPrototypes();
     return m_database->deleteAllData();
 }

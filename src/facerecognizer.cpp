@@ -1,5 +1,6 @@
 #include "facerecognizer.h"
 #include <QDebug>
+#include "logging.h"
 #include <cmath>
 
 FaceRecognizer::FaceRecognizer(QObject *parent)
@@ -23,7 +24,7 @@ FaceRecognizer::~FaceRecognizer()
 bool FaceRecognizer::loadModel(const QString &modelPath)
 {
     try {
-        qDebug() << "Loading ArcFace recognition model from:" << modelPath;
+        qCDebug(lcNami) << "Loading ArcFace recognition model from:" << modelPath;
 
         // Create ONNX Runtime session
         m_session = new Ort::Session(m_env, modelPath.toUtf8().constData(), m_sessionOptions);
@@ -44,8 +45,8 @@ bool FaceRecognizer::loadModel(const QString &modelPath)
         auto tensorInfo = inputTypeInfo.GetTensorTypeAndShapeInfo();
         m_inputShape = tensorInfo.GetShape();
 
-        qDebug() << "Input name:" << m_inputNames[0].c_str();
-        qDebug() << "Input shape:" << m_inputShape[0] << m_inputShape[1]
+        qCDebug(lcNami) << "Input name:" << m_inputNames[0].c_str();
+        qCDebug(lcNami) << "Input shape:" << m_inputShape[0] << m_inputShape[1]
                  << m_inputShape[2] << m_inputShape[3];
 
         // Output
@@ -61,12 +62,12 @@ bool FaceRecognizer::loadModel(const QString &modelPath)
         auto outputTensorInfo = outputTypeInfo.GetTensorTypeAndShapeInfo();
         m_outputShape = outputTensorInfo.GetShape();
 
-        qDebug() << "Output shape:" << m_outputShape[0] << m_outputShape[1];
+        qCDebug(lcNami) << "Output shape:" << m_outputShape[0] << m_outputShape[1];
 
         m_modelLoaded = true;
-        qDebug() << "ArcFace model loaded successfully";
-        qDebug() << "Expected input: 112x112 RGB, normalized";
-        qDebug() << "Output: 512-d embedding vector";
+        qCDebug(lcNami) << "ArcFace model loaded successfully";
+        qCDebug(lcNami) << "Expected input: 112x112 RGB, normalized";
+        qCDebug(lcNami) << "Output: 512-d embedding vector";
 
         return true;
     }
@@ -151,7 +152,7 @@ FaceEmbedding FaceRecognizer::extractEmbedding(const cv::Mat &faceImage)
         // L2 normalize
         embedding = normalizeEmbedding(embedding);
 
-        qDebug() << "Extracted" << embedding.size() << "dimensional embedding";
+        qCDebug(lcNami) << "Extracted" << embedding.size() << "dimensional embedding";
 
         return embedding;
     }

@@ -39,6 +39,12 @@ Page {
                 facesDetected: facesDetected
             })
         }
+
+        onScanFailed: {
+            // Cancelled or errored: leave the scanning page
+            scanning = false
+            pageStack.pop()
+        }
     }
 
     // Gradient background
@@ -247,7 +253,6 @@ Page {
                 width: Theme.buttonWidthMedium
                 height: Theme.itemSizeSmall
                 anchors.horizontalCenter: parent.horizontalCenter
-                visible: !scanning
 
                 Rectangle {
                     anchors.fill: parent
@@ -257,14 +262,20 @@ Page {
 
                     Label {
                         anchors.centerIn: parent
-                        text: qsTr("Done")
+                        text: scanning ? qsTr("Cancel") : qsTr("Done")
                         color: "#0a192f"
                         font.bold: true
                         font.pixelSize: Theme.fontSizeMedium
                     }
                 }
 
-                onClicked: pageStack.pop()
+                onClicked: {
+                    if (scanning) {
+                        facePipeline.cancel()
+                    } else {
+                        pageStack.pop()
+                    }
+                }
             }
         }
     }

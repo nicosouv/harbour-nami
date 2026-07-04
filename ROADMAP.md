@@ -40,30 +40,27 @@ calibration on real photos.
    `GROUPING_THRESHOLD`); detector default confidence raised from 0.3 to 0.8
    (YuNet real faces score > 0.9). Still to do: calibrate on a real gallery
    after the alignment change.
-9. **Person merge missing**: the greedy clustering creates "Person 1..N"
-   duplicates of the same human; there is no way to merge two people. This is
-   essential to converge.
+9. ~~**Person merge missing**~~ Done: `mergePersons(from, into)` reassigns
+   faces, carries rejections over and deletes the duplicate; exposed in the
+   people list context menu ("Merge into...").
 
 ## P1 — Performance
 
-- **Move the pipeline off the UI thread**: inference currently runs on the GUI
-  thread in 5-photo batches with 50 ms breathers — the UI freezes for seconds
-  per batch. Use a worker `QThread` (Qt5Concurrent is already a dependency but
-  unused) and emit progress across threads.
-- **Cache person prototypes**: `matchFaceToDatabase` calls
-  `getAllPersonEmbeddings`, which reloads and re-averages *every face of every
-  person from SQLite for every detected face*. Cache in memory, invalidate on
-  identify/remove.
-- **SQLite tuning**: one transaction per photo (currently one implicit
-  transaction per INSERT). Done already: `journal_mode=WAL`,
-  `synchronous=NORMAL`, `foreign_keys=ON` set at open.
-- **Logging**: the per-photo/per-face `qDebug` walls (box-drawing banners,
-  per-face dumps) run in release builds and measurably slow scans. Use
-  `QLoggingCategory` and disable by default.
-- **Single QImage→Mat conversion** per photo (currently done twice: once in
-  the detector, once in the pipeline for cropping).
-- **Incremental scan** (covered by P0.4) is also the biggest perceived speed
-  win: second scan of an unchanged gallery should take seconds.
+Status: all done (2026-07-04) except the face thumbnail cache.
+
+- ~~**Move the pipeline off the UI thread**~~ Done: decode + detection +
+  embedding run on a QtConcurrent worker (one photo in flight); only the SQL
+  commit runs on the main thread (QSqlDatabase thread affinity).
+- ~~**Cache person prototypes**~~ Done: in-memory cache invalidated on
+  identify/remove/merge/delete; no longer O(persons x faces) DB reads per
+  detected face.
+- ~~**SQLite tuning**~~ Done: one transaction per photo commit;
+  `journal_mode=WAL`, `synchronous=NORMAL`, `foreign_keys=ON` at open.
+- ~~**Logging**~~ Done: verbose logs moved to the `nami.pipeline` logging
+  category, disabled by default (enable with
+  `QT_LOGGING_RULES="nami.pipeline.debug=true"`).
+- ~~**Single QImage→Mat conversion**~~ Done (once per photo).
+- ~~**Incremental scan**~~ Done (P0.4).
 - **Face thumbnail cache** on disk for lists (avoid decoding full-size photos
   to render a 100 px avatar).
 
@@ -94,8 +91,9 @@ calibration on real photos.
   (or migrate to `SailfishApp::main`), resync `.ts` files (es/fi/it are stale:
   59 lines vs 398 for fr, with strings that no longer exist).
 - **ScanningPage**:
-  - No way to cancel a running scan (`cancel()` exists in C++; the only button
-    appears after completion). Add a cancel button / remorse.
+  - ~~No way to cancel a running scan~~ Done: the button cancels while
+    scanning, and the page handles `scanFailed` (it used to stay stuck after
+    a cancel).
   - Hardcoded hex colors (`#0a192f`, `#64ffda`…) break light ambiences and
     Silica conventions — use `Theme.*` colors.
 - **SettingsPage is mostly placebo**:

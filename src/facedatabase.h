@@ -82,6 +82,12 @@ public:
      */
     bool initializeSchema();
 
+    // === Transactions (batch several writes, e.g. one photo commit) ===
+
+    bool beginTransaction();
+    bool commitTransaction();
+    bool rollbackTransaction();
+
     // === Photo operations ===
 
     /**
@@ -198,6 +204,13 @@ public:
      * @brief Delete person and unmap their faces
      */
     bool deletePerson(int personId);
+
+    /**
+     * @brief Merge fromPersonId into intoPersonId and delete fromPersonId
+     *
+     * Faces, verified flags and rejections carry over.
+     */
+    bool mergePersons(int fromPersonId, int intoPersonId);
 
     /**
      * @brief Get all faces for a person

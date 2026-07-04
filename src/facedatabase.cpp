@@ -1,5 +1,6 @@
 #include "facedatabase.h"
 #include <QDebug>
+#include "logging.h"
 #include <QSqlQuery>
 #include <QSqlError>
 #include <QVariant>
@@ -38,7 +39,7 @@ bool FaceDatabase::open(const QString &dbPath)
     }
 
     m_isOpen = true;
-    qDebug() << "Database opened:" << dbPath;
+    qCDebug(lcNami) << "Database opened:" << dbPath;
 
     // FK constraints are declared in the schema but SQLite only enforces
     // them with this pragma; WAL avoids blocking readers during scans
@@ -55,7 +56,7 @@ void FaceDatabase::close()
     if (m_isOpen) {
         m_db.close();
         m_isOpen = false;
-        qDebug() << "Database closed";
+        qCDebug(lcNami) << "Database closed";
     }
 }
 
@@ -149,8 +150,25 @@ bool FaceDatabase::initializeSchema()
     query.exec("CREATE INDEX IF NOT EXISTS idx_faces_person ON faces(person_id)");
     query.exec("CREATE INDEX IF NOT EXISTS idx_photos_path ON photos(file_path)");
 
-    qDebug() << "Database schema initialized";
+    qCDebug(lcNami) << "Database schema initialized";
     return true;
+}
+
+// === Transactions ===
+
+bool FaceDatabase::beginTransaction()
+{
+    return m_db.transaction();
+}
+
+bool FaceDatabase::commitTransaction()
+{
+    return m_db.commit();
+}
+
+bool FaceDatabase::rollbackTransaction()
+{
+    return m_db.rollback();
 }
 
 // === Photo operations ===
@@ -158,7 +176,7 @@ bool FaceDatabase::initializeSchema()
 int FaceDatabase::addPhoto(const QString &filePath, const QDateTime &dateTaken,
                            int width, int height)
 {
-    qDebug() << "  → Attempting to insert photo:" << filePath;
+    qCDebug(lcNami) << "  → Attempting to insert photo:" << filePath;
 
     // Check if photo already exists
     QSqlQuery checkQuery(m_db);
@@ -167,7 +185,7 @@ int FaceDatabase::addPhoto(const QString &filePath, const QDateTime &dateTaken,
 
     if (checkQuery.exec() && checkQuery.next()) {
         int existingId = checkQuery.value(0).toInt();
-        qDebug() << "  ℹ Photo already exists in DB with ID:" << existingId;
+        qCDebug(lcNami) << "  ℹ Photo already exists in DB with ID:" << existingId;
         return existingId;  // Return existing photo ID
     }
 
@@ -191,7 +209,7 @@ int FaceDatabase::addPhoto(const QString &filePath, const QDateTime &dateTaken,
     }
 
     int newId = query.lastInsertId().toInt();
-    qDebug() << "  ✓ Photo inserted with ID:" << newId;
+    qCDebug(lcNami) << "  ✓ Photo inserted with ID:" << newId;
     return newId;
 }
 
@@ -561,6 +579,50 @@ bool FaceDatabase::deletePerson(int personId)
     query3.prepare("DELETE FROM negative_matches WHERE person_id = :person_id");
     query3.bindValue(":person_id", personId);
     query3.exec();
+
+    m_db.commit();
+    return true;
+}
+
+bool FaceDatabase::mergePersons(int fromPersonId, int intoPersonId)
+{
+    m_db.transaction();
+
+    // Reassign faces (verified flags and similarity scores carry over)
+    QSqlQuery moveFaces(m_db);
+    moveFaces.prepare("UPDATE faces SET person_id = :into WHERE person_id = :from");
+    moveFaces.bindValue(":into", intoPersonId);
+    moveFaces.bindValue(":from", fromPersonId);
+    if (!moveFaces.exec()) {
+        m_db.rollback();
+        return false;
+    }
+
+    // A rejection of the duplicate is a rejection of the same human
+    QSqlQuery moveRejections(m_db);
+    moveRejections.prepare(R"(
+        INSERT OR IGNORE INTO negative_matches (face_id, person_id)
+        SELECT face_id, :into FROM negative_matches WHERE person_id = :from
+    )");
+    moveRejections.bindValue(":into", intoPersonId);
+    moveRejections.bindValue(":from", fromPersonId);
+    if (!moveRejections.exec()) {
+        m_db.rollback();
+        return false;
+    }
+
+    QSqlQuery dropRejections(m_db);
+    dropRejections.prepare("DELETE FROM negative_matches WHERE person_id = :from");
+    dropRejections.bindValue(":from", fromPersonId);
+    dropRejections.exec();
+
+    QSqlQuery dropPerson(m_db);
+    dropPerson.prepare("DELETE FROM people WHERE id = :from");
+    dropPerson.bindValue(":from", fromPersonId);
+    if (!dropPerson.exec()) {
+        m_db.rollback();
+        return false;
+    }
 
     m_db.commit();
     return true;

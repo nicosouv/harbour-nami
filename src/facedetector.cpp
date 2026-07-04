@@ -1,5 +1,6 @@
 #include "facedetector.h"
 #include <QDebug>
+#include "logging.h"
 #include <algorithm>
 #include <cmath>
 
@@ -17,7 +18,7 @@ FaceDetector::~FaceDetector()
 bool FaceDetector::loadModel(const QString &modelPath)
 {
     try {
-        qDebug() << "Loading YuNet face detection model from:" << modelPath;
+        qCDebug(lcNami) << "Loading YuNet face detection model from:" << modelPath;
 
         // Create FaceDetectorYN with OpenCV API
         // Parameters: model_path, config_path, input_size, score_threshold, nms_threshold, top_k, backend_id, target_id
@@ -38,8 +39,8 @@ bool FaceDetector::loadModel(const QString &modelPath)
         }
 
         m_modelLoaded = true;
-        qDebug() << "YuNet model loaded successfully";
-        qDebug() << "Fixed input size:" << m_inputSize.width() << "x" << m_inputSize.height()
+        qCDebug(lcNami) << "YuNet model loaded successfully";
+        qCDebug(lcNami) << "Fixed input size:" << m_inputSize.width() << "x" << m_inputSize.height()
                  << "(all images will be resized to this)";
 
         return true;
@@ -54,9 +55,9 @@ bool FaceDetector::loadModel(const QString &modelPath)
 
 QVector<FaceDetection> FaceDetector::detect(const QImage &image, float confidenceThreshold)
 {
-    qDebug() << "QImage detection requested - size:" << image.width() << "x" << image.height();
+    qCDebug(lcNami) << "QImage detection requested - size:" << image.width() << "x" << image.height();
     cv::Mat mat = qImageToCvMat(image);
-    qDebug() << "Converted to cv::Mat - size:" << mat.cols << "x" << mat.rows;
+    qCDebug(lcNami) << "Converted to cv::Mat - size:" << mat.cols << "x" << mat.rows;
     return detect(mat, confidenceThreshold);
 }
 
@@ -72,9 +73,9 @@ QVector<FaceDetection> FaceDetector::detect(const cv::Mat &image, float confiden
         return QVector<FaceDetection>();
     }
 
-    qDebug() << "=== Face Detection Start ===";
-    qDebug() << "Input image size:" << image.cols << "x" << image.rows << "channels:" << image.channels();
-    qDebug() << "Confidence threshold:" << confidenceThreshold;
+    qCDebug(lcNami) << "=== Face Detection Start ===";
+    qCDebug(lcNami) << "Input image size:" << image.cols << "x" << image.rows << "channels:" << image.channels();
+    qCDebug(lcNami) << "Confidence threshold:" << confidenceThreshold;
 
     try {
         // Downscale with a uniform factor so faces are not distorted; YuNet
@@ -102,23 +103,23 @@ QVector<FaceDetection> FaceDetector::detect(const cv::Mat &image, float confiden
         float scaleX = static_cast<float>(image.cols) / newW;
         float scaleY = static_cast<float>(image.rows) / newH;
 
-        qDebug() << "Resized to" << newW << "x" << newH << "scale:" << scaleX;
+        qCDebug(lcNami) << "Resized to" << newW << "x" << newH << "scale:" << scaleX;
 
         // Set score threshold
         m_detector->setScoreThreshold(confidenceThreshold);
 
         // Detect faces on resized image
         cv::Mat faces;
-        qDebug() << "Running YuNet detector...";
+        qCDebug(lcNami) << "Running YuNet detector...";
         m_detector->detect(resizedImage, faces);
 
-        qDebug() << "Detection complete - faces matrix: rows=" << faces.rows << "cols=" << faces.cols << "type=" << faces.type();
+        qCDebug(lcNami) << "Detection complete - faces matrix: rows=" << faces.rows << "cols=" << faces.cols << "type=" << faces.type();
 
         // Convert results
         QVector<FaceDetection> detections;
 
         if (faces.rows > 0) {
-            qDebug() << "Found" << faces.rows << "faces";
+            qCDebug(lcNami) << "Found" << faces.rows << "faces";
 
             for (int i = 0; i < faces.rows; i++) {
                 FaceDetection detection;
@@ -132,7 +133,7 @@ QVector<FaceDetection> FaceDetector::detect(const cv::Mat &image, float confiden
                 float h = faces.at<float>(i, 3);
                 float score = faces.at<float>(i, 14);
 
-                qDebug() << "  Face" << i << "- bbox (pixels in detector input):" << x << y << w << h << "score:" << score;
+                qCDebug(lcNami) << "  Face" << i << "- bbox (pixels in detector input):" << x << y << w << h << "score:" << score;
 
                 // Scale coordinates back to original image size
                 float origX = x * scaleX;
@@ -140,7 +141,7 @@ QVector<FaceDetection> FaceDetector::detect(const cv::Mat &image, float confiden
                 float origW = w * scaleX;
                 float origH = h * scaleY;
 
-                qDebug() << "  Face" << i << "- bbox (pixels in original image):" << origX << origY << origW << origH;
+                qCDebug(lcNami) << "  Face" << i << "- bbox (pixels in original image):" << origX << origY << origW << origH;
 
                 // Normalize to [0-1] based on original image size
                 detection.bbox = QRectF(
@@ -161,10 +162,10 @@ QVector<FaceDetection> FaceDetector::detect(const cv::Mat &image, float confiden
                 detections.append(detection);
             }
         } else {
-            qDebug() << "No faces detected";
+            qCDebug(lcNami) << "No faces detected";
         }
 
-        qDebug() << "=== Detection Complete: Found" << detections.size() << "faces ===";
+        qCDebug(lcNami) << "=== Detection Complete: Found" << detections.size() << "faces ===";
 
         return detections;
     }

@@ -6,6 +6,7 @@
 #include <QImage>
 #include <QVector>
 #include <QFuture>
+#include <QFutureWatcher>
 #include "facedetector.h"
 #include "facerecognizer.h"
 #include "facedatabase.h"
@@ -20,6 +21,31 @@ struct PhotoProcessingResult {
     int facesMatched;
     bool success;
     QString errorMessage;
+};
+
+/**
+ * @brief One face extracted from a photo (detection + embedding, no DB state)
+ */
+struct ExtractedFace {
+    QRectF bbox;
+    float confidence;
+    FaceEmbedding embedding;
+};
+
+/**
+ * @brief CPU-heavy part of photo processing, computed on a worker thread.
+ *
+ * Deliberately contains no database identifiers: QSqlDatabase connections
+ * are bound to the thread that created them, so all DB access stays on the
+ * main thread while decoding/detection/embedding run in the background.
+ */
+struct PhotoExtraction {
+    QString filePath;
+    bool loaded;
+    int width;
+    int height;
+    QDateTime dateTaken;
+    QVector<ExtractedFace> faces;
 };
 
 /**
@@ -136,6 +162,19 @@ public:
     Q_INVOKABLE bool updatePersonName(int personId, const QString &name);
 
     /**
+     * @brief Merge one person into another
+     *
+     * All faces of fromPersonId are reassigned to intoPersonId and
+     * fromPersonId is deleted. Needed to converge when clustering created
+     * duplicates of the same human.
+     *
+     * @param fromPersonId Person to dissolve
+     * @param intoPersonId Person that receives the faces
+     * @return true if successful
+     */
+    Q_INVOKABLE bool mergePersons(int fromPersonId, int intoPersonId);
+
+    /**
      * @brief Get all unmapped faces
      * @return List of faces as QVariantList
      */
@@ -213,8 +252,29 @@ private:
     int m_totalFacesDetected;
     QStringList m_pendingFiles;
 
-    // Helper: Batch processing
-    void processBatch();
+    // One photo in flight at a time: extraction runs on a worker thread,
+    // DB commit happens back on the main thread (QSqlDatabase affinity)
+    QFutureWatcher<PhotoExtraction> m_extractionWatcher;
+
+    // Person prototypes cache; recomputing them from the DB for every
+    // detected face is O(persons x faces) queries per photo
+    QVector<QPair<int, FaceEmbedding>> m_personProtoCache;
+    bool m_personProtoCacheValid;
+
+    // Helper: Start extraction of the next pending photo (scan loop)
+    void processNextPhoto();
+
+    // Helper: Commit a finished extraction and continue the scan loop
+    void onExtractionFinished();
+
+    // Helper: Finish the scan (completed or cancelled)
+    void finishScan(bool cancelled);
+
+    // Helper: CPU-heavy part, safe to run on a worker thread (no DB)
+    PhotoExtraction extractPhotoData(const QString &photoPath);
+
+    // Helper: DB part, main thread only
+    PhotoProcessingResult commitExtraction(const PhotoExtraction &extraction, bool reprocess);
 
     // Helper: Find image files in directory
     QStringList findImageFiles(const QString &directory, bool recursive);
@@ -226,12 +286,13 @@ private:
     // detected landmarks; falls back to a bbox crop if landmarks are missing
     cv::Mat alignFace(const cv::Mat &image, const FaceDetection &detection);
 
-    // Helper: Process single photo (internal)
-    PhotoProcessingResult processPhotoInternal(const QString &photoPath, bool reprocess = false);
-
-    // Helper: Match face against database
+    // Helper: Match face against cached person prototypes
     FaceMatch matchFaceToDatabase(const FaceEmbedding &embedding,
                                   float threshold = AUTO_MATCH_THRESHOLD);
+
+    // Helper: Person prototypes, cached
+    const QVector<QPair<int, FaceEmbedding>> &personPrototypes();
+    void invalidatePersonPrototypes();
 };
 
 #endif // FACEPIPELINE_H
