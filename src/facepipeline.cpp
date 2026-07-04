@@ -3,9 +3,14 @@
 #include "logging.h"
 #include <QDir>
 #include <QImageReader>
+#include <QFile>
 #include <QFileInfo>
 #include <QtConcurrent>
 #include <QSet>
+#include <QStandardPaths>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonArray>
 
 FacePipeline::FacePipeline(QObject *parent)
     : QObject(parent)
@@ -718,4 +723,60 @@ bool FacePipeline::deleteAllData()
 
     invalidatePersonPrototypes();
     return m_database->deleteAllData();
+}
+
+QString FacePipeline::exportData()
+{
+    if (!m_initialized || !m_database) {
+        return QString();
+    }
+
+    QJsonObject root;
+    root["app"] = "harbour-nami";
+    root["exported_at"] = QDateTime::currentDateTime().toString(Qt::ISODate);
+    root["statistics"] = QJsonObject::fromVariantMap(m_database->getStatistics());
+
+    // Raw embeddings are deliberately not exported: they are biometric
+    // templates with no human-readable value
+    QJsonArray peopleArray;
+    for (const Person &person : m_database->getAllPeople()) {
+        QJsonObject personObj;
+        personObj["id"] = person.id;
+        personObj["name"] = person.name;
+        personObj["created_at"] = person.createdAt.toString(Qt::ISODate);
+
+        QJsonArray facesArray;
+        for (const Face &face : m_database->getFacesForPerson(person.id)) {
+            QJsonObject faceObj;
+            faceObj["photo_path"] = m_database->getPhoto(face.photoId).filePath;
+            faceObj["confidence"] = face.confidence;
+            faceObj["similarity_score"] = face.similarityScore;
+            faceObj["verified"] = face.verified;
+            faceObj["detected_at"] = face.detectedAt.toString(Qt::ISODate);
+            facesArray.append(faceObj);
+        }
+        personObj["faces"] = facesArray;
+
+        peopleArray.append(personObj);
+    }
+    root["people"] = peopleArray;
+
+    QString dir = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
+    QString filePath = dir + "/nami-export-"
+        + QDateTime::currentDateTime().toString("yyyyMMdd-hhmmss") + ".json";
+
+    QFile file(filePath);
+    if (!file.open(QIODevice::WriteOnly)) {
+        emit error("Failed to write export file: " + filePath);
+        return QString();
+    }
+
+    file.write(QJsonDocument(root).toJson(QJsonDocument::Indented));
+    file.close();
+
+    // Contains names and photo paths
+    QFile::setPermissions(filePath, QFileDevice::ReadOwner | QFileDevice::WriteOwner);
+
+    qCDebug(lcNami) << "Data exported to" << filePath;
+    return filePath;
 }

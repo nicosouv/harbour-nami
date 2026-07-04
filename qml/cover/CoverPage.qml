@@ -4,6 +4,30 @@ import Sailfish.Silica 1.0
 CoverBackground {
     id: cover
 
+    property int totalPeople: 0
+    property int totalPhotos: 0
+
+    function refreshStats() {
+        if (facePipeline && facePipeline.initialized) {
+            var stats = facePipeline.getStatistics()
+            totalPeople = stats.total_people || 0
+            totalPhotos = stats.total_photos || 0
+        }
+    }
+
+    onStatusChanged: {
+        if (status === Cover.Active) {
+            refreshStats()
+        }
+    }
+
+    Component.onCompleted: refreshStats()
+
+    Connections {
+        target: facePipeline
+        onScanCompleted: refreshStats()
+    }
+
     Column {
         anchors.centerIn: parent
         width: parent.width - 2 * Theme.paddingLarge
@@ -28,7 +52,9 @@ CoverBackground {
         Label {
             id: statusLabel
             anchors.horizontalCenter: parent.horizontalCenter
-            text: qsTr("0 people")
+            text: facePipeline && facePipeline.processing
+                ? qsTr("Scanning...")
+                : qsTr("%n people", "", totalPeople)
             font.pixelSize: Theme.fontSizeSmall
             color: Theme.secondaryColor
         }
@@ -36,22 +62,11 @@ CoverBackground {
         Label {
             id: photosLabel
             anchors.horizontalCenter: parent.horizontalCenter
-            text: qsTr("0 photos")
+            text: facePipeline && facePipeline.processing
+                ? qsTr("%1 / %2").arg(facePipeline.processedPhotos).arg(facePipeline.totalPhotos)
+                : qsTr("%n photos", "", totalPhotos)
             font.pixelSize: Theme.fontSizeExtraSmall
             color: Theme.secondaryColor
         }
     }
-
-    CoverActionList {
-        id: coverAction
-
-        CoverAction {
-            iconSource: "image://theme/icon-cover-refresh"
-            onTriggered: {
-                // Trigger face recognition refresh
-                // TODO: Implement scan trigger from cover
-            }
-        }
-    }
 }
-

@@ -215,6 +215,12 @@ public:
      */
     Q_INVOKABLE bool deleteAllData();
 
+    /**
+     * @brief Export all data to a JSON file (GDPR data portability)
+     * @return Path of the written file, or empty string on failure
+     */
+    Q_INVOKABLE QString exportData();
+
     // === Property getters ===
 
     bool isInitialized() const { return m_initialized; }

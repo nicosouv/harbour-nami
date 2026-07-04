@@ -9,6 +9,8 @@
 #include <QStandardPaths>
 #include <QDir>
 #include <QCoreApplication>
+#include <QTranslator>
+#include <QLocale>
 
 #include "facepipeline.h"
 #include "facedetector.h"
@@ -36,6 +38,16 @@ int main(int argc, char *argv[])
 
     // Model paths (bundled with app)
     QString appDir = QCoreApplication::applicationDirPath() + "/../share/harbour-nami";
+
+    // Load translations (falls back to source English strings)
+    QTranslator *translator = new QTranslator(app.data());
+    QString locale = QLocale::system().name();  // e.g. "fr_FR"
+    QString i18nDir = appDir + "/translations";
+    if (translator->load("harbour-nami-" + locale, i18nDir) ||
+        translator->load("harbour-nami-" + locale.section('_', 0, 0), i18nDir)) {
+        app->installTranslator(translator);
+        qDebug() << "Loaded translation for" << locale;
+    }
     QString detectorModelPath = appDir + "/models/face_detection_yunet_2023mar.onnx";
     QString recognizerModelPath = appDir + "/models/face_recognition_sface_2021dec.onnx";
     QString databasePath = dataDir + "/nami.db";

@@ -47,15 +47,6 @@ Page {
         }
     }
 
-    // Gradient background
-    Rectangle {
-        anchors.fill: parent
-        gradient: Gradient {
-            GradientStop { position: 0.0; color: "#0a192f" }
-            GradientStop { position: 1.0; color: "#172a45" }
-        }
-    }
-
     SilicaFlickable {
         anchors.fill: parent
         contentHeight: column.height
@@ -83,7 +74,7 @@ Page {
                     height: width
                     radius: width / 2
                     color: "transparent"
-                    border.color: "#64ffda"
+                    border.color: Theme.highlightColor
                     border.width: 2
                     opacity: 0.3
 
@@ -109,8 +100,8 @@ Page {
                     width: Theme.itemSizeHuge * 1.5
                     height: width
                     radius: width / 2
-                    color: Qt.rgba(0.39, 1, 0.85, 0.1)
-                    border.color: "#64ffda"
+                    color: Theme.rgba(Theme.highlightColor, 0.1)
+                    border.color: Theme.highlightColor
                     border.width: 3
 
                     // Progress arc (simulated with rotation)
@@ -120,7 +111,7 @@ Page {
                         height: width
                         radius: width / 2
                         color: "transparent"
-                        border.color: "#64ffda"
+                        border.color: Theme.highlightColor
                         border.width: 8
                         opacity: 0.6
 
@@ -141,14 +132,14 @@ Page {
                             text: totalPhotos > 0 ? currentPhoto : "0"
                             font.pixelSize: Theme.fontSizeHuge * 1.5
                             font.bold: true
-                            color: "#64ffda"
+                            color: Theme.highlightColor
                         }
 
                         Label {
                             anchors.horizontalCenter: parent.horizontalCenter
                             text: totalPhotos > 0 ? "/ " + totalPhotos : "..."
                             font.pixelSize: Theme.fontSizeLarge
-                            color: "#8892b0"
+                            color: Theme.secondaryColor
                         }
                     }
                 }
@@ -160,7 +151,7 @@ Page {
                 text: scanning ? qsTr("Scanning Gallery") : qsTr("Scan Complete")
                 font.pixelSize: Theme.fontSizeExtraLarge
                 font.bold: true
-                color: "#ccd6f6"
+                color: Theme.highlightColor
             }
 
             // Subtitle
@@ -173,7 +164,7 @@ Page {
                       (totalPhotos > 0 ? qsTr("%1 files processed out of %2 files").arg(currentPhoto).arg(totalPhotos) : qsTr("Preparing...")) :
                       qsTr("Found %n face(s)", "", facesDetected)
                 font.pixelSize: Theme.fontSizeMedium
-                color: "#8892b0"
+                color: Theme.secondaryColor
             }
 
             // Stats
@@ -194,21 +185,21 @@ Page {
                         text: currentPhoto
                         font.pixelSize: Theme.fontSizeHuge
                         font.bold: true
-                        color: "#64ffda"
+                        color: Theme.highlightColor
                     }
 
                     Label {
                         anchors.horizontalCenter: parent.horizontalCenter
                         text: qsTr("Photos")
                         font.pixelSize: Theme.fontSizeSmall
-                        color: "#8892b0"
+                        color: Theme.secondaryColor
                     }
                 }
 
                 Rectangle {
                     width: 1
                     height: Theme.itemSizeSmall
-                    color: "#8892b0"
+                    color: Theme.secondaryColor
                     opacity: 0.3
                 }
 
@@ -220,14 +211,14 @@ Page {
                         text: facesDetected
                         font.pixelSize: Theme.fontSizeHuge
                         font.bold: true
-                        color: "#64ffda"
+                        color: Theme.highlightColor
                     }
 
                     Label {
                         anchors.horizontalCenter: parent.horizontalCenter
                         text: qsTr("Faces")
                         font.pixelSize: Theme.fontSizeSmall
-                        color: "#8892b0"
+                        color: Theme.secondaryColor
                     }
                 }
             }
@@ -238,7 +229,7 @@ Page {
                 text: totalPhotos > 0 ? Math.round((currentPhoto / totalPhotos) * 100) + "%" : "0%"
                 font.pixelSize: Theme.fontSizeExtraLarge
                 font.bold: true
-                color: "#64ffda"
+                color: Theme.highlightColor
                 opacity: 0.8
                 visible: scanning
             }
@@ -249,25 +240,9 @@ Page {
                 height: Theme.paddingLarge * 2
             }
 
-            BackgroundItem {
-                width: Theme.buttonWidthMedium
-                height: Theme.itemSizeSmall
+            Button {
                 anchors.horizontalCenter: parent.horizontalCenter
-
-                Rectangle {
-                    anchors.fill: parent
-                    radius: Theme.paddingSmall
-                    color: "#64ffda"
-                    opacity: parent.pressed ? 0.6 : 0.8
-
-                    Label {
-                        anchors.centerIn: parent
-                        text: scanning ? qsTr("Cancel") : qsTr("Done")
-                        color: "#0a192f"
-                        font.bold: true
-                        font.pixelSize: Theme.fontSizeMedium
-                    }
-                }
+                text: scanning ? qsTr("Cancel") : qsTr("Done")
 
                 onClicked: {
                     if (scanning) {

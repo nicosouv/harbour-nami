@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.5)
 
-project(harbour-nami VERSION 0.5.0 LANGUAGES CXX)
+project(harbour-nami VERSION 0.5.1 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -15,6 +15,9 @@ set(CMAKE_INSTALL_RPATH_USE_LINK_PATH FALSE)
 
 # Find Qt5
 find_package(Qt5 REQUIRED COMPONENTS Core Gui Qml Quick Sql Concurrent)
+
+# Translations (lrelease); optional so builds still work without linguist tools
+find_package(Qt5LinguistTools QUIET)
 
 # Find OpenCV
 # For Sailfish OS: use bundled minimal OpenCV build
@@ -58,27 +61,7 @@ set(HEADERS
     src/facepipeline.h
 )
 
-# QML files
-set(QML_FILES
-    qml/harbour-nami.qml
-    qml/pages/MainPage.qml
-    qml/pages/PhotoGridPage.qml
-    qml/pages/PersonDetailPage.qml
-    qml/pages/PhotoViewerPage.qml
-    qml/pages/UnknownFacesPage.qml
-    qml/pages/IdentifyFacesPage.qml
-    qml/pages/SettingsPage.qml
-    qml/pages/ScanningPage.qml
-    qml/pages/ScanResultsPage.qml
-    qml/pages/EventsPage.qml
-    qml/pages/MemoriesPage.qml
-    qml/dialogs/IdentifyFaceDialog.qml
-    qml/dialogs/SelectPersonDialog.qml
-    qml/components/FaceRecognitionManager.qml
-    qml/components/PhotoThumbnail.qml
-    qml/components/FaceThumbnail.qml
-    qml/cover/CoverPage.qml
-)
+# QML files are installed as a directory (see install(DIRECTORY qml ...))
 
 # Create executable
 add_executable(${PROJECT_NAME}
@@ -112,10 +95,17 @@ install(DIRECTORY qml
     DESTINATION share/${PROJECT_NAME}
 )
 
-install(DIRECTORY translations
-    DESTINATION share/${PROJECT_NAME}
-    FILES_MATCHING PATTERN "*.qm"
-)
+# Compile .ts -> .qm and install them
+if(Qt5LinguistTools_FOUND)
+    file(GLOB TS_FILES ${CMAKE_SOURCE_DIR}/translations/*.ts)
+    qt5_add_translation(QM_FILES ${TS_FILES})
+    add_custom_target(translations ALL DEPENDS ${QM_FILES})
+    install(FILES ${QM_FILES}
+        DESTINATION share/${PROJECT_NAME}/translations
+    )
+else()
+    message(WARNING "Qt5LinguistTools not found - translations will not be built")
+endif()
 
 install(DIRECTORY python/models
     DESTINATION share/${PROJECT_NAME}

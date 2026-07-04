@@ -503,7 +503,7 @@ Person FaceDatabase::getPerson(int personId)
 {
     QSqlQuery query(m_db);
     query.prepare(R"(
-        SELECT p.*, COUNT(f.id) as photo_count
+        SELECT p.*, COUNT(DISTINCT f.photo_id) as photo_count
         FROM people p
         LEFT JOIN faces f ON f.person_id = p.id
         WHERE p.id = :id
@@ -529,7 +529,7 @@ QVector<Person> FaceDatabase::getAllPeople()
     QSqlQuery query(m_db);
 
     if (query.exec(R"(
-        SELECT p.*, COUNT(f.id) as photo_count
+        SELECT p.*, COUNT(DISTINCT f.photo_id) as photo_count
         FROM people p
         LEFT JOIN faces f ON f.person_id = p.id
         GROUP BY p.id

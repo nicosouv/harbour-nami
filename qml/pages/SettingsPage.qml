@@ -44,32 +44,6 @@ Page {
             }
 
             SectionHeader {
-                text: qsTr("Performance")
-            }
-
-            ComboBox {
-                id: qualityCombo
-                width: parent.width
-                label: qsTr("Recognition quality")
-                currentIndex: 1
-
-                menu: ContextMenu {
-                    MenuItem { text: qsTr("Low (faster)") }
-                    MenuItem { text: qsTr("Medium (balanced)") }
-                    MenuItem { text: qsTr("High (accurate)") }
-                }
-
-                description: qsTr("Higher quality improves accuracy but uses more resources")
-            }
-
-            TextSwitch {
-                id: autoScanSwitch
-                text: qsTr("Auto-scan new photos")
-                description: qsTr("Automatically detect faces in newly added photos")
-                checked: false
-            }
-
-            SectionHeader {
                 text: qsTr("Storage")
             }
 
@@ -102,9 +76,10 @@ Page {
                     text: qsTr("Export data")
                     enabled: facePipeline && facePipeline.initialized
                     onClicked: {
-                        pageStack.push(Qt.resolvedUrl("../components/NotificationBanner.qml"), {
-                            "text": qsTr("Export feature coming soon")
-                        })
+                        var path = facePipeline.exportData()
+                        exportResultLabel.text = path
+                            ? qsTr("Exported to %1").arg(path)
+                            : qsTr("Export failed")
                     }
                 }
 
@@ -119,6 +94,16 @@ Page {
                         })
                     }
                 }
+            }
+
+            Label {
+                id: exportResultLabel
+                x: Theme.horizontalPageMargin
+                width: parent.width - 2 * Theme.horizontalPageMargin
+                font.pixelSize: Theme.fontSizeExtraSmall
+                color: Theme.secondaryHighlightColor
+                wrapMode: Text.Wrap
+                visible: text.length > 0
             }
         }
     }
