@@ -68,15 +68,17 @@ class FacePipeline : public QObject
     Q_PROPERTY(bool needsRescan READ needsRescan NOTIFY needsRescanChanged)
 
 public:
-    // Bump when embedding computation changes (alignment, preprocessing...);
-    // stored embeddings are then incompatible and a full re-scan is forced
-    static constexpr int EMBEDDING_VERSION = 2;
+    // Bump when embedding computation changes (model, alignment,
+    // preprocessing...); stored embeddings are then incompatible and a full
+    // re-scan is forced
+    static constexpr int EMBEDDING_VERSION = 3;
 
-    // Thresholds on the rescaled similarity (cosine mapped from [-1,1] to [0,1]).
-    // Auto-assign must be stricter than interactive suggestions: a silent
-    // wrong match poisons the person prototype.
-    static constexpr float AUTO_MATCH_THRESHOLD = 0.75f;
-    static constexpr float GROUPING_THRESHOLD = 0.7f;
+    // Thresholds on the rescaled similarity (cosine mapped from [-1,1] to
+    // [0,1]). SFace's official same-identity cosine threshold is 0.363,
+    // i.e. ~0.68 rescaled. Auto-assign must be stricter than interactive
+    // suggestions: a silent wrong match poisons the person prototype.
+    static constexpr float AUTO_MATCH_THRESHOLD = 0.72f;
+    static constexpr float GROUPING_THRESHOLD = 0.68f;
 
     explicit FacePipeline(QObject *parent = nullptr);
     ~FacePipeline();
@@ -281,10 +283,6 @@ private:
 
     // Helper: Load and validate image
     QImage loadImage(const QString &filePath);
-
-    // Helper: Align face to the 112x112 ArcFace template using the 5
-    // detected landmarks; falls back to a bbox crop if landmarks are missing
-    cv::Mat alignFace(const cv::Mat &image, const FaceDetection &detection);
 
     // Helper: Match face against cached person prototypes
     FaceMatch matchFaceToDatabase(const FaceEmbedding &embedding,

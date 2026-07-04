@@ -14,44 +14,11 @@ pkcon install qt5-qtquick-devel
 pkcon install sailfish-components-webview-qt5-devel
 ```
 
-### ONNX Runtime
+### Face recognition
 
-ONNX Runtime is **not available** in Sailfish OS repositories and must be bundled with the app.
-
-#### Option A: Use Pre-built Binary (Recommended)
-
-Download pre-compiled ONNX Runtime for ARM:
-
-```bash
-# Download ONNX Runtime 1.16.3 for Linux ARM64
-wget https://github.com/microsoft/onnxruntime/releases/download/v1.16.3/onnxruntime-linux-aarch64-1.16.3.tgz
-
-# Extract
-tar -xzf onnxruntime-linux-aarch64-1.16.3.tgz
-
-# Copy to 3rdparty directory
-mkdir -p 3rdparty/onnxruntime
-cp -r onnxruntime-linux-aarch64-1.16.3/include 3rdparty/onnxruntime/
-cp -r onnxruntime-linux-aarch64-1.16.3/lib 3rdparty/onnxruntime/
-```
-
-The library will be bundled in the RPM package.
-
-#### Option B: Compile from Source (Advanced)
-
-If you need to compile ONNX Runtime for ARM yourself:
-
-```bash
-git clone --recursive https://github.com/Microsoft/onnxruntime
-cd onnxruntime
-
-# For ARM64
-./build.sh --config Release --build_shared_lib \
-  --parallel --skip_tests \
-  --cmake_extra_defines CMAKE_POSITION_INDEPENDENT_CODE=ON
-
-# Output: build/Linux/Release/libonnxruntime.so
-```
+Recognition uses OpenCV's built-in `FaceRecognizerSF` (objdetect module) with
+the OpenCV Zoo SFace model, downloaded and checksum-verified by
+`scripts/download_models_for_build.sh`. No extra runtime is needed.
 
 ## Build Steps
 
@@ -94,7 +61,6 @@ The RPM will be in `RPMS/` directory.
 The GitHub Actions workflow automatically:
 
 1. Downloads ML models (YuNet + ArcFace)
-2. Downloads ONNX Runtime pre-built binaries
 3. Builds for 3 architectures (armv7hl, aarch64, i486)
 4. Creates GitHub release with RPM packages
 
@@ -111,7 +77,6 @@ See `.github/workflows/build.yml` for details.
 ### Runtime (bundled in RPM)
 - OpenCV >= 4.0 ✅ (available in Sailfish repos)
 - Qt5 ✅ (pre-installed on Sailfish OS)
-- ONNX Runtime 📦 (bundled with app)
 - ML Models 📦 (bundled with app)
 
 ### Runtime (from Sailfish repos)
@@ -132,9 +97,8 @@ harbour-nami/
 ├── qml/                   # QML UI
 ├── python/models/         # ML models (ONNX)
 │   ├── face_detection_yunet_2023mar.onnx
-│   └── arcface_mobilefacenet.onnx
+│   └── face_recognition_sface_2021dec.onnx
 ├── 3rdparty/
-│   └── onnxruntime/       # ONNX Runtime library
 │       ├── include/
 │       └── lib/
 ├── CMakeLists.txt         # Build configuration
@@ -143,14 +107,6 @@ harbour-nami/
 ```
 
 ## Troubleshooting
-
-### Missing ONNX Runtime
-
-```
-Error: libonnxruntime.so not found
-```
-
-Solution: Download pre-built ONNX Runtime (see Option A above).
 
 ### OpenCV Not Found
 

@@ -16,13 +16,12 @@ Face recognition photo gallery for Sailfish OS.
 
 - Sailfish SDK (for CI/CD builds)
 - Docker (recommended)
-- ML Models (YuNet + ArcFace)
+- ML Models (YuNet + SFace, from OpenCV Zoo)
 
 ### Architecture
 
 This app uses **C++ native implementation** with:
-- **OpenCV minimal** (core, imgproc, dnn modules only) - bundled
-- **ONNX Runtime** - bundled
+- **OpenCV minimal** (core, imgproc, dnn, objdetect modules) - bundled
 - **CMake** build system
 - Target: Jolla C2 (aarch64)
 
@@ -33,8 +32,7 @@ The app is designed for **CI/CD only builds** using GitHub Actions:
 1. Push a tag: `git tag v0.2.0 && git push origin v0.2.0`
 2. GitHub Actions will:
    - Cross-compile OpenCV minimal (cached)
-   - Download ONNX Runtime
-   - Download ML models
+   - Download ML models (checksum-verified)
    - Build the RPM
    - Create a GitHub release
 
@@ -52,10 +50,7 @@ docker run --rm \
   coderus/sailfishos-platform-sdk:5.0.0.43 \
   bash -c "cd /home/mersdk/src && sb2 -t SailfishOS-5.0.0.43-aarch64 bash scripts/build_opencv_minimal.sh"
 
-# 3. Download ONNX Runtime
-./scripts/download_onnxruntime.sh
-
-# 4. Build the app
+# 3. Build the app
 docker run --rm \
   -v $(pwd):/home/mersdk/src:z \
   coderus/sailfishos-platform-sdk:5.0.0.43 \

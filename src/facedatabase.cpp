@@ -6,6 +6,7 @@
 #include <QVariant>
 #include <QDataStream>
 #include <QBuffer>
+#include <QFile>
 #include <QFileInfo>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -41,12 +42,19 @@ bool FaceDatabase::open(const QString &dbPath)
     m_isOpen = true;
     qCDebug(lcNami) << "Database opened:" << dbPath;
 
+    // Owner-only: the database holds biometric data (face embeddings)
+    QFile::setPermissions(dbPath, QFileDevice::ReadOwner | QFileDevice::WriteOwner);
+
     // FK constraints are declared in the schema but SQLite only enforces
     // them with this pragma; WAL avoids blocking readers during scans
     QSqlQuery pragma(m_db);
     pragma.exec("PRAGMA foreign_keys = ON");
     pragma.exec("PRAGMA journal_mode = WAL");
     pragma.exec("PRAGMA synchronous = NORMAL");
+
+    // WAL side files inherit creation-time permissions, tighten them too
+    QFile::setPermissions(dbPath + "-wal", QFileDevice::ReadOwner | QFileDevice::WriteOwner);
+    QFile::setPermissions(dbPath + "-shm", QFileDevice::ReadOwner | QFileDevice::WriteOwner);
 
     return initializeSchema();
 }

@@ -251,9 +251,9 @@ PhotoExtraction FacePipeline::extractPhotoData(const QString &photoPath)
     cv::Mat cvImage = m_detector->qImageToCvMat(image);
 
     for (const FaceDetection &detection : detections) {
-        cv::Mat faceRegion = alignFace(cvImage, detection);
-
-        FaceEmbedding embedding = m_recognizer->extractEmbedding(faceRegion);
+        // Alignment to the 112x112 template happens inside the recognizer
+        // (FaceRecognizerSF::alignCrop) using the detected landmarks
+        FaceEmbedding embedding = m_recognizer->extractEmbedding(cvImage, detection);
         if (embedding.empty()) {
             qWarning() << "Failed to extract embedding for a face in" << photoPath;
             continue;
@@ -516,71 +516,6 @@ QImage FacePipeline::loadImage(const QString &filePath)
     }
 
     return image;
-}
-
-cv::Mat FacePipeline::alignFace(const cv::Mat &image, const FaceDetection &detection)
-{
-    // Standard ArcFace 112x112 destination landmarks, same order as YuNet:
-    // right eye, left eye, nose tip, right mouth corner, left mouth corner
-    // ("right" = subject's right, i.e. image-left on an upright face)
-    static const float kArcFaceTemplate[5][2] = {
-        {38.2946f, 51.6963f},
-        {73.5318f, 51.5014f},
-        {56.0252f, 71.7366f},
-        {41.5493f, 92.3655f},
-        {70.7299f, 92.2041f}
-    };
-
-    if (detection.landmarks.size() == 5) {
-        // Least-squares similarity transform (scale+rotation+translation)
-        // mapping detected landmarks onto the template. Closed form to
-        // avoid depending on calib3d (not bundled).
-        double meanSrcX = 0, meanSrcY = 0, meanDstX = 0, meanDstY = 0;
-        for (int i = 0; i < 5; i++) {
-            meanSrcX += detection.landmarks[i].x() * image.cols;
-            meanSrcY += detection.landmarks[i].y() * image.rows;
-            meanDstX += kArcFaceTemplate[i][0];
-            meanDstY += kArcFaceTemplate[i][1];
-        }
-        meanSrcX /= 5; meanSrcY /= 5; meanDstX /= 5; meanDstY /= 5;
-
-        double num_a = 0, num_b = 0, denom = 0;
-        for (int i = 0; i < 5; i++) {
-            double sx = detection.landmarks[i].x() * image.cols - meanSrcX;
-            double sy = detection.landmarks[i].y() * image.rows - meanSrcY;
-            double dx = kArcFaceTemplate[i][0] - meanDstX;
-            double dy = kArcFaceTemplate[i][1] - meanDstY;
-            num_a += sx * dx + sy * dy;
-            num_b += sx * dy - sy * dx;
-            denom += sx * sx + sy * sy;
-        }
-
-        if (denom > 1e-6) {
-            double a = num_a / denom;
-            double b = num_b / denom;
-            double tx = meanDstX - (a * meanSrcX - b * meanSrcY);
-            double ty = meanDstY - (b * meanSrcX + a * meanSrcY);
-
-            cv::Mat transform = (cv::Mat_<double>(2, 3) << a, -b, tx, b, a, ty);
-            cv::Mat aligned;
-            cv::warpAffine(image, aligned, transform, cv::Size(112, 112),
-                           cv::INTER_LINEAR, cv::BORDER_REPLICATE);
-            return aligned;
-        }
-    }
-
-    // Fallback: bbox crop (degenerate landmarks or none)
-    int x = static_cast<int>(detection.bbox.x() * image.cols);
-    int y = static_cast<int>(detection.bbox.y() * image.rows);
-    int w = static_cast<int>(detection.bbox.width() * image.cols);
-    int h = static_cast<int>(detection.bbox.height() * image.rows);
-
-    x = std::max(0, std::min(x, image.cols - 1));
-    y = std::max(0, std::min(y, image.rows - 1));
-    w = std::max(1, std::min(w, image.cols - x));
-    h = std::max(1, std::min(h, image.rows - y));
-
-    return image(cv::Rect(x, y, w, h)).clone();
 }
 
 FaceMatch FacePipeline::matchFaceToDatabase(const FaceEmbedding &embedding, float threshold)

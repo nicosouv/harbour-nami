@@ -4,12 +4,12 @@
 #include <QObject>
 #include <QString>
 #include <QVector>
-#include <QImage>
 #include <opencv2/opencv.hpp>
-#include <onnxruntime_cxx_api.h>
+#include <opencv2/objdetect.hpp>
+#include "facedetector.h"
 
 /**
- * @brief Face embedding (512-d vector for ArcFace)
+ * @brief Face embedding (128-d vector for SFace)
  */
 using FaceEmbedding = std::vector<float>;
 
@@ -22,10 +22,15 @@ struct FaceMatch {
 };
 
 /**
- * @brief ArcFace-based face recognition using ONNX Runtime
+ * @brief SFace-based face recognition using OpenCV FaceRecognizerSF
  *
- * Extracts 512-dimensional embeddings for face matching.
- * Uses cosine similarity for comparison.
+ * Uses the official OpenCV Zoo SFace model, designed to pair with YuNet:
+ * alignCrop() consumes YuNet landmarks directly and feature() applies the
+ * exact preprocessing the model was trained with.
+ *
+ * Extracts 128-dimensional embeddings, compared with cosine similarity.
+ * The official cosine decision threshold is 0.363, i.e. ~0.68 on the
+ * rescaled [0,1] similarity used across the app.
  */
 class FaceRecognizer : public QObject
 {
@@ -36,19 +41,19 @@ public:
     ~FaceRecognizer();
 
     /**
-     * @brief Load the ArcFace ONNX model
-     * @param modelPath Path to arcface_mobilefacenet.onnx
+     * @brief Load the SFace ONNX model
+     * @param modelPath Path to face_recognition_sface_2021dec.onnx
      * @return true if loaded successfully
      */
     bool loadModel(const QString &modelPath);
 
     /**
-     * @brief Extract face embedding from aligned face image
-     * @param faceImage Face image (should be aligned, 112x112 recommended)
-     * @return 512-d embedding vector (L2-normalized)
+     * @brief Extract face embedding from a detected face
+     * @param image Full image (BGR)
+     * @param detection Face detection with normalized bbox and landmarks
+     * @return 128-d embedding vector (L2-normalized), empty on failure
      */
-    FaceEmbedding extractEmbedding(const QImage &faceImage);
-    FaceEmbedding extractEmbedding(const cv::Mat &faceImage);
+    FaceEmbedding extractEmbedding(const cv::Mat &image, const FaceDetection &detection);
 
     /**
      * @brief Compute cosine similarity between two embeddings
@@ -62,12 +67,12 @@ public:
      * @brief Match face against database of embeddings
      * @param faceEmbedding Embedding to match
      * @param databaseEmbeddings Database of (personId, embedding) pairs
-     * @param threshold Minimum similarity threshold (default: 0.7)
-     * @return Best match or {-1, 0.0} if no match
+     * @param threshold Minimum similarity threshold
+     * @return Best match or {-1, similarity} if below threshold
      */
     static FaceMatch matchFace(const FaceEmbedding &faceEmbedding,
                                const QVector<QPair<int, FaceEmbedding>> &databaseEmbeddings,
-                               float threshold = 0.7f);
+                               float threshold = 0.68f);
 
     /**
      * @brief Normalize embedding to unit vector (L2 normalization)
@@ -88,22 +93,12 @@ signals:
     void error(const QString &message);
 
 private:
-    Ort::Env m_env;
-    Ort::Session *m_session;
-    Ort::SessionOptions m_sessionOptions;
+    cv::Ptr<cv::FaceRecognizerSF> m_recognizer;
     bool m_modelLoaded;
 
-    std::vector<std::string> m_inputNames;
-    std::vector<std::string> m_outputNames;
-    std::vector<int64_t> m_inputShape;
-    std::vector<int64_t> m_outputShape;
-
-    // Helper: Convert QImage to cv::Mat
-    cv::Mat qImageToCvMat(const QImage &image);
-
-    // Helper: Preprocess face image for ArcFace
-    // Normalize: (pixel - 127.5) / 128.0
-    std::vector<float> preprocessImage(const cv::Mat &faceImage);
+    // Helper: Build the 1x15 YuNet-format face row (pixel coordinates)
+    // expected by FaceRecognizerSF::alignCrop
+    static cv::Mat detectionToFaceRow(const cv::Mat &image, const FaceDetection &detection);
 };
 
 #endif // FACERECOGNIZER_H

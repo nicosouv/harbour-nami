@@ -1,12 +1,12 @@
 Name: harbour-nami
 Summary: Face Recognition Photo Gallery
-Version: 0.4.0
+Version: 0.5.0
 Release: 1
 # The contents of the Group field should be one of the groups listed here:
 # https://github.com/mer-tools/spectacle/blob/master/data/GROUPS
 Group: Qt/Qt
 URL: https://github.com/nicosouv/harbour-nami
-License: MIT (code) / Non-commercial (ML models)
+License: MIT (code) / MIT + Apache-2.0 (ML models)
 # This must be generated before uploading a package to a remote build service.
 # Usually this line does not need to be modified.
 Sources:
@@ -16,7 +16,7 @@ Description: |
 
   Features:
   - 100% on-device processing (no cloud, no internet required)
-  - YuNet face detection + ArcFace recognition (C++ native)
+  - YuNet face detection + SFace recognition (C++ native, OpenCV Zoo models)
   - Smart photo grouping by faces
   - GDPR compliant (data export, right to be forgotten)
   - Multilingual (EN, FR, DE, IT, ES, FI)
@@ -34,7 +34,7 @@ PkgConfigBR:
   - Qt5Sql
 
 # Runtime dependencies
-# Note: OpenCV and ONNX Runtime are bundled in the RPM
+# Note: OpenCV minimal is bundled in the RPM
 Requires:
   - sailfishsilica-qt5 >= 0.10.9
   - qt5-plugin-sqldriver-sqlite
@@ -45,7 +45,6 @@ Files:
   - '%{_datadir}/%{name}'
   - '%{_datadir}/applications/%{name}.desktop'
   - '%{_datadir}/icons/hicolor/*/apps/%{name}.png'
-  - '%{_libdir}/harbour-nami/libonnxruntime.so*'
   - '%{_libdir}/harbour-nami/libopencv_*.so*'
 
 # Additional files

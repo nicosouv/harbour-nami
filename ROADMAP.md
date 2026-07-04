@@ -67,15 +67,17 @@ Status: all done (2026-07-04) except the face thumbnail cache.
 ## P2 — Security and privacy
 
 - **Biometric data at rest**: embeddings + names live in an unencrypted
-  SQLite in `~/.local/share`. At minimum `chmod 600` the DB and export files;
-  evaluate SQLCipher. Embeddings are GDPR Art. 9 biometric data.
+  SQLite in `~/.local/share`. Done: `chmod 600` on the DB and WAL/SHM files.
+  Still open: evaluate SQLCipher. Embeddings are GDPR Art. 9 biometric data.
 - **Log hygiene**: file paths, person ids and match scores are logged to the
   systemd journal. Strip or gate behind the logging category (same work as P1).
-- **Model supply chain**: models are downloaded without checksum verification
-  (size check only), and the ArcFace model comes from a personal HuggingFace
-  repo (`garavv/arcface-onnx`). Pin SHA256 checksums in the download scripts
-  and switch to an official source (OpenCV Zoo SFace or InsightFace
-  buffalo_s), which also documents the expected preprocessing.
+- ~~**Model supply chain**~~ Done: switched recognition to the official
+  OpenCV Zoo SFace model via `cv::FaceRecognizerSF` (alignment and
+  preprocessing exactly as trained, official cosine threshold 0.363); both
+  model downloads are now SHA256-pinned. Bonus discovered during the audit:
+  the old "MobileFaceNet" from the personal HuggingFace repo was actually a
+  136 MB ResNet — the RPM shrinks from ~138 MB to ~45 MB and ONNX Runtime is
+  dropped entirely (OpenCV DNN runs the model).
 - **GDPR claims vs reality**: the RPM description advertises "GDPR compliant
   (data export)" but export is a "coming soon" toast. Implement
   `exportPersonData`/full export to JSON. Done already: `VACUUM` after

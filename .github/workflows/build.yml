@@ -31,43 +31,13 @@ jobs:
 
       - name: Prepare Build Directories
         run: |
-          # Create onnxruntime directory (opencv may be restored from cache)
-          mkdir -p 3rdparty/onnxruntime
-
           # Fix permissions for Docker container
           chmod -R 777 .
 
       - name: Download Dependencies
         run: |
-          # Download ML Models
+          # Download ML Models (checksum-verified)
           bash scripts/download_models_for_build.sh
-
-          # Download ONNX Runtime for the target architecture (directory already created)
-
-          # Map Sailfish arch to ONNX Runtime arch
-          case "${{ matrix.arch }}" in
-            aarch64)
-              ONNX_ARCH="linux-aarch64"
-              ;;
-            armv7hl)
-              ONNX_ARCH="linux-aarch64"
-              ;;
-            i486)
-              ONNX_ARCH="linux-x64"
-              ;;
-          esac
-
-          echo "Downloading ONNX Runtime for $ONNX_ARCH..."
-          curl -L "https://github.com/microsoft/onnxruntime/releases/download/v1.16.3/onnxruntime-$ONNX_ARCH-1.16.3.tgz" \
-            -o onnxruntime.tgz
-
-          tar -xzf onnxruntime.tgz
-          cp -r onnxruntime-*/include 3rdparty/onnxruntime/
-          cp -r onnxruntime-*/lib 3rdparty/onnxruntime/
-          rm -rf onnxruntime*
-
-          echo "✓ ONNX Runtime downloaded and extracted"
-          ls -lh 3rdparty/onnxruntime/lib/
 
       - name: Build OpenCV Minimal
         if: steps.cache-opencv.outputs.cache-hit != 'true'

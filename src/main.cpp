@@ -37,7 +37,7 @@ int main(int argc, char *argv[])
     // Model paths (bundled with app)
     QString appDir = QCoreApplication::applicationDirPath() + "/../share/harbour-nami";
     QString detectorModelPath = appDir + "/models/face_detection_yunet_2023mar.onnx";
-    QString recognizerModelPath = appDir + "/models/arcface_mobilefacenet.onnx";
+    QString recognizerModelPath = appDir + "/models/face_recognition_sface_2021dec.onnx";
     QString databasePath = dataDir + "/nami.db";
 
     qDebug() << "=== Harbour Nami Face Recognition ===";

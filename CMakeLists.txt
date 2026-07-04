@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.5)
 
-project(harbour-nami VERSION 0.4.0 LANGUAGES CXX)
+project(harbour-nami VERSION 0.5.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -38,17 +38,6 @@ else()
     find_package(OpenCV REQUIRED COMPONENTS core imgproc dnn objdetect)
     message(STATUS "Using system OpenCV")
 endif()
-
-# ONNX Runtime - manual for now (will be bundled)
-set(ONNXRUNTIME_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/3rdparty/onnxruntime/include")
-set(ONNXRUNTIME_LIB_DIR "${CMAKE_SOURCE_DIR}/3rdparty/onnxruntime/lib")
-
-# Find ONNX Runtime library
-find_library(ONNXRUNTIME_LIB onnxruntime PATHS ${ONNXRUNTIME_LIB_DIR} NO_DEFAULT_PATH)
-if(NOT ONNXRUNTIME_LIB)
-    message(FATAL_ERROR "ONNX Runtime library not found in ${ONNXRUNTIME_LIB_DIR}")
-endif()
-message(STATUS "ONNX Runtime lib: ${ONNXRUNTIME_LIB}")
 
 # Sources
 set(SOURCES
@@ -100,7 +89,6 @@ add_executable(${PROJECT_NAME}
 # Include directories
 target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_SOURCE_DIR}/src
-    ${ONNXRUNTIME_INCLUDE_DIR}
     ${OpenCV_INCLUDE_DIRS}
 )
 
@@ -113,7 +101,6 @@ target_link_libraries(${PROJECT_NAME}
     Qt5::Sql
     Qt5::Concurrent
     ${OpenCV_LIBS}
-    ${ONNXRUNTIME_LIB}
 )
 
 # Installation
@@ -166,23 +153,6 @@ if(EXISTS "${CMAKE_SOURCE_DIR}/3rdparty/opencv/lib")
     file(GLOB OPENCV_LIBS_TO_INSTALL "${CMAKE_SOURCE_DIR}/3rdparty/opencv/lib/libopencv_*.so*")
     install(FILES ${OPENCV_LIBS_TO_INSTALL}
         DESTINATION "${INSTALL_LIB_DIR}"
-    )
-endif()
-
-# Install ONNX Runtime library
-if(EXISTS "${ONNXRUNTIME_LIB_DIR}/libonnxruntime.so.1.16.3")
-    install(FILES "${ONNXRUNTIME_LIB_DIR}/libonnxruntime.so.1.16.3"
-        DESTINATION "${INSTALL_LIB_DIR}"
-    )
-    # Create symlink
-    install(CODE "execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink \
-        libonnxruntime.so.1.16.3 \
-        \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${INSTALL_LIB_DIR}/libonnxruntime.so)")
-elseif(EXISTS "${ONNXRUNTIME_LIB_DIR}/libonnxruntime.so")
-    # Fallback if versioned lib doesn't exist
-    install(FILES "${ONNXRUNTIME_LIB_DIR}/libonnxruntime.so"
-        DESTINATION "${INSTALL_LIB_DIR}"
-        RENAME libonnxruntime.so.1.16.3
     )
 endif()
 
