@@ -5,6 +5,7 @@
 #include <QUrl>
 #include <QImageReader>
 #include <QFileInfo>
+#include <QDateTime>
 #include <QDir>
 #include <QFile>
 #include <QCryptographicHash>
