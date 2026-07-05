@@ -211,7 +211,7 @@ int FaceDatabase::addPhoto(const QString &filePath, const QDateTime &dateTaken,
         QString errorMsg = "Failed to add photo: " + query.lastError().text();
         qWarning() << "  ✗ SQL Error:" << errorMsg;
         qWarning() << "  ✗ Query:" << query.lastQuery();
-        qWarning() << "  ✗ File path:" << filePath;
+        qCDebug(lcNami) << "  ✗ File path:" << filePath;
         emit error(errorMsg);
         return -1;
     }
@@ -685,58 +685,48 @@ Face FaceDatabase::getBestFaceForPerson(int personId)
     return Face{-1, -1, QRectF(), 0.0f, FaceEmbedding(), -1, 0.0f, false, QDateTime()};
 }
 
-FaceEmbedding FaceDatabase::getAverageEmbedding(int personId)
+QVector<FaceEmbedding> FaceDatabase::getPersonExemplars(int personId, int maxCount)
 {
-    QVector<Face> allFaces = getFacesForPerson(personId);
+    QVector<FaceEmbedding> exemplars;
 
-    if (allFaces.isEmpty()) {
-        return FaceEmbedding();
-    }
+    // User-verified faces define the person; only fall back to unverified
+    // detections when there is no verified face yet, so a bad auto-match
+    // cannot poison the person's representation
+    QSqlQuery query(m_db);
+    query.prepare(R"(
+        SELECT embedding FROM faces
+        WHERE person_id = :person_id AND verified = 1
+        ORDER BY similarity_score DESC, confidence DESC
+        LIMIT :limit
+    )");
+    query.bindValue(":person_id", personId);
+    query.bindValue(":limit", maxCount);
 
-    // Only user-verified faces define the person prototype; averaging in
-    // auto-matched faces lets one bad match drift the centroid and attract
-    // more bad matches. Fall back to all faces if nothing is verified yet.
-    QVector<Face> faces;
-    for (const Face &face : allFaces) {
-        if (face.verified) {
-            faces.append(face);
-        }
-    }
-    if (faces.isEmpty()) {
-        faces = allFaces;
-    }
-
-    // Calculate average embedding
-    size_t embeddingSize = faces.first().embedding.size();
-    FaceEmbedding avgEmbedding(embeddingSize, 0.0f);
-
-    for (const Face &face : faces) {
-        for (size_t i = 0; i < embeddingSize; i++) {
-            avgEmbedding[i] += face.embedding[i];
+    if (query.exec()) {
+        while (query.next()) {
+            exemplars.append(deserializeEmbedding(query.value(0).toByteArray()));
         }
     }
 
-    for (size_t i = 0; i < embeddingSize; i++) {
-        avgEmbedding[i] /= faces.size();
-    }
+    if (exemplars.isEmpty()) {
+        QSqlQuery fallback(m_db);
+        fallback.prepare(R"(
+            SELECT embedding FROM faces
+            WHERE person_id = :person_id
+            ORDER BY confidence DESC
+            LIMIT :limit
+        )");
+        fallback.bindValue(":person_id", personId);
+        fallback.bindValue(":limit", maxCount);
 
-    // L2 normalize
-    return FaceRecognizer::normalizeEmbedding(avgEmbedding);
-}
-
-QVector<QPair<int, FaceEmbedding>> FaceDatabase::getAllPersonEmbeddings()
-{
-    QVector<QPair<int, FaceEmbedding>> result;
-    QVector<Person> people = getAllPeople();
-
-    for (const Person &person : people) {
-        FaceEmbedding avgEmbedding = getAverageEmbedding(person.id);
-        if (!avgEmbedding.empty()) {
-            result.append(qMakePair(person.id, avgEmbedding));
+        if (fallback.exec()) {
+            while (fallback.next()) {
+                exemplars.append(deserializeEmbedding(fallback.value(0).toByteArray()));
+            }
         }
     }
 
-    return result;
+    return exemplars;
 }
 
 // === GDPR ===

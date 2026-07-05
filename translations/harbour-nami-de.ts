@@ -2,123 +2,845 @@
 <!DOCTYPE TS>
 <TS version="2.1" language="de">
 <context>
-    <name>CoverPage</name>
+    <name>AboutPage</name>
     <message>
-        <source>Nami</source>
-        <translation>Nami</translation>
-    </message>
-</context>
-<context>
-    <name>MainPage</name>
-    <message>
-        <source>Settings</source>
-        <translation>Einstellungen</translation>
-    </message>
-    <message>
-        <source>Scan Gallery</source>
-        <translation>Galerie scannen</translation>
-    </message>
-    <message>
-        <source>Scanning photos...</source>
-        <translation>Fotos werden gescannt...</translation>
-    </message>
-    <message>
-        <source>Nami</source>
-        <translation>Nami</translation>
-    </message>
-    <message>
-        <source>Face Recognition Gallery</source>
-        <translation>Gesichtserkennungs-Galerie</translation>
-    </message>
-    <message>
-        <source>Automatically organize your photos by faces. All processing happens on your device for complete privacy.</source>
-        <translation>Organisieren Sie Ihre Fotos automatisch nach Gesichtern. Die gesamte Verarbeitung erfolgt auf Ihrem Gerät für vollständigen Datenschutz.</translation>
-    </message>
-    <message>
-        <source>People</source>
-        <translation>Personen</translation>
-    </message>
-    <message>
-        <source>No faces detected yet</source>
-        <translation>Noch keine Gesichter erkannt</translation>
-    </message>
-    <message>
-        <source>Pull down to scan your gallery</source>
-        <translation>Herunterziehen, um Ihre Galerie zu scannen</translation>
-    </message>
-</context>
-<context>
-    <name>SettingsPage</name>
-    <message>
-        <source>Settings</source>
-        <translation>Einstellungen</translation>
-    </message>
-    <message>
-        <source>Privacy</source>
-        <translation>Datenschutz</translation>
-    </message>
-    <message>
-        <source>All face recognition processing happens locally on your device. No data is sent to external servers.</source>
-        <translation>Die gesamte Gesichtserkennung erfolgt lokal auf Ihrem Gerät. Es werden keine Daten an externe Server gesendet.</translation>
-    </message>
-    <message>
-        <source>Performance</source>
-        <translation>Leistung</translation>
-    </message>
-    <message>
-        <source>Recognition quality</source>
-        <translation>Erkennungsqualität</translation>
-    </message>
-    <message>
-        <source>Low (faster)</source>
-        <translation>Niedrig (schneller)</translation>
-    </message>
-    <message>
-        <source>Medium (balanced)</source>
-        <translation>Mittel (ausgewogen)</translation>
-    </message>
-    <message>
-        <source>High (accurate)</source>
-        <translation>Hoch (genau)</translation>
-    </message>
-    <message>
-        <source>Data Management</source>
-        <translation>Datenverwaltung</translation>
-    </message>
-    <message>
-        <source>Clear all face data</source>
-        <translation>Alle Gesichtsdaten löschen</translation>
-    </message>
-    <message>
-        <source>Clear all data?</source>
-        <translation>Alle Daten löschen?</translation>
-    </message>
-    <message>
-        <source>This will delete all detected faces and names. This action cannot be undone.</source>
-        <translation>Dies löscht alle erkannten Gesichter und Namen. Diese Aktion kann nicht rückgängig gemacht werden.</translation>
+        <source>100% on-device processing</source>
+        <translation>100 % Verarbeitung auf dem Gerät</translation>
     </message>
     <message>
         <source>About</source>
         <translation>Über</translation>
     </message>
     <message>
-        <source>Nami v0.1.0</source>
-        <translation>Nami v0.1.0</translation>
+        <source>Automatic face detection</source>
+        <translation>Automatische Gesichtserkennung</translation>
     </message>
     <message>
-        <source>Face recognition gallery for Sailfish OS</source>
-        <translation>Gesichtserkennungs-Galerie für Sailfish OS</translation>
+        <source>Face Recognition Gallery</source>
+        <translation>Galerie mit Gesichtserkennung</translation>
+    </message>
+    <message>
+        <source>Features</source>
+        <translation>Funktionen</translation>
+    </message>
+    <message>
+        <source>Framework</source>
+        <translation>Framework</translation>
+    </message>
+    <message>
+        <source>Intelligent photo organization using on-device face recognition</source>
+        <translation>Intelligente Fotoorganisation mit Gesichtserkennung auf dem Gerät</translation>
+    </message>
+    <message>
+        <source>License</source>
+        <translation>Lizenz</translation>
+    </message>
+    <message>
+        <source>ML Engine</source>
+        <translation>ML-Engine</translation>
+    </message>
+    <message>
+        <source>No internet connection required</source>
+        <translation>Keine Internetverbindung erforderlich</translation>
+    </message>
+    <message>
+        <source>Open Source Software</source>
+        <translation>Open-Source-Software</translation>
+    </message>
+    <message>
+        <source>Platform</source>
+        <translation>Plattform</translation>
+    </message>
+    <message>
+        <source>Privacy-first design</source>
+        <translation>Datenschutz an erster Stelle</translation>
+    </message>
+    <message>
+        <source>Smart photo grouping</source>
+        <translation>Intelligente Fotogruppierung</translation>
+    </message>
+    <message>
+        <source>Source Code</source>
+        <translation>Quellcode</translation>
+    </message>
+    <message>
+        <source>Technology</source>
+        <translation>Technologie</translation>
     </message>
 </context>
 <context>
     <name>ConfirmDialog</name>
     <message>
+        <source>Cancel</source>
+        <translation>Abbrechen</translation>
+    </message>
+    <message>
         <source>Confirm</source>
         <translation>Bestätigen</translation>
+    </message>
+</context>
+<context>
+    <name>CoverPage</name>
+    <message>
+        <source>%1 / %2</source>
+        <translation>%1 / %2</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n people</source>
+        <translation>
+            <numerusform>%n Person</numerusform>
+            <numerusform>%n Personen</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n photos</source>
+        <translation>
+            <numerusform>%n Foto</numerusform>
+            <numerusform>%n Fotos</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Scanning...</source>
+        <translation>Scanne...</translation>
+    </message>
+</context>
+<context>
+    <name>EventsPage</name>
+    <message>
+        <source>Events</source>
+        <translation>Ereignisse</translation>
+    </message>
+    <message>
+        <source>Events are created when you have multiple photos from the same day</source>
+        <translation>Ereignisse entstehen, wenn mehrere Fotos vom selben Tag vorhanden sind</translation>
+    </message>
+    <message>
+        <source>No events detected</source>
+        <translation>Keine Ereignisse erkannt</translation>
+    </message>
+    <message>
+        <source>Photos automatically grouped by date</source>
+        <translation>Automatisch nach Datum gruppierte Fotos</translation>
+    </message>
+    <message>
+        <source>photo</source>
+        <translation>Foto</translation>
+    </message>
+    <message>
+        <source>photos</source>
+        <translation>Fotos</translation>
+    </message>
+</context>
+<context>
+    <name>FaceInPhotoPage</name>
+    <message>
+        <source>Tap to go back</source>
+        <translation>Zum Zurückkehren tippen</translation>
+    </message>
+</context>
+<context>
+    <name>IdentifyFaceDialog</name>
+    <message>
+        <source>Cancel</source>
+        <translation>Abbrechen</translation>
+    </message>
+    <message>
+        <source>Enter a name above to create the first person</source>
+        <translation>Geben Sie oben einen Namen ein, um die erste Person anzulegen</translation>
+    </message>
+    <message>
+        <source>Enter name (e.g., John, Mom, Friend)</source>
+        <translation>Name eingeben (z. B. Jan, Mama, Freund)</translation>
+    </message>
+    <message>
+        <source>Identify</source>
+        <translation>Identifizieren</translation>
+    </message>
+    <message>
+        <source>No people yet</source>
+        <translation>Noch keine Personen</translation>
+    </message>
+    <message>
+        <source>Or assign to existing person:</source>
+        <translation>Oder einer vorhandenen Person zuordnen:</translation>
+    </message>
+    <message>
+        <source>Person name</source>
+        <translation>Name der Person</translation>
+    </message>
+    <message>
+        <source>View in photo</source>
+        <translation>Im Foto anzeigen</translation>
+    </message>
+    <message>
+        <source>Who is this?</source>
+        <translation>Wer ist das?</translation>
+    </message>
+    <message>
+        <source>photo</source>
+        <translation>Foto</translation>
+    </message>
+    <message>
+        <source>photos</source>
+        <translation>Fotos</translation>
+    </message>
+</context>
+<context>
+    <name>IdentifyFacesPage</name>
+    <message>
+        <source>%1 of %2</source>
+        <translation>%1 von %2</translation>
+    </message>
+    <message>
+        <source>All detected faces have been identified</source>
+        <translation>Alle erkannten Gesichter wurden identifiziert</translation>
+    </message>
+    <message>
+        <source>All done!</source>
+        <translation>Fertig!</translation>
+    </message>
+    <message>
+        <source>Identify Faces</source>
+        <translation>Gesichter identifizieren</translation>
+    </message>
+    <message>
+        <source>No faces to identify</source>
+        <translation>Keine Gesichter zu identifizieren</translation>
+    </message>
+    <message>
+        <source>Skip all</source>
+        <translation>Alle überspringen</translation>
+    </message>
+    <message>
+        <source>View in photo</source>
+        <translation>Im Foto anzeigen</translation>
+    </message>
+    <message>
+        <source>You've reviewed all unknown faces</source>
+        <translation>Sie haben alle unbekannten Gesichter durchgesehen</translation>
+    </message>
+    <message>
+        <source>✗ Ignore (not a face or low quality, won't be shown again)
+✓ Identify (assign to a person)</source>
+        <translation>✗ Ignorieren (kein Gesicht oder schlechte Qualität, wird nicht mehr angezeigt)
+✓ Identifizieren (einer Person zuordnen)</translation>
+    </message>
+</context>
+<context>
+    <name>MainPage</name>
+    <message>
+        <source>About</source>
+        <translation>Über</translation>
+    </message>
+    <message>
+        <source>Automatically organize your photos by faces. All processing happens on your device for complete privacy.</source>
+        <translation>Organisieren Sie Ihre Fotos automatisch nach Gesichtern. Die gesamte Verarbeitung erfolgt auf Ihrem Gerät.</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>Löschen</translation>
+    </message>
+    <message>
+        <source>Delete person?</source>
+        <translation>Person löschen?</translation>
+    </message>
+    <message>
+        <source>Enter name</source>
+        <translation>Namen eingeben</translation>
+    </message>
+    <message>
+        <source>Events</source>
+        <translation>Ereignisse</translation>
+    </message>
+    <message>
+        <source>Face Recognition Gallery</source>
+        <translation>Galerie mit Gesichtserkennung</translation>
+    </message>
+    <message>
+        <source>Identify Faces</source>
+        <translation>Gesichter identifizieren</translation>
+    </message>
+    <message>
+        <source>Memories</source>
+        <translation>Erinnerungen</translation>
+    </message>
+    <message>
+        <source>Merge</source>
+        <translation>Zusammenführen</translation>
+    </message>
+    <message>
+        <source>Merge %1 into...</source>
+        <translation>%1 zusammenführen mit...</translation>
+    </message>
+    <message>
+        <source>Merge into...</source>
+        <translation>Zusammenführen mit...</translation>
+    </message>
+    <message>
+        <source>Nami</source>
+        <translation>Nami</translation>
+    </message>
+    <message>
+        <source>No faces detected yet</source>
+        <translation>Noch keine Gesichter erkannt</translation>
+    </message>
+    <message>
+        <source>People (%1)</source>
+        <translation>Personen (%1)</translation>
+    </message>
+    <message>
+        <source>Pull down to scan your gallery</source>
+        <translation>Nach unten ziehen, um die Galerie zu scannen</translation>
+    </message>
+    <message>
+        <source>Rename</source>
+        <translation>Umbenennen</translation>
+    </message>
+    <message>
+        <source>Rename Person</source>
+        <translation>Person umbenennen</translation>
+    </message>
+    <message>
+        <source>Scan Gallery</source>
+        <translation>Galerie scannen</translation>
+    </message>
+    <message>
+        <source>Search people</source>
+        <translation>Personen suchen</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation>Einstellungen</translation>
+    </message>
+    <message>
+        <source>Sort by Name</source>
+        <translation>Nach Name sortieren</translation>
+    </message>
+    <message>
+        <source>Sort by Photos</source>
+        <translation>Nach Fotos sortieren</translation>
+    </message>
+    <message>
+        <source>This will remove %1 and unlink all their photos</source>
+        <translation>Dies entfernt %1 und löst alle zugehörigen Fotos</translation>
+    </message>
+    <message>
+        <source>Unknown</source>
+        <translation>Unbekannt</translation>
+    </message>
+    <message>
+        <source>most photos</source>
+        <translation>meiste Fotos</translation>
+    </message>
+    <message>
+        <source>people</source>
+        <translation>Personen</translation>
+    </message>
+    <message>
+        <source>person</source>
+        <translation>Person</translation>
+    </message>
+    <message>
+        <source>photo</source>
+        <translation>Foto</translation>
+    </message>
+    <message>
+        <source>photos</source>
+        <translation>Fotos</translation>
+    </message>
+</context>
+<context>
+    <name>MemoriesPage</name>
+    <message>
+        <source> year ago</source>
+        <translation> Jahr zuvor</translation>
+    </message>
+    <message>
+        <source> years ago</source>
+        <translation> Jahre zuvor</translation>
+    </message>
+    <message>
+        <source>Memories</source>
+        <translation>Erinnerungen</translation>
+    </message>
+    <message>
+        <source>No memories</source>
+        <translation>Keine Erinnerungen</translation>
+    </message>
+    <message>
+        <source>No photos found from this day in previous years</source>
+        <translation>Keine Fotos von diesem Tag aus früheren Jahren</translation>
+    </message>
+    <message>
+        <source>Photos from this day in previous years</source>
+        <translation>Fotos von diesem Tag aus früheren Jahren</translation>
+    </message>
+    <message>
+        <source>photo</source>
+        <translation>Foto</translation>
+    </message>
+    <message>
+        <source>photos</source>
+        <translation>Fotos</translation>
+    </message>
+</context>
+<context>
+    <name>ModelDownloadPage</name>
+    <message>
+        <source>All models run 100% on your device. No data is sent to external servers.</source>
+        <translation>Alle Modelle laufen zu 100 % auf Ihrem Gerät. Es werden keine Daten an externe Server gesendet.</translation>
+    </message>
+    <message>
+        <source>ArcFace Recognition</source>
+        <translation>ArcFace-Erkennung</translation>
+    </message>
+    <message>
+        <source>Continue</source>
+        <translation>Weiter</translation>
+    </message>
+    <message>
+        <source>Download Models</source>
+        <translation>Modelle herunterladen</translation>
+    </message>
+    <message>
+        <source>Downloading %1...</source>
+        <translation>%1 wird heruntergeladen...</translation>
+    </message>
+    <message>
+        <source>ML Models Setup</source>
+        <translation>ML-Modelle einrichten</translation>
+    </message>
+    <message>
+        <source>Manual Installation</source>
+        <translation>Manuelle Installation</translation>
+    </message>
+    <message>
+        <source>Manual installation required</source>
+        <translation>Manuelle Installation erforderlich</translation>
+    </message>
+    <message>
+        <source>Nami requires machine learning models for face detection and recognition.</source>
+        <translation>Nami benötigt Machine-Learning-Modelle für die Gesichtserkennung.</translation>
+    </message>
+    <message>
+        <source>Not installed</source>
+        <translation>Nicht installiert</translation>
+    </message>
+    <message>
+        <source>Open Documentation</source>
+        <translation>Dokumentation öffnen</translation>
+    </message>
+    <message>
+        <source>Required Models</source>
+        <translation>Erforderliche Modelle</translation>
+    </message>
+    <message>
+        <source>Size: %1 MB</source>
+        <translation>Größe: %1 MB</translation>
+    </message>
+    <message>
+        <source>The ArcFace model requires manual installation. Please see the documentation for instructions.</source>
+        <translation>Das ArcFace-Modell erfordert eine manuelle Installation. Siehe Dokumentation.</translation>
+    </message>
+    <message>
+        <source>YuNet Face Detection</source>
+        <translation>YuNet-Gesichtserkennung</translation>
+    </message>
+    <message>
+        <source>✓ Installed</source>
+        <translation>✓ Installiert</translation>
+    </message>
+</context>
+<context>
+    <name>PersonDetailPage</name>
+    <message>
+        <source>Confirm all matches</source>
+        <translation>Alle Übereinstimmungen bestätigen</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>Löschen</translation>
+    </message>
+    <message>
+        <source>Deleting %1</source>
+        <translation>%1 wird gelöscht</translation>
+    </message>
+    <message>
+        <source>Enter name</source>
+        <translation>Namen eingeben</translation>
+    </message>
+    <message>
+        <source>No photos</source>
+        <translation>Keine Fotos</translation>
+    </message>
+    <message>
+        <source>Photos</source>
+        <translation>Fotos</translation>
+    </message>
+    <message>
+        <source>Remove from person</source>
+        <translation>Von Person entfernen</translation>
+    </message>
+    <message>
+        <source>Removing</source>
+        <translation>Wird entfernt</translation>
+    </message>
+    <message>
+        <source>Rename</source>
+        <translation>Umbenennen</translation>
+    </message>
+    <message>
+        <source>Rename Person</source>
+        <translation>Person umbenennen</translation>
+    </message>
+    <message>
+        <source>This person hasn't been detected in any photos yet</source>
+        <translation>Diese Person wurde noch in keinem Foto erkannt</translation>
+    </message>
+    <message>
+        <source>View full photo</source>
+        <translation>Ganzes Foto anzeigen</translation>
+    </message>
+    <message>
+        <source>photo</source>
+        <translation>Foto</translation>
+    </message>
+    <message>
+        <source>photos</source>
+        <translation>Fotos</translation>
+    </message>
+    <message>
+        <source>with this person</source>
+        <translation>mit dieser Person</translation>
+    </message>
+</context>
+<context>
+    <name>PersonPage</name>
+    <message>
+        <source>No photos</source>
+        <translation>Keine Fotos</translation>
+    </message>
+    <message>
+        <source>Photos</source>
+        <translation>Fotos</translation>
+    </message>
+    <message>
+        <source>Share All Photos</source>
+        <translation>Alle Fotos teilen</translation>
+    </message>
+    <message>
+        <source>This person has no associated photos yet</source>
+        <translation>Diese Person hat noch keine zugeordneten Fotos</translation>
+    </message>
+    <message>
+        <source>Unknown</source>
+        <translation>Unbekannt</translation>
+    </message>
+    <message>
+        <source>photo</source>
+        <translation>Foto</translation>
+    </message>
+    <message>
+        <source>photos</source>
+        <translation>Fotos</translation>
+    </message>
+</context>
+<context>
+    <name>PhotoViewerPage</name>
+    <message>
+        <source>Close</source>
+        <translation>Schließen</translation>
+    </message>
+    <message>
+        <source>Failed to load image</source>
+        <translation>Bild konnte nicht geladen werden</translation>
+    </message>
+</context>
+<context>
+    <name>RenamePersonDialog</name>
+    <message>
+        <source>Cancel</source>
+        <translation>Abbrechen</translation>
+    </message>
+    <message>
+        <source>Enter person name</source>
+        <translation>Namen der Person eingeben</translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation>Name</translation>
+    </message>
+    <message>
+        <source>Rename Person</source>
+        <translation>Person umbenennen</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>Speichern</translation>
+    </message>
+</context>
+<context>
+    <name>ScanResultsPage</name>
+    <message numerus="yes">
+        <source>%n faces need to be identified</source>
+        <translation>
+            <numerusform>%n Gesicht muss identifiziert werden</numerusform>
+            <numerusform>%n Gesichter müssen identifiziert werden</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>1 face needs to be identified</source>
+        <translation>1 Gesicht muss identifiziert werden</translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation>Fertig</translation>
+    </message>
+    <message>
+        <source>No faces detected</source>
+        <translation>Keine Gesichter erkannt</translation>
+    </message>
+    <message>
+        <source>No faces were found in your photos</source>
+        <translation>In Ihren Fotos wurden keine Gesichter gefunden</translation>
+    </message>
+    <message>
+        <source>Recognized people</source>
+        <translation>Erkannte Personen</translation>
+    </message>
+    <message>
+        <source>Review unknown faces</source>
+        <translation>Unbekannte Gesichter durchsehen</translation>
+    </message>
+    <message>
+        <source>Scan Complete</source>
+        <translation>Scan abgeschlossen</translation>
+    </message>
+    <message>
+        <source>Scan summary</source>
+        <translation>Scan-Zusammenfassung</translation>
+    </message>
+    <message>
+        <source>These faces were automatically matched to people you've already identified:</source>
+        <translation>Diese Gesichter wurden automatisch bereits identifizierten Personen zugeordnet:</translation>
+    </message>
+    <message>
+        <source>Unknown faces</source>
+        <translation>Unbekannte Gesichter</translation>
+    </message>
+    <message>
+        <source>face</source>
+        <translation>Gesicht</translation>
+    </message>
+    <message>
+        <source>faces</source>
+        <translation>Gesichter</translation>
+    </message>
+    <message>
+        <source>photo</source>
+        <translation>Foto</translation>
+    </message>
+    <message>
+        <source>photos</source>
+        <translation>Fotos</translation>
+    </message>
+</context>
+<context>
+    <name>ScanningPage</name>
+    <message>
+        <source>%1 files processed out of %2 files</source>
+        <translation>%1 von %2 Dateien verarbeitet</translation>
     </message>
     <message>
         <source>Cancel</source>
         <translation>Abbrechen</translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation>Fertig</translation>
+    </message>
+    <message>
+        <source>Faces</source>
+        <translation>Gesichter</translation>
+    </message>
+    <message numerus="yes">
+        <source>Found %n face(s)</source>
+        <translation>
+            <numerusform>%n Gesicht gefunden</numerusform>
+            <numerusform>%n Gesichter gefunden</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Photos</source>
+        <translation>Fotos</translation>
+    </message>
+    <message>
+        <source>Preparing...</source>
+        <translation>Vorbereitung...</translation>
+    </message>
+    <message>
+        <source>Scan Complete</source>
+        <translation>Scan abgeschlossen</translation>
+    </message>
+    <message>
+        <source>Scanning Gallery</source>
+        <translation>Galerie wird gescannt</translation>
+    </message>
+</context>
+<context>
+    <name>SelectPersonDialog</name>
+    <message>
+        <source>Cancel</source>
+        <translation>Abbrechen</translation>
+    </message>
+    <message>
+        <source>Enter a name to create the first person</source>
+        <translation>Geben Sie einen Namen ein, um die erste Person anzulegen</translation>
+    </message>
+    <message>
+        <source>Enter name</source>
+        <translation>Namen eingeben</translation>
+    </message>
+    <message>
+        <source>Identify</source>
+        <translation>Identifizieren</translation>
+    </message>
+    <message>
+        <source>New person</source>
+        <translation>Neue Person</translation>
+    </message>
+    <message>
+        <source>No people yet</source>
+        <translation>Noch keine Personen</translation>
+    </message>
+    <message>
+        <source>Or select existing:</source>
+        <translation>Oder vorhandene auswählen:</translation>
+    </message>
+    <message>
+        <source>Select person:</source>
+        <translation>Person auswählen:</translation>
+    </message>
+    <message>
+        <source>Who is this?</source>
+        <translation>Wer ist das?</translation>
+    </message>
+</context>
+<context>
+    <name>SettingsPage</name>
+    <message>
+        <source>All face recognition processing happens locally on your device. No data is sent to external servers.</source>
+        <translation>Die gesamte Gesichtserkennung erfolgt lokal auf Ihrem Gerät. Es werden keine Daten an externe Server gesendet.</translation>
+    </message>
+    <message>
+        <source>Clear all data</source>
+        <translation>Alle Daten löschen</translation>
+    </message>
+    <message>
+        <source>Data Management</source>
+        <translation>Datenverwaltung</translation>
+    </message>
+    <message>
+        <source>Deleting all data</source>
+        <translation>Alle Daten werden gelöscht</translation>
+    </message>
+    <message>
+        <source>Detected faces</source>
+        <translation>Erkannte Gesichter</translation>
+    </message>
+    <message>
+        <source>Export data</source>
+        <translation>Daten exportieren</translation>
+    </message>
+    <message>
+        <source>Export failed</source>
+        <translation>Export fehlgeschlagen</translation>
+    </message>
+    <message>
+        <source>Exported to %1</source>
+        <translation>Exportiert nach %1</translation>
+    </message>
+    <message>
+        <source>Higher values reduce wrong matches but leave more faces to identify manually</source>
+        <translation>Höhere Werte reduzieren Fehlzuordnungen, lassen aber mehr Gesichter zur manuellen Identifizierung übrig</translation>
+    </message>
+    <message>
+        <source>Named people</source>
+        <translation>Benannte Personen</translation>
+    </message>
+    <message>
+        <source>On-device processing</source>
+        <translation>Verarbeitung auf dem Gerät</translation>
+    </message>
+    <message>
+        <source>Privacy</source>
+        <translation>Datenschutz</translation>
+    </message>
+    <message>
+        <source>Recognition strictness</source>
+        <translation>Strenge der Erkennung</translation>
+    </message>
+    <message>
+        <source>Scan folder</source>
+        <translation>Scan-Ordner</translation>
+    </message>
+    <message>
+        <source>Scanning</source>
+        <translation>Scannen</translation>
+    </message>
+    <message>
+        <source>Select folder to scan</source>
+        <translation>Ordner zum Scannen auswählen</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation>Einstellungen</translation>
+    </message>
+    <message>
+        <source>Storage</source>
+        <translation>Speicher</translation>
+    </message>
+    <message>
+        <source>Storage used</source>
+        <translation>Belegter Speicher</translation>
+    </message>
+</context>
+<context>
+    <name>UnknownFacesPage</name>
+    <message numerus="yes">
+        <source>%n faces found</source>
+        <translation>
+            <numerusform>%n Gesicht gefunden</numerusform>
+            <numerusform>%n Gesichter gefunden</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>1 face found</source>
+        <translation>1 Gesicht gefunden</translation>
+    </message>
+    <message>
+        <source>All detected faces have been identified</source>
+        <translation>Alle erkannten Gesichter wurden identifiziert</translation>
+    </message>
+    <message>
+        <source>Identify people</source>
+        <translation>Personen identifizieren</translation>
+    </message>
+    <message>
+        <source>No faces to identify</source>
+        <translation>Keine Gesichter zu identifizieren</translation>
+    </message>
+    <message>
+        <source>No unknown faces</source>
+        <translation>Keine unbekannten Gesichter</translation>
+    </message>
+    <message>
+        <source>Tap on a face to give it a name. Faces from the same person will be grouped together automatically.</source>
+        <translation>Tippen Sie auf ein Gesicht, um ihm einen Namen zu geben. Gesichter derselben Person werden automatisch gruppiert.</translation>
+    </message>
+    <message>
+        <source>Unknown Faces</source>
+        <translation>Unbekannte Gesichter</translation>
     </message>
 </context>
 </TS>

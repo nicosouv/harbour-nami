@@ -127,32 +127,6 @@ float FaceRecognizer::computeSimilarity(const FaceEmbedding &emb1, const FaceEmb
     return similarity;
 }
 
-FaceMatch FaceRecognizer::matchFace(const FaceEmbedding &faceEmbedding,
-                                    const QVector<QPair<int, FaceEmbedding>> &databaseEmbeddings,
-                                    float threshold)
-{
-    FaceMatch bestMatch{-1, 0.0f};
-
-    for (const auto &pair : databaseEmbeddings) {
-        int personId = pair.first;
-        const FaceEmbedding &dbEmbedding = pair.second;
-
-        float similarity = computeSimilarity(faceEmbedding, dbEmbedding);
-
-        if (similarity > bestMatch.similarity) {
-            bestMatch.personId = personId;
-            bestMatch.similarity = similarity;
-        }
-    }
-
-    // Check threshold
-    if (bestMatch.similarity < threshold) {
-        return FaceMatch{-1, bestMatch.similarity};
-    }
-
-    return bestMatch;
-}
-
 FaceEmbedding FaceRecognizer::normalizeEmbedding(const FaceEmbedding &embedding)
 {
     // L2 normalization

@@ -46,10 +46,12 @@ cleared and recomputed. Remaining: threshold calibration on real photos.
 
 ### Why it "doesn't learn"
 
-5. ~~**Centroid matching poisons itself**~~ Done: `getAverageEmbedding`
-   builds the person prototype from user-verified faces only (falls back to
-   all faces when none verified). Top-k nearest-neighbour matching over
-   individual embeddings is still worth exploring later.
+5. ~~**Centroid matching poisons itself**~~ Done, twice: prototypes were
+   first restricted to user-verified faces, then (0.7.0) replaced by
+   **exemplar matching** — each person is represented by up to 5 verified
+   embeddings and scored by the best similarity over them, which handles a
+   person's different looks (glasses, age, lighting) better than a single
+   averaged centroid.
 6. ~~**User corrections are not persistent**~~ Done: `negative_matches`
    table; `removeFaceFromPerson` records the rejection and auto-matching
    skips rejected (face, person) pairs.
@@ -59,15 +61,16 @@ cleared and recomputed. Remaining: threshold calibration on real photos.
 8. ~~**Thresholds**~~ Partially done: auto-assign raised to 0.75 (rescaled
    similarity) and centralized as constants (`AUTO_MATCH_THRESHOLD`,
    `GROUPING_THRESHOLD`); detector default confidence raised from 0.3 to 0.8
-   (YuNet real faces score > 0.9). Still to do: calibrate on a real gallery
-   after the alignment change.
+   (YuNet real faces score > 0.9). The auto-match threshold is now
+   user-tunable ("Recognition strictness" in Settings, persisted, 0.65-0.80,
+   default 0.72), so calibration can happen on the real gallery.
 9. ~~**Person merge missing**~~ Done: `mergePersons(from, into)` reassigns
    faces, carries rejections over and deletes the duplicate; exposed in the
    people list context menu ("Merge into...").
 
 ## P1 — Performance
 
-Status: all done (2026-07-04) except the face thumbnail cache.
+Status: all done.
 
 - ~~**Move the pipeline off the UI thread**~~ Done: decode + detection +
   embedding run on a QtConcurrent worker (one photo in flight); only the SQL
@@ -82,16 +85,21 @@ Status: all done (2026-07-04) except the face thumbnail cache.
   `QT_LOGGING_RULES="nami.pipeline.debug=true"`).
 - ~~**Single QImage→Mat conversion**~~ Done (once per photo).
 - ~~**Incremental scan**~~ Done (P0.4).
-- **Face thumbnail cache** on disk for lists (avoid decoding full-size photos
-  to render a 100 px avatar).
+- ~~**Face thumbnail cache**~~ Done in v0.6.0 via `FaceImageProvider`
+  (disk-cached crops).
 
 ## P2 — Security and privacy
 
 - **Biometric data at rest**: embeddings + names live in an unencrypted
   SQLite in `~/.local/share`. Done: `chmod 600` on the DB and WAL/SHM files.
-  Still open: evaluate SQLCipher. Embeddings are GDPR Art. 9 biometric data.
-- **Log hygiene**: file paths, person ids and match scores are logged to the
-  systemd journal. Strip or gate behind the logging category (same work as P1).
+  SQLCipher evaluated and **not adopted** for now: it would require bundling
+  a custom Qt SQL driver plugin, the key would have to live next to the data
+  (no SFOS keystore API for apps), and the on-device threat is already
+  mitigated by file permissions and device encryption. Revisit if Sailfish
+  gains an app keystore.
+- ~~**Log hygiene**~~ Done: all per-file/per-face messages (paths, ids,
+  scores) are behind the `nami.pipeline` category, disabled by default;
+  remaining default-on warnings carry no personal data.
 - ~~**Model supply chain**~~ Done: switched recognition to the official
   OpenCV Zoo SFace model via `cv::FaceRecognizerSF` (alignment and
   preprocessing exactly as trained, official cosine threshold 0.363); both
@@ -102,14 +110,16 @@ Status: all done (2026-07-04) except the face thumbnail cache.
 - ~~**GDPR claims vs reality**~~ Done: `exportData()` writes a JSON export
   (people, faces, photo paths — no raw embeddings) to Documents with 600
   permissions, wired to the Settings button; `VACUUM` after `deleteAllData`.
-- **CI**: pin GitHub Actions by commit SHA, drop `chmod -R 777`.
+- ~~**CI**: pin GitHub Actions by commit SHA~~ Done (SHAs with version
+  comments). `chmod -R 777` is kept deliberately: the SDK container user
+  must write into the runner-owned workdir.
 
 ## P3 — UI / UX / usability
 
-- ~~**i18n is currently dead**~~ Mostly done: `qt5_add_translation` compiles
-  the `.ts` files (guarded if LinguistTools is missing) and `main.cpp` loads
-  the locale's `QTranslator`. Still to do: resync `.ts` files with `lupdate`
-  (es/fi/it are stale: 59 lines vs 398 for fr) and translate the new strings.
+- ~~**i18n is currently dead**~~ Done: `qt5_add_translation` compiles the
+  `.ts` files and `main.cpp` loads the locale's `QTranslator`; all six `.ts`
+  files regenerated from the QML sources with complete fr/de/it/es/fi
+  translations (192 strings, plural forms included).
 - **ScanningPage**:
   - ~~No way to cancel a running scan~~ Done: the button cancels while
     scanning, and the page handles `scanFailed` (it used to stay stuck after
@@ -120,19 +130,22 @@ Status: all done (2026-07-04) except the face thumbnail cache.
   controls are removed, "Storage used" shows the real DB size, and "Export
   data" performs the actual JSON export (the old button pushed a
   non-existent QML file → runtime error).
-- **Real face thumbnails**: people lists show a generic contact icon; crop and
-  cache the best verified face per person for MainPage/PersonDetail/selection
-  dialogs.
+- ~~**Real face thumbnails**~~ Done in v0.6.0 (`FaceImageProvider` +
+  `getPersonBestFace`).
 - ~~**photo_count is wrong**~~ Done: `COUNT(DISTINCT f.photo_id)`.
 - ~~**CoverPage**~~ Done: real stats, refreshed on activation and scan
   completion; shows scan progress while processing.
-- **Scan source selection**: gallery path is hardcoded to `Pictures`; let the
-  user pick folders and exclude e.g. `Screenshots`.
-- **Person merge UI** (pairs with P0.9) and batch identify ("confirm all
-  suggested matches for this person").
+- ~~**Scan source selection**~~ Done: "Scan folder" in Settings
+  (FolderPickerDialog), persisted in the settings table and used by the
+  scan.
+- ~~**Person merge UI**~~ Done (P0.9). ~~Batch identify~~ Done: "Confirm
+  all matches" in the person page menu marks the auto-matched faces as
+  verified (they then contribute to the person prototype).
 - ~~**Dead code / drift cleanup**~~ Done: removed the stale
   `FaceRecognitionManager.qml` stub, the legacy `python/` implementation
   (only `python/models` remains, used by the build), the phantom CMake
   `QML_FILES` list, and versions are aligned across yaml/spec/CMake.
-- **EXIF date**: `date_taken` uses file mtime; read EXIF DateTimeOriginal so
-  Memories/Events group correctly.
+- ~~**EXIF date**~~ Done: minimal EXIF reader (`src/exifreader.cpp`) reads
+  DateTimeOriginal (fallback DateTime, then mtime) so Memories/Events group
+  by real capture dates. Already-scanned photos keep their old dates until
+  a forced re-scan.

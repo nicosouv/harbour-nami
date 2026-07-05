@@ -1,4 +1,5 @@
 #include "facepipeline.h"
+#include "exifreader.h"
 #include <QDebug>
 #include "logging.h"
 #include <QDir>
@@ -25,6 +26,7 @@ FacePipeline::FacePipeline(QObject *parent)
     , m_totalPhotos(0)
     , m_processedPhotos(0)
     , m_personProtoCacheValid(false)
+    , m_autoMatchThreshold(AUTO_MATCH_THRESHOLD)
 {
     connect(&m_extractionWatcher, &QFutureWatcher<PhotoExtraction>::finished,
             this, &FacePipeline::onExtractionFinished);
@@ -70,6 +72,13 @@ bool FacePipeline::initialize(const QString &detectorModelPath,
     if (!m_database->open(databasePath)) {
         emit error("Failed to open database");
         return false;
+    }
+
+    // User-tuned matching threshold
+    bool thresholdOk = false;
+    float storedThreshold = m_database->getSetting("auto_match_threshold").toFloat(&thresholdOk);
+    if (thresholdOk && storedThreshold >= 0.5f && storedThreshold <= 0.95f) {
+        m_autoMatchThreshold = storedThreshold;
     }
 
     // Embeddings computed by older engine versions are incompatible with
@@ -242,8 +251,11 @@ PhotoExtraction FacePipeline::extractPhotoData(const QString &photoPath)
     extraction.width = image.width();
     extraction.height = image.height();
 
-    QFileInfo fileInfo(photoPath);
-    extraction.dateTaken = fileInfo.lastModified();  // Could use EXIF data
+    // Capture date from EXIF; mtime only as fallback (it resets on copy/sync)
+    extraction.dateTaken = ExifReader::dateTaken(photoPath);
+    if (!extraction.dateTaken.isValid()) {
+        extraction.dateTaken = QFileInfo(photoPath).lastModified();
+    }
 
     QVector<FaceDetection> detections = m_detector->detect(image);
     qCDebug(lcNami) << "Detected" << detections.size() << "faces";
@@ -260,7 +272,7 @@ PhotoExtraction FacePipeline::extractPhotoData(const QString &photoPath)
         // (FaceRecognizerSF::alignCrop) using the detected landmarks
         FaceEmbedding embedding = m_recognizer->extractEmbedding(cvImage, detection);
         if (embedding.empty()) {
-            qWarning() << "Failed to extract embedding for a face in" << photoPath;
+            qCDebug(lcNami) << "Failed to extract embedding for a face in" << photoPath;
             continue;
         }
 
@@ -285,7 +297,7 @@ PhotoProcessingResult FacePipeline::commitExtraction(const PhotoExtraction &extr
     result.success = false;
 
     if (!extraction.loaded) {
-        qWarning() << "Failed to load image:" << extraction.filePath;
+        qCDebug(lcNami) << "Failed to load image:" << extraction.filePath;
         result.errorMessage = "Failed to load image";
         return result;
     }
@@ -318,7 +330,7 @@ PhotoProcessingResult FacePipeline::commitExtraction(const PhotoExtraction &extr
     result.facesDetected = extraction.faces.size();
 
     for (const ExtractedFace &face : extraction.faces) {
-        FaceMatch match = matchFaceToDatabase(face.embedding);
+        FaceMatch match = matchFaceToDatabase(face.embedding, m_autoMatchThreshold);
 
         if (match.personId >= 0) {
             result.facesMatched++;
@@ -330,7 +342,7 @@ PhotoProcessingResult FacePipeline::commitExtraction(const PhotoExtraction &extr
                                          face.embedding, match.personId,
                                          match.similarity, false);
         if (faceId < 0) {
-            qWarning() << "Failed to add face to database for" << extraction.filePath;
+            qCDebug(lcNami) << "Failed to add face to database for" << extraction.filePath;
         }
     }
 
@@ -436,10 +448,10 @@ bool FacePipeline::identifyFace(int faceId, int personId, const QString &personN
     // against the updated person profile
     qCDebug(lcNami) << "Re-matching unmapped faces against person" << personId;
 
-    // Prototype built from user-verified faces (see getAverageEmbedding)
-    FaceEmbedding personEmbedding = m_database->getAverageEmbedding(personId);
-    if (personEmbedding.empty()) {
-        qCDebug(lcNami) << "Could not get average embedding for person" << personId;
+    // Exemplars built from user-verified faces (see getPersonExemplars)
+    QVector<FaceEmbedding> exemplars = m_database->getPersonExemplars(personId);
+    if (exemplars.isEmpty()) {
+        qCDebug(lcNami) << "No exemplars for person" << personId;
         return true;  // Still return success, re-matching is optional
     }
 
@@ -455,10 +467,14 @@ bool FacePipeline::identifyFace(int faceId, int personId, const QString &personN
             continue;
         }
 
-        float similarity = FaceRecognizer::computeSimilarity(face.embedding, personEmbedding);
+        float similarity = 0.0f;
+        for (const FaceEmbedding &exemplar : exemplars) {
+            similarity = qMax(similarity,
+                              FaceRecognizer::computeSimilarity(face.embedding, exemplar));
+        }
 
         // If similarity is above threshold, auto-assign to this person
-        if (similarity >= AUTO_MATCH_THRESHOLD) {
+        if (similarity >= m_autoMatchThreshold) {
             qCDebug(lcNami) << "Auto-matching face" << face.id << "to person" << personId
                      << "with similarity" << similarity;
 
@@ -517,7 +533,7 @@ QImage FacePipeline::loadImage(const QString &filePath)
     QImage image = reader.read();
 
     if (image.isNull()) {
-        qWarning() << "Failed to load image:" << filePath << "-" << reader.errorString();
+        qCDebug(lcNami) << "Failed to load image:" << filePath << "-" << reader.errorString();
     }
 
     return image;
@@ -525,27 +541,46 @@ QImage FacePipeline::loadImage(const QString &filePath)
 
 FaceMatch FacePipeline::matchFaceToDatabase(const FaceEmbedding &embedding, float threshold)
 {
-    const QVector<QPair<int, FaceEmbedding>> &prototypes = personPrototypes();
+    FaceMatch bestMatch{-1, 0.0f};
 
-    if (prototypes.isEmpty()) {
-        return FaceMatch{-1, 0.0f};  // No people in database yet
+    // A person is represented by several exemplar embeddings (different
+    // looks: glasses, age, lighting); the person's score is the best
+    // similarity over their exemplars
+    for (const auto &entry : personExemplars()) {
+        for (const FaceEmbedding &exemplar : entry.second) {
+            float similarity = FaceRecognizer::computeSimilarity(embedding, exemplar);
+            if (similarity > bestMatch.similarity) {
+                bestMatch.personId = entry.first;
+                bestMatch.similarity = similarity;
+            }
+        }
     }
 
-    return FaceRecognizer::matchFace(embedding, prototypes, threshold);
+    if (bestMatch.similarity < threshold) {
+        return FaceMatch{-1, bestMatch.similarity};
+    }
+
+    return bestMatch;
 }
 
-const QVector<QPair<int, FaceEmbedding>> &FacePipeline::personPrototypes()
+const QVector<QPair<int, QVector<FaceEmbedding>>> &FacePipeline::personExemplars()
 {
-    // Prototypes only change when verified faces or people change
+    // Exemplars only change when verified faces or people change
     // (identify, remove, merge, delete); unverified auto-assigns during a
     // scan don't affect them, so the cache stays valid for a whole scan
     if (!m_personProtoCacheValid) {
-        m_personProtoCache = m_database->getAllPersonEmbeddings();
+        m_personExemplarCache.clear();
+        for (const Person &person : m_database->getAllPeople()) {
+            QVector<FaceEmbedding> exemplars = m_database->getPersonExemplars(person.id);
+            if (!exemplars.isEmpty()) {
+                m_personExemplarCache.append(qMakePair(person.id, exemplars));
+            }
+        }
         m_personProtoCacheValid = true;
-        qCDebug(lcNami) << "Person prototype cache rebuilt:" << m_personProtoCache.size() << "people";
+        qCDebug(lcNami) << "Person exemplar cache rebuilt:" << m_personExemplarCache.size() << "people";
     }
 
-    return m_personProtoCache;
+    return m_personExemplarCache;
 }
 
 void FacePipeline::invalidatePersonPrototypes()
@@ -763,6 +798,55 @@ bool FacePipeline::deleteAllData()
     QDir(cacheDir + "/faces").removeRecursively();
 
     return m_database->deleteAllData();
+}
+
+QString FacePipeline::getSetting(const QString &key, const QString &defaultValue)
+{
+    if (!m_initialized || !m_database) {
+        return defaultValue;
+    }
+
+    return m_database->getSetting(key, defaultValue);
+}
+
+bool FacePipeline::setSetting(const QString &key, const QString &value)
+{
+    if (!m_initialized || !m_database) {
+        return false;
+    }
+
+    if (key == QLatin1String("auto_match_threshold")) {
+        bool ok = false;
+        float threshold = value.toFloat(&ok);
+        if (ok && threshold >= 0.5f && threshold <= 0.95f) {
+            m_autoMatchThreshold = threshold;
+        }
+    }
+
+    return m_database->setSetting(key, value);
+}
+
+int FacePipeline::confirmAllFaces(int personId)
+{
+    if (!m_initialized || !m_database) {
+        return 0;
+    }
+
+    int confirmed = 0;
+    for (const Face &face : m_database->getFacesForPerson(personId)) {
+        if (!face.verified) {
+            if (m_database->updateFaceMetadata(face.id, face.similarityScore, true)) {
+                confirmed++;
+            }
+        }
+    }
+
+    if (confirmed > 0) {
+        // Verified faces define the person prototype
+        invalidatePersonPrototypes();
+    }
+
+    return confirmed;
 }
 
 QString FacePipeline::exportData()

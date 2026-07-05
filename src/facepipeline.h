@@ -229,6 +229,22 @@ public:
      */
     Q_INVOKABLE QString exportData();
 
+    /**
+     * @brief Read a persisted app setting (settings table)
+     */
+    Q_INVOKABLE QString getSetting(const QString &key, const QString &defaultValue = QString());
+
+    /**
+     * @brief Persist an app setting; threshold changes take effect immediately
+     */
+    Q_INVOKABLE bool setSetting(const QString &key, const QString &value);
+
+    /**
+     * @brief Mark all auto-matched faces of a person as user-verified
+     * @return Number of faces confirmed
+     */
+    Q_INVOKABLE int confirmAllFaces(int personId);
+
     // === Property getters ===
 
     bool isInitialized() const { return m_initialized; }
@@ -272,10 +288,15 @@ private:
     // DB commit happens back on the main thread (QSqlDatabase affinity)
     QFutureWatcher<PhotoExtraction> m_extractionWatcher;
 
-    // Person prototypes cache; recomputing them from the DB for every
-    // detected face is O(persons x faces) queries per photo
-    QVector<QPair<int, FaceEmbedding>> m_personProtoCache;
+    // Person exemplars cache (up to 5 verified embeddings per person);
+    // recomputing them from the DB for every detected face is
+    // O(persons x faces) queries per photo
+    QVector<QPair<int, QVector<FaceEmbedding>>> m_personExemplarCache;
     bool m_personProtoCacheValid;
+
+    // User-tunable auto-assign threshold (persisted in the settings table,
+    // defaults to AUTO_MATCH_THRESHOLD)
+    float m_autoMatchThreshold;
 
     // Helper: Start extraction of the next pending photo (scan loop)
     void processNextPhoto();
@@ -298,12 +319,13 @@ private:
     // Helper: Load and validate image
     QImage loadImage(const QString &filePath);
 
-    // Helper: Match face against cached person prototypes
+    // Helper: Match face against cached person exemplars (max similarity
+    // over each person's exemplar embeddings)
     FaceMatch matchFaceToDatabase(const FaceEmbedding &embedding,
                                   float threshold = AUTO_MATCH_THRESHOLD);
 
-    // Helper: Person prototypes, cached
-    const QVector<QPair<int, FaceEmbedding>> &personPrototypes();
+    // Helper: Person exemplars, cached
+    const QVector<QPair<int, QVector<FaceEmbedding>>> &personExemplars();
     void invalidatePersonPrototypes();
 };
 

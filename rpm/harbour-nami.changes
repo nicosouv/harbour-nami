@@ -1,4 +1,18 @@
-* Sun Nov 13 2025 Nico <nico@example.com> 0.1.0-1
+* Sun Jul 05 2026 Nicolas Souveton <souvetonnicolas@gmail.com> 0.7.0-1
+- Complete translations (fr, de, it, es, fi)
+- EXIF capture dates for Events and Memories
+- Configurable scan folder and recognition strictness
+- Exemplar-based matching (up to 5 verified embeddings per person)
+- Confirm all matches action on person page
+- Pin CI actions by commit SHA
+
+* Sun Jul 05 2026 Nicolas Souveton <souvetonnicolas@gmail.com> 0.6.0-1
+- Face thumbnail provider with disk cache (avatars, identify flow)
+- Fix identify faces page load error
+- Fix Events and Memories timestamps
+- View face in photo with highlight
+
+* Sat Nov 15 2025 Nicolas Souveton <souvetonnicolas@gmail.com> 0.1.0-1
 - Initial release
 - Face detection and recognition
 - Photo gallery integration

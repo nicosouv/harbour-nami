@@ -64,17 +64,6 @@ public:
     static float computeSimilarity(const FaceEmbedding &emb1, const FaceEmbedding &emb2);
 
     /**
-     * @brief Match face against database of embeddings
-     * @param faceEmbedding Embedding to match
-     * @param databaseEmbeddings Database of (personId, embedding) pairs
-     * @param threshold Minimum similarity threshold
-     * @return Best match or {-1, similarity} if below threshold
-     */
-    static FaceMatch matchFace(const FaceEmbedding &faceEmbedding,
-                               const QVector<QPair<int, FaceEmbedding>> &databaseEmbeddings,
-                               float threshold = 0.68f);
-
-    /**
      * @brief Normalize embedding to unit vector (L2 normalization)
      */
     static FaceEmbedding normalizeEmbedding(const FaceEmbedding &embedding);

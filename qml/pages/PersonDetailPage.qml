@@ -38,6 +38,15 @@ Page {
 
         PullDownMenu {
             MenuItem {
+                text: qsTr("Confirm all matches")
+                onClicked: {
+                    var confirmed = facePipeline.confirmAllFaces(personId)
+                    if (confirmed > 0) {
+                        loadPhotos()
+                    }
+                }
+            }
+            MenuItem {
                 text: qsTr("Rename")
                 onClicked: {
                     var dialog = pageStack.push("Sailfish.Silica.InputDialog", {

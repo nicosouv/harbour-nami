@@ -1,16 +1,19 @@
 import QtQuick 2.0
 import Sailfish.Silica 1.0
+import Sailfish.Pickers 1.0
 
 Page {
     id: page
 
     property var stats: ({})
+    property string galleryPath: ""
 
     allowedOrientations: Orientation.All
 
     function loadStatistics() {
         if (facePipeline && facePipeline.initialized) {
             stats = facePipeline.getStatistics()
+            galleryPath = facePipeline.getSetting("gallery_path", defaultGalleryPath)
         }
     }
 
@@ -41,6 +44,60 @@ Page {
                 readOnly: true
                 label: qsTr("On-device processing")
                 text: qsTr("All face recognition processing happens locally on your device. No data is sent to external servers.")
+            }
+
+            SectionHeader {
+                text: qsTr("Scanning")
+            }
+
+            ValueButton {
+                label: qsTr("Scan folder")
+                value: galleryPath || defaultGalleryPath
+                enabled: facePipeline && facePipeline.initialized
+                onClicked: {
+                    var dialog = pageStack.push(folderPickerComponent)
+                }
+
+                Component {
+                    id: folderPickerComponent
+                    FolderPickerDialog {
+                        title: qsTr("Select folder to scan")
+                        onAccepted: {
+                            galleryPath = selectedPath
+                            facePipeline.setSetting("gallery_path", selectedPath)
+                        }
+                    }
+                }
+            }
+
+            Slider {
+                id: thresholdSlider
+                width: parent.width
+                label: qsTr("Recognition strictness")
+                minimumValue: 0.65
+                maximumValue: 0.80
+                stepSize: 0.01
+                valueText: Math.round(value * 100) + "%"
+                enabled: facePipeline && facePipeline.initialized
+
+                Component.onCompleted: {
+                    if (facePipeline && facePipeline.initialized) {
+                        value = parseFloat(facePipeline.getSetting("auto_match_threshold", "0.72"))
+                    }
+                }
+
+                onReleased: {
+                    facePipeline.setSetting("auto_match_threshold", value.toFixed(2))
+                }
+            }
+
+            Label {
+                x: Theme.horizontalPageMargin
+                width: parent.width - 2 * Theme.horizontalPageMargin
+                text: qsTr("Higher values reduce wrong matches but leave more faces to identify manually")
+                font.pixelSize: Theme.fontSizeExtraSmall
+                color: Theme.secondaryColor
+                wrapMode: Text.WordWrap
             }
 
             SectionHeader {

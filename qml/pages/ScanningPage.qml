@@ -12,8 +12,9 @@ Page {
     property bool scanning: true
 
     Component.onCompleted: {
-        // Start scanning
-        facePipeline.scanGallery(defaultGalleryPath, true)
+        // Start scanning the configured folder (defaults to Pictures)
+        var galleryPath = facePipeline.getSetting("gallery_path", defaultGalleryPath)
+        facePipeline.scanGallery(galleryPath, true)
     }
 
     Connections {

@@ -61,7 +61,7 @@ QImage FaceImageProvider::requestImage(const QString &id, QSize *size, const QSi
 
         QImage image = reader.read();
         if (image.isNull()) {
-            qWarning() << "FaceImageProvider: failed to load" << path;
+            qCDebug(lcNami) << "FaceImageProvider: failed to load" << path;
             return QImage();
         }
 

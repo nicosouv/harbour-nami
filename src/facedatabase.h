@@ -225,15 +225,15 @@ public:
     Face getBestFaceForPerson(int personId);
 
     /**
-     * @brief Get average embedding for a person
+     * @brief Exemplar embeddings representing a person for matching
+     *
+     * Up to maxCount embeddings, user-verified faces first (best
+     * similarity), falling back to the most confident detections when the
+     * person has no verified face yet. Multiple exemplars capture the
+     * different looks of a person (glasses, age, lighting) better than a
+     * single averaged centroid.
      */
-    FaceEmbedding getAverageEmbedding(int personId);
-
-    /**
-     * @brief Get all person embeddings for matching
-     * @return Vector of (personId, averageEmbedding) pairs
-     */
-    QVector<QPair<int, FaceEmbedding>> getAllPersonEmbeddings();
+    QVector<FaceEmbedding> getPersonExemplars(int personId, int maxCount = 5);
 
     // === GDPR compliance ===
 
