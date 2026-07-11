@@ -229,6 +229,18 @@
 <context>
     <name>MainPage</name>
     <message>
+        <source>Link to contact</source>
+        <translation>Yhdistä yhteystietoon</translation>
+    </message>
+    <message>
+        <source>Change linked contact</source>
+        <translation>Vaihda yhdistettyä yhteystietoa</translation>
+    </message>
+    <message>
+        <source>Unlink contact</source>
+        <translation>Poista yhteystiedon linkitys</translation>
+    </message>
+    <message>
         <source>About</source>
         <translation>Tietoja</translation>
     </message>
@@ -688,6 +700,41 @@
     </message>
 </context>
 <context>
+    <name>SelectContactDialog</name>
+    <message>
+        <source>Link</source>
+        <translation>Yhdistä</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Peruuta</translation>
+    </message>
+    <message>
+        <source>Link %1 to a contact</source>
+        <translation>Yhdistä %1 yhteystietoon</translation>
+    </message>
+    <message>
+        <source>Link to a contact</source>
+        <translation>Yhdistä yhteystietoon</translation>
+    </message>
+    <message>
+        <source>Search contacts</source>
+        <translation>Hae yhteystietoja</translation>
+    </message>
+    <message>
+        <source>Unnamed contact</source>
+        <translation>Nimetön yhteystieto</translation>
+    </message>
+    <message>
+        <source>No contacts</source>
+        <translation>Ei yhteystietoja</translation>
+    </message>
+    <message>
+        <source>No contact matches your search</source>
+        <translation>Yksikään yhteystieto ei vastaa hakuasi</translation>
+    </message>
+</context>
+<context>
     <name>SelectPersonDialog</name>
     <message>
         <source>Cancel</source>
@@ -728,6 +775,38 @@
 </context>
 <context>
     <name>SettingsPage</name>
+    <message>
+        <source>Scanned folders</source>
+        <translation>Skannatut kansiot</translation>
+    </message>
+    <message>
+        <source>Nami only scans the folders listed here. Add a folder on the SD card to include external photos.</source>
+        <translation>Nami skannaa vain tässä luetellut kansiot. Lisää kansio SD-kortilta ottaaksesi mukaan ulkoiset kuvat.</translation>
+    </message>
+    <message>
+        <source>Add folder</source>
+        <translation>Lisää kansio</translation>
+    </message>
+    <message>
+        <source>Display</source>
+        <translation>Näyttö</translation>
+    </message>
+    <message>
+        <source>People layout</source>
+        <translation>Henkilöiden asettelu</translation>
+    </message>
+    <message>
+        <source>List</source>
+        <translation>Luettelo</translation>
+    </message>
+    <message>
+        <source>Grid</source>
+        <translation>Ruudukko</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>Poista</translation>
+    </message>
     <message>
         <source>All face recognition processing happens locally on your device. No data is sent to external servers.</source>
         <translation>Kaikki kasvontunnistus tapahtuu paikallisesti laitteellasi. Tietoja ei lähetetä ulkoisille palvelimille.</translation>

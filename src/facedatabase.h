@@ -30,6 +30,7 @@ struct Person {
     QString name;
     QDateTime createdAt;
     int photoCount;
+    QString contactId;  // linked device contact id, empty when unlinked
 };
 
 /**
@@ -199,6 +200,11 @@ public:
      * @brief Update person name
      */
     bool updatePersonName(int personId, const QString &name);
+
+    /**
+     * @brief Link a person to a device contact (empty id unlinks)
+     */
+    bool setPersonContact(int personId, const QString &contactId);
 
     /**
      * @brief Delete person and unmap their faces

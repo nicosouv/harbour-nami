@@ -135,12 +135,16 @@ bool FaceDatabase::initializeSchema()
         CREATE TABLE IF NOT EXISTS people (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL,
-            created_at TEXT DEFAULT CURRENT_TIMESTAMP
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            contact_id TEXT
         )
     )")) {
         emit error("Failed to create people table: " + query.lastError().text());
         return false;
     }
+
+    // Migrate existing database: link to device contacts
+    query.exec("ALTER TABLE people ADD COLUMN contact_id TEXT");
 
     // Settings table
     if (!query.exec(R"(
@@ -517,10 +521,11 @@ Person FaceDatabase::getPerson(int personId)
         person.name = query.value("name").toString();
         person.createdAt = QDateTime::fromString(query.value("created_at").toString(), Qt::ISODate);
         person.photoCount = query.value("photo_count").toInt();
+        person.contactId = query.value("contact_id").toString();
         return person;
     }
 
-    return Person{-1, "", QDateTime(), 0};
+    return Person{-1, "", QDateTime(), 0, QString()};
 }
 
 QVector<Person> FaceDatabase::getAllPeople()
@@ -541,6 +546,7 @@ QVector<Person> FaceDatabase::getAllPeople()
             person.name = query.value("name").toString();
             person.createdAt = QDateTime::fromString(query.value("created_at").toString(), Qt::ISODate);
             person.photoCount = query.value("photo_count").toInt();
+            person.contactId = query.value("contact_id").toString();
             people.append(person);
         }
     }
@@ -553,6 +559,17 @@ bool FaceDatabase::updatePersonName(int personId, const QString &name)
     QSqlQuery query(m_db);
     query.prepare("UPDATE people SET name = :name WHERE id = :id");
     query.bindValue(":name", name);
+    query.bindValue(":id", personId);
+
+    return query.exec();
+}
+
+bool FaceDatabase::setPersonContact(int personId, const QString &contactId)
+{
+    QSqlQuery query(m_db);
+    query.prepare("UPDATE people SET contact_id = :contact_id WHERE id = :id");
+    // Store NULL rather than "" when unlinking
+    query.bindValue(":contact_id", contactId.isEmpty() ? QVariant() : QVariant(contactId));
     query.bindValue(":id", personId);
 
     return query.exec();

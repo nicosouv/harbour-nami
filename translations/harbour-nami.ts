@@ -228,6 +228,18 @@
 <context>
     <name>MainPage</name>
     <message>
+        <source>Link to contact</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change linked contact</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unlink contact</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>About</source>
         <translation type="unfinished"></translation>
     </message>
@@ -687,6 +699,41 @@
     </message>
 </context>
 <context>
+    <name>SelectContactDialog</name>
+    <message>
+        <source>Link</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Link %1 to a contact</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Link to a contact</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Search contacts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unnamed contact</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No contacts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No contact matches your search</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>SelectPersonDialog</name>
     <message>
         <source>Cancel</source>
@@ -727,6 +774,38 @@
 </context>
 <context>
     <name>SettingsPage</name>
+    <message>
+        <source>Scanned folders</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nami only scans the folders listed here. Add a folder on the SD card to include external photos.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Display</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>People layout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>List</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Grid</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message>
         <source>All face recognition processing happens locally on your device. No data is sent to external servers.</source>
         <translation type="unfinished"></translation>

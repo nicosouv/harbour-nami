@@ -6,15 +6,49 @@ Page {
     id: page
 
     property var stats: ({})
-    property string galleryPath: ""
+    // Whitelist of folders Nami is allowed to scan (internal storage + SD card)
+    property var scanFolders: []
+    property string peopleViewMode: "list"
 
     allowedOrientations: Orientation.All
 
     function loadStatistics() {
         if (facePipeline && facePipeline.initialized) {
             stats = facePipeline.getStatistics()
-            galleryPath = facePipeline.getSetting("gallery_path", defaultGalleryPath)
+            loadFolders()
+            peopleViewMode = facePipeline.getSetting("people_view_mode", "list")
         }
+    }
+
+    function loadFolders() {
+        var raw = facePipeline.getSetting("scan_folders", "")
+        if (raw.length > 0) {
+            scanFolders = raw.split("\n").filter(function (f) { return f.length > 0 })
+        } else {
+            // Backward compat: migrate the single legacy folder
+            var legacy = facePipeline.getSetting("gallery_path", "")
+            scanFolders = legacy.length > 0 ? [legacy] : [defaultGalleryPath]
+        }
+    }
+
+    function saveFolders() {
+        facePipeline.setSetting("scan_folders", scanFolders.join("\n"))
+    }
+
+    function addFolder(path) {
+        if (!path || scanFolders.indexOf(path) >= 0) return
+        var copy = scanFolders.slice()
+        copy.push(path)
+        scanFolders = copy
+        saveFolders()
+    }
+
+    function removeFolder(path) {
+        var copy = scanFolders.filter(function (f) { return f !== path })
+        // Never leave the whitelist empty: fall back to the default folder
+        if (copy.length === 0) copy = [defaultGalleryPath]
+        scanFolders = copy
+        saveFolders()
     }
 
     Component.onCompleted: {
@@ -47,27 +81,85 @@ Page {
             }
 
             SectionHeader {
-                text: qsTr("Scanning")
+                text: qsTr("Scanned folders")
             }
 
-            ValueButton {
-                label: qsTr("Scan folder")
-                value: galleryPath || defaultGalleryPath
-                enabled: facePipeline && facePipeline.initialized
-                onClicked: {
-                    var dialog = pageStack.push(folderPickerComponent)
+            Label {
+                x: Theme.horizontalPageMargin
+                width: parent.width - 2 * Theme.horizontalPageMargin
+                text: qsTr("Nami only scans the folders listed here. Add a folder on the SD card to include external photos.")
+                font.pixelSize: Theme.fontSizeExtraSmall
+                color: Theme.secondaryColor
+                wrapMode: Text.WordWrap
+            }
+
+            Repeater {
+                model: scanFolders
+
+                delegate: ListItem {
+                    width: parent.width
+                    contentHeight: Theme.itemSizeSmall
+                    enabled: facePipeline && facePipeline.initialized
+
+                    Label {
+                        x: Theme.horizontalPageMargin
+                        width: parent.width - 2 * Theme.horizontalPageMargin
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: modelData
+                        truncationMode: TruncationMode.Fade
+                        font.pixelSize: Theme.fontSizeSmall
+                    }
+
+                    menu: ContextMenu {
+                        MenuItem {
+                            text: qsTr("Remove")
+                            onClicked: removeFolder(modelData)
+                        }
+                    }
                 }
+            }
+
+            Button {
+                x: Theme.horizontalPageMargin
+                text: qsTr("Add folder")
+                enabled: facePipeline && facePipeline.initialized
+                onClicked: pageStack.push(folderPickerComponent)
 
                 Component {
                     id: folderPickerComponent
                     FolderPickerDialog {
                         title: qsTr("Select folder to scan")
-                        onAccepted: {
-                            galleryPath = selectedPath
-                            facePipeline.setSetting("gallery_path", selectedPath)
-                        }
+                        onAccepted: addFolder(selectedPath)
                     }
                 }
+            }
+
+            SectionHeader {
+                text: qsTr("Display")
+            }
+
+            ComboBox {
+                width: parent.width
+                label: qsTr("People layout")
+                enabled: facePipeline && facePipeline.initialized
+                currentIndex: peopleViewMode === "grid" ? 1 : 0
+
+                menu: ContextMenu {
+                    MenuItem { text: qsTr("List") }
+                    MenuItem { text: qsTr("Grid") }
+                }
+
+                onCurrentIndexChanged: {
+                    var mode = currentIndex === 1 ? "grid" : "list"
+                    if (mode !== peopleViewMode) {
+                        peopleViewMode = mode
+                        facePipeline.setSetting("people_view_mode", mode)
+                    }
+                }
+            }
+
+            SectionHeader {
+                text: qsTr("Scanning")
             }
 
             Slider {

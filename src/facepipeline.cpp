@@ -101,6 +101,11 @@ bool FacePipeline::initialize(const QString &detectorModelPath,
 
 void FacePipeline::scanGallery(const QString &galleryPath, bool recursive, bool forceRescan)
 {
+    scanGalleries(QStringList{galleryPath}, recursive, forceRescan);
+}
+
+void FacePipeline::scanGalleries(const QStringList &galleryPaths, bool recursive, bool forceRescan)
+{
     if (!m_initialized) {
         emit error("Pipeline not initialized");
         return;
@@ -125,11 +130,26 @@ void FacePipeline::scanGallery(const QString &galleryPath, bool recursive, bool 
     m_currentScanIsForced = forceRescan;
     emit processingChanged();
 
-    qCDebug(lcNami) << "Scanning gallery:" << galleryPath << "(recursive:" << recursive
+    qCDebug(lcNami) << "Scanning galleries:" << galleryPaths << "(recursive:" << recursive
              << "force:" << forceRescan << ")";
 
-    // Find all image files
-    m_pendingFiles = findImageFiles(galleryPath, recursive);
+    // Find all image files across every folder, deduplicated (folders may
+    // overlap, e.g. an SD card mounted under a scanned parent)
+    QStringList allFiles;
+    QSet<QString> seen;
+    for (const QString &path : galleryPaths) {
+        if (path.isEmpty()) {
+            continue;
+        }
+        const QStringList files = findImageFiles(path, recursive);
+        for (const QString &file : files) {
+            if (!seen.contains(file)) {
+                seen.insert(file);
+                allFiles.append(file);
+            }
+        }
+    }
+    m_pendingFiles = allFiles;
 
     // Incremental scan: skip photos already processed
     if (!forceRescan) {
@@ -604,6 +624,7 @@ QVariantList FacePipeline::getAllPeople()
         personMap["name"] = person.name;
         personMap["photo_count"] = person.photoCount;
         personMap["created_at"] = person.createdAt;
+        personMap["contact_id"] = person.contactId;
         result.append(personMap);
     }
 
@@ -700,6 +721,15 @@ bool FacePipeline::updatePersonName(int personId, const QString &name)
     }
 
     return m_database->updatePersonName(personId, name);
+}
+
+bool FacePipeline::linkPersonToContact(int personId, const QString &contactId)
+{
+    if (!m_initialized || !m_database) {
+        return false;
+    }
+
+    return m_database->setPersonContact(personId, contactId);
 }
 
 bool FacePipeline::mergePersons(int fromPersonId, int intoPersonId)

@@ -12,6 +12,6 @@ Name=Nami
 Name[de]=Nami
 
 [X-Sailjail]
-Permissions=Pictures;Documents
+Permissions=Pictures;Documents;RemovableMedia;Contacts
 OrganizationName=harbour-nami
 ApplicationName=harbour-nami

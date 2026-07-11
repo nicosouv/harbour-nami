@@ -109,6 +109,16 @@ public:
                                  bool forceRescan = false);
 
     /**
+     * @brief Scan several gallery folders in one pass
+     *
+     * Same behaviour as scanGallery but accumulates image files across all
+     * given folders (deduplicated). Used by the folder whitelist so the SD
+     * card and internal storage can be scanned together.
+     */
+    Q_INVOKABLE void scanGalleries(const QStringList &galleryPaths, bool recursive = true,
+                                   bool forceRescan = false);
+
+    /**
      * @brief Process a single photo
      * @param photoPath Path to photo file
      * @return Processing result
@@ -170,6 +180,12 @@ public:
      * @return true if successful
      */
     Q_INVOKABLE bool updatePersonName(int personId, const QString &name);
+
+    /**
+     * @brief Link (or unlink with empty id) a person to a device contact
+     * @return true if successful
+     */
+    Q_INVOKABLE bool linkPersonToContact(int personId, const QString &contactId);
 
     /**
      * @brief Merge one person into another

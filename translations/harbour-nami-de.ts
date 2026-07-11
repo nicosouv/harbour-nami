@@ -229,6 +229,18 @@
 <context>
     <name>MainPage</name>
     <message>
+        <source>Link to contact</source>
+        <translation>Mit Kontakt verknüpfen</translation>
+    </message>
+    <message>
+        <source>Change linked contact</source>
+        <translation>Verknüpften Kontakt ändern</translation>
+    </message>
+    <message>
+        <source>Unlink contact</source>
+        <translation>Kontakt trennen</translation>
+    </message>
+    <message>
         <source>About</source>
         <translation>Über</translation>
     </message>
@@ -688,6 +700,41 @@
     </message>
 </context>
 <context>
+    <name>SelectContactDialog</name>
+    <message>
+        <source>Link</source>
+        <translation>Verknüpfen</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Abbrechen</translation>
+    </message>
+    <message>
+        <source>Link %1 to a contact</source>
+        <translation>%1 mit Kontakt verknüpfen</translation>
+    </message>
+    <message>
+        <source>Link to a contact</source>
+        <translation>Mit Kontakt verknüpfen</translation>
+    </message>
+    <message>
+        <source>Search contacts</source>
+        <translation>Kontakte suchen</translation>
+    </message>
+    <message>
+        <source>Unnamed contact</source>
+        <translation>Unbenannter Kontakt</translation>
+    </message>
+    <message>
+        <source>No contacts</source>
+        <translation>Keine Kontakte</translation>
+    </message>
+    <message>
+        <source>No contact matches your search</source>
+        <translation>Kein Kontakt entspricht deiner Suche</translation>
+    </message>
+</context>
+<context>
     <name>SelectPersonDialog</name>
     <message>
         <source>Cancel</source>
@@ -728,6 +775,38 @@
 </context>
 <context>
     <name>SettingsPage</name>
+    <message>
+        <source>Scanned folders</source>
+        <translation>Gescannte Ordner</translation>
+    </message>
+    <message>
+        <source>Nami only scans the folders listed here. Add a folder on the SD card to include external photos.</source>
+        <translation>Nami scannt nur die hier aufgeführten Ordner. Füge einen Ordner auf der SD-Karte hinzu, um externe Fotos einzubeziehen.</translation>
+    </message>
+    <message>
+        <source>Add folder</source>
+        <translation>Ordner hinzufügen</translation>
+    </message>
+    <message>
+        <source>Display</source>
+        <translation>Anzeige</translation>
+    </message>
+    <message>
+        <source>People layout</source>
+        <translation>Personen-Layout</translation>
+    </message>
+    <message>
+        <source>List</source>
+        <translation>Liste</translation>
+    </message>
+    <message>
+        <source>Grid</source>
+        <translation>Raster</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>Entfernen</translation>
+    </message>
     <message>
         <source>All face recognition processing happens locally on your device. No data is sent to external servers.</source>
         <translation>Die gesamte Gesichtserkennung erfolgt lokal auf Ihrem Gerät. Es werden keine Daten an externe Server gesendet.</translation>
