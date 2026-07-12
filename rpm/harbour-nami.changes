@@ -1,3 +1,6 @@
+* Sun Jul 12 2026 Nicolas Souveton <souvetonnicolas@gmail.com> 0.7.5-1
+- Add Privileged permission so contact linking can read the address book
+
 * Sun Jul 12 2026 Nicolas Souveton <souvetonnicolas@gmail.com> 0.7.4-1
 - Fix invalid contact icons failing to render
 - Fix contact search field binding in the link dialog
