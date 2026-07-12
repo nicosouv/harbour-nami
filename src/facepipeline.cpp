@@ -440,7 +440,7 @@ int FacePipeline::groupUnknownFaces(float similarityThreshold)
     return groupsCreated;
 }
 
-bool FacePipeline::identifyFace(int faceId, int personId, const QString &personName)
+bool FacePipeline::identifyFace(int faceId, int personId, const QString &personName, const QString &contactId)
 {
     if (!m_initialized) {
         emit error("Pipeline not initialized");
