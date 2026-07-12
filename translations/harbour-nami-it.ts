@@ -718,6 +718,10 @@
 <context>
     <name>SelectContactDialog</name>
     <message>
+        <source>Your address book appears to be empty</source>
+        <translation>La rubrica sembra vuota</translation>
+    </message>
+    <message>
         <source>Link</source>
         <translation>Collega</translation>
     </message>

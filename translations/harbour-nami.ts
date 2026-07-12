@@ -717,6 +717,10 @@
 <context>
     <name>SelectContactDialog</name>
     <message>
+        <source>Your address book appears to be empty</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Link</source>
         <translation type="unfinished"></translation>
     </message>

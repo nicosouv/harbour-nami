@@ -9,12 +9,15 @@ Dialog {
     property string selectedContactId: ""
     property string selectedContactName: ""
     property string personName: ""
+    // Search text lives on the dialog so both the model and the header
+    // SearchField can reach it (the SearchField id is scoped to the header)
+    property string searchText: ""
 
     PeopleModel {
         id: contactsModel
         filterType: PeopleModel.FilterAll
         requiredProperty: PeopleModel.NoPropertyRequired
-        filterPattern: searchField.text
+        filterPattern: dialog.searchText
     }
 
     SilicaListView {
@@ -45,6 +48,7 @@ Dialog {
                 id: searchField
                 width: parent.width
                 placeholderText: qsTr("Search contacts")
+                onTextChanged: dialog.searchText = text
                 EnterKey.iconSource: "image://theme/icon-m-enter-close"
                 EnterKey.onClicked: focus = false
             }
@@ -102,10 +106,19 @@ Dialog {
             }
         }
 
+        BusyIndicator {
+            anchors.centerIn: parent
+            size: BusyIndicatorSize.Large
+            running: !contactsModel.populated
+            visible: running
+        }
+
         ViewPlaceholder {
-            enabled: listView.count === 0
+            enabled: contactsModel.populated && listView.count === 0
             text: qsTr("No contacts")
-            hintText: qsTr("No contact matches your search")
+            hintText: searchText.length > 0
+                      ? qsTr("No contact matches your search")
+                      : qsTr("Your address book appears to be empty")
         }
 
         VerticalScrollDecorator {}

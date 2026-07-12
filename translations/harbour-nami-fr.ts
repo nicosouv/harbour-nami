@@ -718,6 +718,10 @@
 <context>
     <name>SelectContactDialog</name>
     <message>
+        <source>Your address book appears to be empty</source>
+        <translation>Votre carnet d'adresses semble vide</translation>
+    </message>
+    <message>
         <source>Link</source>
         <translation>Associer</translation>
     </message>

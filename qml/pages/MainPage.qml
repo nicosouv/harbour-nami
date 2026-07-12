@@ -449,7 +449,7 @@ Page {
                             Image {
                                 id: linkedIcon
                                 anchors.verticalCenter: parent.verticalCenter
-                                source: "image://theme/icon-s-contact"
+                                source: "image://theme/icon-m-contact"
                                 width: Theme.iconSizeExtraSmall
                                 height: Theme.iconSizeExtraSmall
                                 visible: model.contact_id && model.contact_id.length > 0
@@ -584,7 +584,7 @@ Page {
 
                         Image {
                             anchors.centerIn: parent
-                            source: grid.dense ? "image://theme/icon-m-contact" : "image://theme/icon-l-contact"
+                            source: "image://theme/icon-m-contact"
                             visible: gridAvatar.status !== Image.Ready
                             opacity: 0.4
                         }
@@ -595,7 +595,7 @@ Page {
                                 right: parent.right
                                 margins: Theme.paddingSmall
                             }
-                            source: "image://theme/icon-s-contact"
+                            source: "image://theme/icon-m-contact"
                             width: grid.dense ? Theme.iconSizeExtraSmall : Theme.iconSizeSmall
                             height: width
                             visible: model.contact_id && model.contact_id.length > 0

@@ -718,6 +718,10 @@
 <context>
     <name>SelectContactDialog</name>
     <message>
+        <source>Your address book appears to be empty</source>
+        <translation>Dein Adressbuch scheint leer zu sein</translation>
+    </message>
+    <message>
         <source>Link</source>
         <translation>Verknüpfen</translation>
     </message>
