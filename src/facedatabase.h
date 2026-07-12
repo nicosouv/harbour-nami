@@ -154,6 +154,15 @@ public:
     bool removeFaceFromPerson(int faceId);
 
     /**
+     * @brief Unassign every face of a person within a single photo
+     *
+     * A photo may contain several faces mapped to the same person; removing
+     * only the best one leaves the photo attached. This clears them all and
+     * records a rejection for each so auto-matching won't reassign them.
+     */
+    bool removePersonFromPhoto(int personId, int photoId);
+
+    /**
      * @brief Mark face as ignored (not a face / not worth identifying)
      */
     bool setFaceIgnored(int faceId, bool ignored);

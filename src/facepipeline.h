@@ -188,6 +188,11 @@ public:
     Q_INVOKABLE bool linkPersonToContact(int personId, const QString &contactId);
 
     /**
+     * @brief Contact id linked to a person, empty when none
+     */
+    Q_INVOKABLE QString personContactId(int personId);
+
+    /**
      * @brief Merge one person into another
      *
      * All faces of fromPersonId are reassigned to intoPersonId and
@@ -216,6 +221,12 @@ public:
      * @return true if successful
      */
     Q_INVOKABLE bool removeFaceFromPerson(int faceId);
+
+    /**
+     * @brief Detach a person from a whole photo (all their faces in it)
+     * @return true if successful
+     */
+    Q_INVOKABLE bool removePersonFromPhoto(int personId, int photoId);
 
     /**
      * @brief Permanently ignore a face (false positive, stranger, low quality)

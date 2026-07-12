@@ -426,6 +426,33 @@ bool FaceDatabase::removeFaceFromPerson(int faceId)
     return query.exec();
 }
 
+bool FaceDatabase::removePersonFromPhoto(int personId, int photoId)
+{
+    // Collect the affected faces first so each rejection is remembered
+    QVector<int> faceIds;
+    QSqlQuery sel(m_db);
+    sel.prepare("SELECT id FROM faces WHERE photo_id = :photo AND person_id = :person");
+    sel.bindValue(":photo", photoId);
+    sel.bindValue(":person", personId);
+    if (sel.exec()) {
+        while (sel.next()) {
+            faceIds.append(sel.value(0).toInt());
+        }
+    }
+
+    for (int faceId : faceIds) {
+        addNegativeMatch(faceId, personId);
+    }
+
+    QSqlQuery upd(m_db);
+    upd.prepare("UPDATE faces SET person_id = -1, verified = 0 "
+                "WHERE photo_id = :photo AND person_id = :person");
+    upd.bindValue(":photo", photoId);
+    upd.bindValue(":person", personId);
+
+    return upd.exec();
+}
+
 bool FaceDatabase::setFaceIgnored(int faceId, bool ignored)
 {
     QSqlQuery query(m_db);

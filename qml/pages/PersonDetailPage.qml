@@ -6,9 +6,16 @@ Page {
 
     property int personId: -1
     property string personName: ""
+    property string contactId: ""
     property var faceManager: facePipeline
 
     allowedOrientations: Orientation.All
+
+    function loadContact() {
+        if (faceManager && faceManager.initialized && personId >= 0) {
+            contactId = faceManager.personContactId(personId)
+        }
+    }
 
     // Photos with this person
     ListModel {
@@ -30,6 +37,7 @@ Page {
 
     Component.onCompleted: {
         loadPhotos()
+        loadContact()
     }
 
     SilicaFlickable {
@@ -49,24 +57,40 @@ Page {
             MenuItem {
                 text: qsTr("Rename")
                 onClicked: {
-                    var dialog = pageStack.push("Sailfish.Silica.InputDialog", {
-                        acceptDestination: page,
-                        acceptDestinationAction: PageStackAction.Pop,
-                        title: qsTr("Rename Person"),
-                        placeholderText: qsTr("Enter name"),
-                        text: personName
+                    var dialog = pageStack.push(Qt.resolvedUrl("../dialogs/RenamePersonDialog.qml"), {
+                        personId: personId,
+                        currentName: personName
                     })
                     dialog.accepted.connect(function() {
-                        facePipeline.updatePersonName(personId, dialog.value)
-                        personName = dialog.value
+                        facePipeline.updatePersonName(personId, dialog.newName)
+                        personName = dialog.newName
                     })
+                }
+            }
+            MenuItem {
+                text: contactId.length > 0 ? qsTr("Change linked contact") : qsTr("Link to contact")
+                onClicked: {
+                    var dialog = pageStack.push(Qt.resolvedUrl("../dialogs/SelectContactDialog.qml"), {
+                        personName: personName
+                    })
+                    dialog.accepted.connect(function() {
+                        facePipeline.linkPersonToContact(personId, dialog.selectedContactId)
+                        contactId = dialog.selectedContactId
+                    })
+                }
+            }
+            MenuItem {
+                text: qsTr("Unlink contact")
+                visible: contactId.length > 0
+                onClicked: {
+                    facePipeline.linkPersonToContact(personId, "")
+                    contactId = ""
                 }
             }
             MenuItem {
                 text: qsTr("Delete")
                 onClicked: {
-                    var remorse = pageStack.push("Sailfish.Silica.RemorsePopup")
-                    remorse.execute(qsTr("Deleting %1").arg(personName), function() {
+                    Remorse.popupAction(page, qsTr("Deleting %1").arg(personName), function() {
                         facePipeline.deletePerson(personId)
                         pageStack.pop()
                     })
@@ -250,7 +274,7 @@ Page {
                                 text: qsTr("Remove from person")
                                 onClicked: {
                                     photoItem.remorseAction(qsTr("Removing"), function() {
-                                        if (facePipeline.removeFaceFromPerson(model.face_id)) {
+                                        if (facePipeline.removePersonFromPhoto(page.personId, model.photo_id)) {
                                             photosModel.remove(index)
                                         }
                                     })

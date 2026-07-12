@@ -732,6 +732,15 @@ bool FacePipeline::linkPersonToContact(int personId, const QString &contactId)
     return m_database->setPersonContact(personId, contactId);
 }
 
+QString FacePipeline::personContactId(int personId)
+{
+    if (!m_initialized || !m_database) {
+        return QString();
+    }
+
+    return m_database->getPerson(personId).contactId;
+}
+
 bool FacePipeline::mergePersons(int fromPersonId, int intoPersonId)
 {
     if (!m_initialized || !m_database) {
@@ -761,6 +770,16 @@ bool FacePipeline::removeFaceFromPerson(int faceId)
 
     invalidatePersonPrototypes();
     return m_database->removeFaceFromPerson(faceId);
+}
+
+bool FacePipeline::removePersonFromPhoto(int personId, int photoId)
+{
+    if (!m_initialized || !m_database) {
+        return false;
+    }
+
+    invalidatePersonPrototypes();
+    return m_database->removePersonFromPhoto(personId, photoId);
 }
 
 bool FacePipeline::ignoreFace(int faceId)
