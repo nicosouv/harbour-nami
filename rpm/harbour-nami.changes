@@ -1,3 +1,8 @@
+* Sun Jul 12 2026 Nicolas Souveton <souvetonnicolas@gmail.com> 0.7.4-1
+- Fix invalid contact icons failing to render
+- Fix contact search field binding in the link dialog
+- Show a loading indicator while contacts load
+
 * Sun Jul 12 2026 Nicolas Souveton <souvetonnicolas@gmail.com> 0.7.3-1
 - List, grid x2 and grid x4 layouts for people
 - Scan folders whitelist with SD card (RemovableMedia) support
