@@ -674,6 +674,7 @@ QVariantList FacePipeline::getPersonPhotos(int personId)
                 ? photo.dateTaken.toMSecsSinceEpoch() / 1000 : 0;
             photoMap["similarity_score"] = face.similarityScore;
             photoMap["verified"] = face.verified;
+            photoMap["rotation"] = photo.rotation;
             photoMap["bbox_x"] = face.bbox.x();
             photoMap["bbox_y"] = face.bbox.y();
             photoMap["bbox_width"] = face.bbox.width();
@@ -748,6 +749,24 @@ QString FacePipeline::personContactId(int personId)
     }
 
     return m_database->getPerson(personId).contactId;
+}
+
+int FacePipeline::photoRotation(const QString &photoPath)
+{
+    if (!m_initialized || !m_database) {
+        return 0;
+    }
+
+    return m_database->photoRotation(photoPath);
+}
+
+bool FacePipeline::setPhotoRotation(const QString &photoPath, int rotation)
+{
+    if (!m_initialized || !m_database) {
+        return false;
+    }
+
+    return m_database->setPhotoRotation(photoPath, rotation);
 }
 
 void FacePipeline::setContactsEnabled(bool enabled)

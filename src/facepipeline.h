@@ -197,6 +197,16 @@ public:
     Q_INVOKABLE QString personContactId(int personId);
 
     /**
+     * @brief User-applied rotation for a photo (degrees, 0 when none)
+     */
+    Q_INVOKABLE int photoRotation(const QString &photoPath);
+
+    /**
+     * @brief Persist a user-applied rotation for a photo
+     */
+    Q_INVOKABLE bool setPhotoRotation(const QString &photoPath, int rotation);
+
+    /**
      * @brief Merge one person into another
      *
      * All faces of fromPersonId are reassigned to intoPersonId and

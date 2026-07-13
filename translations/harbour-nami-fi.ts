@@ -105,6 +105,36 @@
     </message>
 </context>
 <context>
+    <name>DayPhotosPage</name>
+    <message>
+        <source>photo</source>
+        <translation>kuva</translation>
+    </message>
+    <message>
+        <source>photos</source>
+        <translation>kuvaa</translation>
+    </message>
+    <message>
+        <source>No photos</source>
+        <translation>Ei kuvia</translation>
+    </message>
+</context>
+<context>
+    <name>MemoryDetailPage</name>
+    <message>
+        <source>photo</source>
+        <translation>kuva</translation>
+    </message>
+    <message>
+        <source>photos</source>
+        <translation>kuvaa</translation>
+    </message>
+    <message>
+        <source>No photos</source>
+        <translation>Ei kuvia</translation>
+    </message>
+</context>
+<context>
     <name>EventsPage</name>
     <message>
         <source>Events</source>
@@ -375,6 +405,10 @@
 </context>
 <context>
     <name>MemoriesPage</name>
+    <message>
+        <source>Photos from around this time in previous years</source>
+        <translation>Kuvia tältä ajalta aiempina vuosina</translation>
+    </message>
     <message>
         <source> year ago</source>
         <translation> vuosi sitten</translation>

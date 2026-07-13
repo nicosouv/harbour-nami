@@ -20,6 +20,7 @@ struct Photo {
     int width;
     int height;
     QDateTime processedAt;
+    int rotation;  // user-applied rotation in degrees (0/90/180/270)
 };
 
 /**
@@ -112,6 +113,16 @@ public:
      * @brief Mark photo as processed
      */
     bool markPhotoProcessed(int photoId);
+
+    /**
+     * @brief User-applied rotation for a photo (degrees, 0 when none)
+     */
+    int photoRotation(const QString &filePath);
+
+    /**
+     * @brief Persist a user-applied rotation for a photo
+     */
+    bool setPhotoRotation(const QString &filePath, int rotation);
 
     // === Face operations ===
 

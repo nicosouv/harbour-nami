@@ -115,6 +115,7 @@ bool FaceDatabase::initializeSchema()
     query.exec("ALTER TABLE faces ADD COLUMN similarity_score REAL DEFAULT 0.0");
     query.exec("ALTER TABLE faces ADD COLUMN verified INTEGER DEFAULT 0");
     query.exec("ALTER TABLE faces ADD COLUMN ignored INTEGER DEFAULT 0");
+    query.exec("ALTER TABLE photos ADD COLUMN rotation INTEGER DEFAULT 0");
 
     // Rejections: "this face is NOT this person", so auto-matching never
     // reassigns a face the user explicitly removed from a person
@@ -239,10 +240,33 @@ Photo FaceDatabase::getPhoto(int photoId)
         photo.width = query.value("width").toInt();
         photo.height = query.value("height").toInt();
         photo.processedAt = QDateTime::fromString(query.value("processed_at").toString(), Qt::ISODate);
+        photo.rotation = query.value("rotation").toInt();
         return photo;
     }
 
-    return Photo{-1, "", QDateTime(), 0, 0, QDateTime()};
+    return Photo{-1, "", QDateTime(), 0, 0, QDateTime(), 0};
+}
+
+int FaceDatabase::photoRotation(const QString &filePath)
+{
+    QSqlQuery query(m_db);
+    query.prepare("SELECT rotation FROM photos WHERE file_path = :path");
+    query.bindValue(":path", filePath);
+
+    if (query.exec() && query.next()) {
+        return query.value(0).toInt();
+    }
+    return 0;
+}
+
+bool FaceDatabase::setPhotoRotation(const QString &filePath, int rotation)
+{
+    QSqlQuery query(m_db);
+    query.prepare("UPDATE photos SET rotation = :rotation WHERE file_path = :path");
+    query.bindValue(":rotation", rotation);
+    query.bindValue(":path", filePath);
+
+    return query.exec();
 }
 
 QVector<Photo> FaceDatabase::getAllPhotos()
@@ -259,6 +283,7 @@ QVector<Photo> FaceDatabase::getAllPhotos()
             photo.width = query.value("width").toInt();
             photo.height = query.value("height").toInt();
             photo.processedAt = QDateTime::fromString(query.value("processed_at").toString(), Qt::ISODate);
+            photo.rotation = query.value("rotation").toInt();
             photos.append(photo);
         }
     }

@@ -187,10 +187,13 @@ Page {
         }
     }
 
-    // Re-read the layout choice when coming back from Settings
+    // Coming back from Settings or a person page: re-read the layout choice
+    // and reload people (deletions/renames done on the detail page would
+    // otherwise not show until the next scan)
     onStatusChanged: {
         if (status === PageStatus.Active) {
             reloadViewMode()
+            refreshPeople()
         }
     }
 
@@ -453,11 +456,14 @@ Page {
                             Image {
                                 id: linkedIcon
                                 anchors.verticalCenter: parent.verticalCenter
-                                source: "image://theme/icon-m-contact"
+                                // Tinted like secondary text so it reads as
+                                // metadata, not as an action button
+                                source: "image://theme/icon-m-contact?" + Theme.secondaryColor
                                 width: Theme.iconSizeExtraSmall
                                 height: Theme.iconSizeExtraSmall
+                                sourceSize.width: width
+                                sourceSize.height: height
                                 visible: facePipeline.contactsEnabled && model.contact_id && model.contact_id.length > 0
-                                opacity: 0.6
                             }
                         }
 
@@ -569,18 +575,17 @@ Page {
                     anchors.margins: grid.dense ? Theme.paddingSmall : Theme.paddingMedium
                     spacing: Theme.paddingSmall
 
-                    Rectangle {
+                    Item {
                         id: avatarFrame
                         width: parent.width
                         height: width
-                        radius: grid.dense ? Theme.paddingSmall : Theme.paddingMedium
-                        color: Theme.rgba(Theme.highlightBackgroundColor, 0.2)
-                        clip: true
 
                         Image {
                             id: gridAvatar
                             anchors.fill: parent
-                            source: FaceUtils.personAvatarUrl(facePipeline, model.person_id)
+                            // Square crop: the photo fills the whole tile,
+                            // no ambience-colored halo around a round crop
+                            source: FaceUtils.personAvatarUrl(facePipeline, model.person_id, false)
                             sourceSize.width: width
                             sourceSize.height: height
                             fillMode: Image.PreserveAspectCrop
@@ -594,16 +599,27 @@ Page {
                             opacity: 0.4
                         }
 
-                        Image {
+                        // Discreet linked-contact badge
+                        Rectangle {
                             anchors {
-                                top: parent.top
+                                bottom: parent.bottom
                                 right: parent.right
-                                margins: Theme.paddingSmall
+                                margins: Theme.paddingSmall / 2
                             }
-                            source: "image://theme/icon-m-contact"
-                            width: grid.dense ? Theme.iconSizeExtraSmall : Theme.iconSizeSmall
+                            width: Theme.iconSizeSmall
                             height: width
+                            radius: width / 2
+                            color: Theme.rgba("black", 0.5)
                             visible: facePipeline.contactsEnabled && model.contact_id && model.contact_id.length > 0
+
+                            Image {
+                                anchors.centerIn: parent
+                                source: "image://theme/icon-m-contact?#ffffff"
+                                width: parent.width * 0.6
+                                height: width
+                                sourceSize.width: width
+                                sourceSize.height: height
+                            }
                         }
                     }
 

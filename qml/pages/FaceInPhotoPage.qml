@@ -20,6 +20,9 @@ Page {
         anchors.fill: parent
         source: photoPath ? "file://" + photoPath : ""
         fillMode: Image.PreserveAspectFit
+        // Bboxes are normalized to the EXIF-oriented image, so the display
+        // must be oriented the same way or frames land off the face
+        autoTransform: true
         asynchronous: true
 
         BusyIndicator {

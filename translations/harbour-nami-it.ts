@@ -105,6 +105,36 @@
     </message>
 </context>
 <context>
+    <name>DayPhotosPage</name>
+    <message>
+        <source>photo</source>
+        <translation>foto</translation>
+    </message>
+    <message>
+        <source>photos</source>
+        <translation>foto</translation>
+    </message>
+    <message>
+        <source>No photos</source>
+        <translation>Nessuna foto</translation>
+    </message>
+</context>
+<context>
+    <name>MemoryDetailPage</name>
+    <message>
+        <source>photo</source>
+        <translation>foto</translation>
+    </message>
+    <message>
+        <source>photos</source>
+        <translation>foto</translation>
+    </message>
+    <message>
+        <source>No photos</source>
+        <translation>Nessuna foto</translation>
+    </message>
+</context>
+<context>
     <name>EventsPage</name>
     <message>
         <source>Events</source>
@@ -375,6 +405,10 @@
 </context>
 <context>
     <name>MemoriesPage</name>
+    <message>
+        <source>Photos from around this time in previous years</source>
+        <translation>Foto di questo periodo negli anni passati</translation>
+    </message>
     <message>
         <source> year ago</source>
         <translation> anno fa</translation>
