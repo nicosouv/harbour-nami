@@ -4,6 +4,38 @@
 <context>
     <name>AboutPage</name>
     <message>
+        <source>100% on-device processing, no internet required</source>
+        <translation>100 % paikallinen käsittely, ei internet-yhteyttä</translation>
+    </message>
+    <message>
+        <source>Automatic face detection and recognition</source>
+        <translation>Automaattinen kasvojen tunnistus</translation>
+    </message>
+    <message>
+        <source>People gallery in list or grid layout</source>
+        <translation>Henkilögalleria luettelona tai ruudukkona</translation>
+    </message>
+    <message>
+        <source>Link people to your device contacts</source>
+        <translation>Henkilöiden yhdistäminen yhteystietoihin</translation>
+    </message>
+    <message>
+        <source>Events grouped by day</source>
+        <translation>Tapahtumat ryhmiteltyinä päivittäin</translation>
+    </message>
+    <message>
+        <source>Memories from previous years</source>
+        <translation>Muistoja aiemmilta vuosilta</translation>
+    </message>
+    <message>
+        <source>Scan folders of your choice, SD card included</source>
+        <translation>Valitsemiesi kansioiden skannaus, myös SD-kortti</translation>
+    </message>
+    <message>
+        <source>Data export and full deletion (GDPR)</source>
+        <translation>Tietojen vienti ja täydellinen poisto (GDPR)</translation>
+    </message>
+    <message>
         <source>100% on-device processing</source>
         <translation>Käsittely 100 % laitteella</translation>
     </message>

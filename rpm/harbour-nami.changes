@@ -1,3 +1,7 @@
+* Mon Jul 13 2026 Nicolas Souveton <souvetonnicolas@gmail.com> 0.8.0-1
+- About page: app logo, dynamic version, updated feature list
+- Version bump consolidating all 0.7.x changes since the 0.7.1 release
+
 * Mon Jul 13 2026 Nicolas Souveton <souvetonnicolas@gmail.com> 0.7.9-1
 - Offer to merge duplicates when linking a contact already linked to someone
 - Full context menu on long press in grid layout

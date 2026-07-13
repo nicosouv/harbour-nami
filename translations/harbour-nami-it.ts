@@ -4,6 +4,38 @@
 <context>
     <name>AboutPage</name>
     <message>
+        <source>100% on-device processing, no internet required</source>
+        <translation>Elaborazione 100% sul dispositivo, nessuna connessione richiesta</translation>
+    </message>
+    <message>
+        <source>Automatic face detection and recognition</source>
+        <translation>Rilevamento e riconoscimento automatico dei volti</translation>
+    </message>
+    <message>
+        <source>People gallery in list or grid layout</source>
+        <translation>Galleria delle persone in elenco o griglia</translation>
+    </message>
+    <message>
+        <source>Link people to your device contacts</source>
+        <translation>Collegamento delle persone ai contatti</translation>
+    </message>
+    <message>
+        <source>Events grouped by day</source>
+        <translation>Eventi raggruppati per giorno</translation>
+    </message>
+    <message>
+        <source>Memories from previous years</source>
+        <translation>Ricordi degli anni passati</translation>
+    </message>
+    <message>
+        <source>Scan folders of your choice, SD card included</source>
+        <translation>Scansione delle cartelle a scelta, scheda SD inclusa</translation>
+    </message>
+    <message>
+        <source>Data export and full deletion (GDPR)</source>
+        <translation>Esportazione dei dati e cancellazione completa (GDPR)</translation>
+    </message>
+    <message>
         <source>100% on-device processing</source>
         <translation>Elaborazione 100% sul dispositivo</translation>
     </message>
