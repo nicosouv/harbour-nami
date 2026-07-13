@@ -8,7 +8,6 @@ Page {
     property var stats: ({})
     // Whitelist of folders Nami is allowed to scan (internal storage + SD card)
     property var scanFolders: []
-    property string peopleViewMode: "list"
 
     allowedOrientations: Orientation.All
 
@@ -16,7 +15,6 @@ Page {
         if (facePipeline && facePipeline.initialized) {
             stats = facePipeline.getStatistics()
             loadFolders()
-            peopleViewMode = facePipeline.getSetting("people_view_mode", "list")
         }
     }
 
@@ -148,13 +146,15 @@ Page {
             }
 
             ComboBox {
+                id: layoutCombo
                 width: parent.width
                 label: qsTr("People layout")
                 enabled: facePipeline && facePipeline.initialized
-                // "grid" is the legacy value for the 2-column grid
-                currentIndex: (peopleViewMode === "grid4") ? 2
-                              : (peopleViewMode === "grid2" || peopleViewMode === "grid") ? 1
-                              : 0
+
+                // Guard against writes while the initial value is applied:
+                // a declarative currentIndex binding gets clamped before the
+                // menu items exist, so the value must be set imperatively
+                property bool ready: false
 
                 menu: ContextMenu {
                     MenuItem { text: qsTr("List") }
@@ -162,14 +162,23 @@ Page {
                     MenuItem { text: qsTr("Grid ×4") }
                 }
 
+                Component.onCompleted: {
+                    if (facePipeline && facePipeline.initialized) {
+                        // "grid" is the legacy value for the 2-column grid
+                        var mode = facePipeline.getSetting("people_view_mode", "list")
+                        currentIndex = (mode === "grid4") ? 2
+                                     : (mode === "grid2" || mode === "grid") ? 1
+                                     : 0
+                    }
+                    ready = true
+                }
+
                 onCurrentIndexChanged: {
+                    if (!ready) return
                     var mode = currentIndex === 2 ? "grid4"
                              : currentIndex === 1 ? "grid2"
                              : "list"
-                    if (mode !== peopleViewMode) {
-                        peopleViewMode = mode
-                        facePipeline.setSetting("people_view_mode", mode)
-                    }
+                    facePipeline.setSetting("people_view_mode", mode)
                 }
             }
 
