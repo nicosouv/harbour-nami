@@ -583,9 +583,9 @@ Page {
                         Image {
                             id: gridAvatar
                             anchors.fill: parent
-                            // Square crop: the photo fills the whole tile,
-                            // no ambience-colored halo around a round crop
-                            source: FaceUtils.personAvatarUrl(facePipeline, model.person_id, false)
+                            // Round crop on a transparent frame: no colored
+                            // square showing behind the circle
+                            source: FaceUtils.personAvatarUrl(facePipeline, model.person_id)
                             sourceSize.width: width
                             sourceSize.height: height
                             fillMode: Image.PreserveAspectCrop
@@ -599,12 +599,13 @@ Page {
                             opacity: 0.4
                         }
 
-                        // Discreet linked-contact badge
+                        // Discreet linked-contact badge, sitting on the
+                        // circle's lower-right edge
                         Rectangle {
                             anchors {
                                 bottom: parent.bottom
                                 right: parent.right
-                                margins: Theme.paddingSmall / 2
+                                margins: parent.width * 0.05
                             }
                             width: Theme.iconSizeSmall
                             height: width
