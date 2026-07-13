@@ -1,4 +1,4 @@
-import QtQuick 2.0
+import QtQuick 2.6
 import Sailfish.Silica 1.0
 
 // A memory's photos scattered like polaroids thrown on a table
@@ -6,7 +6,7 @@ Page {
     id: page
 
     property int year: 0
-    property int windowDays: 7
+    property int windowDays: 20
     property string title: ""
 
     allowedOrientations: Orientation.All

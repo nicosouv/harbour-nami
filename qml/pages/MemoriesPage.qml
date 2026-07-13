@@ -1,4 +1,4 @@
-import QtQuick 2.0
+import QtQuick 2.6
 import Sailfish.Silica 1.0
 
 Page {
@@ -19,7 +19,7 @@ Page {
 
     // Days to look around today's date: exact-day matching almost never
     // fires, a window makes memories actually show up
-    readonly property int windowDays: 7
+    readonly property int windowDays: 20
 
     // Circular distance in days between a photo's month/day and today's,
     // ignoring the year (so Dec 30 is 3 days from Jan 2)
