@@ -5,7 +5,7 @@
     <name>AboutPage</name>
     <message>
         <source>100% on-device processing</source>
-        <translation>100 % lokal behandling på enheten</translation>
+        <translation>100 % prosessering på enheten</translation>
     </message>
     <message>
         <source>About</source>
@@ -162,7 +162,7 @@
     </message>
     <message>
         <source>Or assign to existing person:</source>
-        <translation>Eller tildel til eksisterende person:</translation>
+        <translation>Eller legg til eksisterende person:</translation>
     </message>
     <message>
         <source>Person name</source>
@@ -234,7 +234,7 @@
     </message>
     <message>
         <source>Automatically organize your photos by faces. All processing happens on your device for complete privacy.</source>
-        <translation>Organiser bildene dine automatisk etter ansikter. All behandling skjer på enheten din for fullstendig personvern.</translation>
+        <translation>Organiser bildene dine automatisk etter ansikter. All behandling skjer på enheten din for fullt personvern.</translation>
     </message>
     <message>
         <source>Delete</source>
@@ -298,7 +298,7 @@
     </message>
     <message>
         <source>Rename Person</source>
-        <translation>Gi nytt navn til person</translation>
+        <translation>Endre navn på person</translation>
     </message>
     <message>
         <source>Scan Gallery</source>
@@ -373,7 +373,7 @@
     </message>
     <message>
         <source>Photos from this day in previous years</source>
-        <translation>Bilder fra denne dagen i tidligere år</translation>
+        <translation>Bilder fra denne dagen tidligere år</translation>
     </message>
     <message>
         <source>photo</source>
@@ -491,7 +491,7 @@
     </message>
     <message>
         <source>Rename Person</source>
-        <translation>Gi nytt navn til person</translation>
+        <translation>Endre navn på person</translation>
     </message>
     <message>
         <source>This person hasn't been detected in any photos yet</source>
@@ -572,7 +572,7 @@
     </message>
     <message>
         <source>Rename Person</source>
-        <translation>Gi nytt navn til person</translation>
+        <translation>Endre navn på person</translation>
     </message>
     <message>
         <source>Save</source>
