@@ -8,6 +8,8 @@ Page {
     property var stats: ({})
     // Whitelist of folders Nami is allowed to scan (internal storage + SD card)
     property var scanFolders: []
+    // ISO date string of the last successful backup, empty if none yet
+    property string lastBackupAt: ""
 
     allowedOrientations: Orientation.All
 
@@ -15,7 +17,19 @@ Page {
         if (facePipeline && facePipeline.initialized) {
             stats = facePipeline.getStatistics()
             loadFolders()
+            lastBackupAt = facePipeline.getSetting("last_backup_at", "")
         }
+    }
+
+    function lastBackupText() {
+        if (!lastBackupAt) {
+            return qsTr("No backup yet — make one before switching phones")
+        }
+        var days = Math.floor((Date.now() - new Date(lastBackupAt).getTime()) / 86400000)
+        if (days <= 0) {
+            return qsTr("Last backup: today")
+        }
+        return qsTr("Last backup: %n day(s) ago", "", days)
     }
 
     function loadFolders() {
@@ -367,9 +381,18 @@ Page {
             Label {
                 x: Theme.horizontalPageMargin
                 width: parent.width - 2 * Theme.horizontalPageMargin
-                text: qsTr("A backup includes everyone you've identified, their photos and your trips, so you can restore it all on a new device. If your photos land at the exact same folder as before, restore before your first scan. If they end up somewhere else (e.g. a different SD card), scan first, then restore: Nami recognizes photos by their content too, not just their path.")
+                text: qsTr("A backup includes everyone you've identified, their photos and your trips, so you can restore it all on a new device. On the new phone, scan your gallery first, then restore: this is always safe, whether your photos ended up at the same path or not, and whatever Nami version you're running.")
                 font.pixelSize: Theme.fontSizeExtraSmall
                 color: Theme.secondaryColor
+                wrapMode: Text.WordWrap
+            }
+
+            Label {
+                x: Theme.horizontalPageMargin
+                width: parent.width - 2 * Theme.horizontalPageMargin
+                text: lastBackupText()
+                font.pixelSize: Theme.fontSizeExtraSmall
+                color: lastBackupAt ? Theme.secondaryColor : Theme.highlightColor
                 wrapMode: Text.WordWrap
             }
 
@@ -383,6 +406,9 @@ Page {
                         backupResultLabel.text = path
                             ? qsTr("Backup written to %1").arg(path)
                             : qsTr("Backup failed")
+                        if (path) {
+                            lastBackupAt = facePipeline.getSetting("last_backup_at", "")
+                        }
                     }
                 }
 

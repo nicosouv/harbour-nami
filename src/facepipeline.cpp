@@ -1091,6 +1091,8 @@ QString FacePipeline::exportBackupData()
     // Contains names, photo paths and face embeddings
     QFile::setPermissions(filePath, QFileDevice::ReadOwner | QFileDevice::WriteOwner);
 
+    m_database->setSetting("last_backup_at", QDateTime::currentDateTime().toString(Qt::ISODate));
+
     qCDebug(lcNami) << "Backup written to" << filePath;
     return filePath;
 }
