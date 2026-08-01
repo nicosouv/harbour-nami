@@ -274,6 +274,27 @@ public:
     Q_INVOKABLE QString exportData();
 
     /**
+     * @brief Write a complete backup (photos, faces incl. embeddings,
+     *        people, trips) meant to be restored on another device
+     * @return Path of the written file, or empty string on failure
+     */
+    Q_INVOKABLE QString exportBackupData();
+
+    /**
+     * @brief List Nami backup files found directly in a folder
+     * @return List of maps with file_path, exported_at, total_photos,
+     *         total_people, sorted newest first
+     */
+    Q_INVOKABLE QVariantList listBackupFiles(const QString &folderPath);
+
+    /**
+     * @brief Restore a backup written by exportBackupData()
+     * @return Map with photos_imported, photos_skipped, people_imported,
+     *         faces_imported, trips_imported, or an empty map on failure
+     */
+    Q_INVOKABLE QVariantMap importBackupData(const QString &filePath);
+
+    /**
      * @brief Read a persisted app setting (settings table)
      */
     Q_INVOKABLE QString getSetting(const QString &key, const QString &defaultValue = QString());
