@@ -359,6 +359,83 @@ Page {
                 wrapMode: Text.Wrap
                 visible: text.length > 0
             }
+
+            SectionHeader {
+                text: qsTr("Backup")
+            }
+
+            Label {
+                x: Theme.horizontalPageMargin
+                width: parent.width - 2 * Theme.horizontalPageMargin
+                text: qsTr("A backup includes everyone you've identified, their photos and your trips, so you can restore it all on a new device. Restore it before scanning your gallery for the best result, with your photos back at the same paths.")
+                font.pixelSize: Theme.fontSizeExtraSmall
+                color: Theme.secondaryColor
+                wrapMode: Text.WordWrap
+            }
+
+            ButtonLayout {
+                Button {
+                    text: qsTr("Create backup")
+                    enabled: facePipeline && facePipeline.initialized
+                    onClicked: {
+                        var path = facePipeline.exportBackupData()
+                        backupResultLabel.color = Theme.secondaryHighlightColor
+                        backupResultLabel.text = path
+                            ? qsTr("Backup written to %1").arg(path)
+                            : qsTr("Backup failed")
+                    }
+                }
+
+                Button {
+                    text: qsTr("Restore backup")
+                    enabled: facePipeline && facePipeline.initialized
+                    onClicked: pageStack.push(folderPickerForRestoreComponent)
+
+                    Component {
+                        id: folderPickerForRestoreComponent
+                        FolderPickerDialog {
+                            title: qsTr("Select folder containing the backup")
+                            onAccepted: {
+                                var backups = facePipeline.listBackupFiles(selectedPath)
+                                if (backups.length === 0) {
+                                    backupResultLabel.color = Theme.highlightColor
+                                    backupResultLabel.text = qsTr("No backup found in %1").arg(selectedPath)
+                                    return
+                                }
+                                var rd = pageStack.push(Qt.resolvedUrl("../dialogs/RestoreBackupDialog.qml"),
+                                                         { "backups": backups })
+                                rd.accepted.connect(function() {
+                                    var cd = pageStack.push(Qt.resolvedUrl("../dialogs/ConfirmDialog.qml"), {
+                                        "title": qsTr("Restore this backup?"),
+                                        "message": qsTr("Identifications and trips will be added to what's already on this device. Nothing is deleted.")
+                                    })
+                                    cd.accepted.connect(function() {
+                                        var result = facePipeline.importBackupData(rd.selectedFilePath)
+                                        backupResultLabel.color = Theme.secondaryHighlightColor
+                                        backupResultLabel.text = result && Object.keys(result).length > 0
+                                            ? qsTr("Restored %1 photos, %2 faces, %3 people, %4 trips (%5 photos skipped, not found on this device)")
+                                                .arg(result.photos_imported).arg(result.faces_imported)
+                                                .arg(result.people_imported).arg(result.trips_imported)
+                                                .arg(result.photos_skipped)
+                                            : qsTr("Restore failed")
+                                        loadStatistics()
+                                    })
+                                })
+                            }
+                        }
+                    }
+                }
+            }
+
+            Label {
+                id: backupResultLabel
+                x: Theme.horizontalPageMargin
+                width: parent.width - 2 * Theme.horizontalPageMargin
+                font.pixelSize: Theme.fontSizeExtraSmall
+                color: Theme.secondaryHighlightColor
+                wrapMode: Text.Wrap
+                visible: text.length > 0
+            }
         }
     }
 }

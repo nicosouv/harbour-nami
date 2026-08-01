@@ -9,6 +9,7 @@
 #include <QVariantMap>
 #include <QDateTime>
 #include <QSqlDatabase>
+#include <QJsonObject>
 #include "facerecognizer.h"
 
 /**
@@ -287,6 +288,38 @@ public:
      * @brief Delete all data (GDPR right to be forgotten)
      */
     bool deleteAllData();
+
+    // === Full backup (device migration) ===
+
+    /**
+     * @brief Counts reported by importBackup()
+     */
+    struct ImportStats {
+        int photosImported = 0;
+        int photosSkipped = 0;  // file no longer exists on this device
+        int peopleImported = 0;
+        int facesImported = 0;
+        int tripsImported = 0;
+    };
+
+    /**
+     * @brief Export every table needed to fully restore the app on another
+     *        device: photos, faces (including embeddings), people, trips
+     *        and rejections. Unlike exportPersonData()/GDPR export, nothing
+     *        is omitted here since this is meant to be re-imported.
+     */
+    QJsonObject exportBackup();
+
+    /**
+     * @brief Restore a backup produced by exportBackup()
+     *
+     * Additive: a photo already in the database (same file_path) or a
+     * person with the same name is reused rather than duplicated, so this
+     * is safe to run on a database that already has some data. A photo
+     * whose file no longer exists on this device is skipped, along with
+     * its faces, since there is nothing on disk to attach them to.
+     */
+    ImportStats importBackup(const QJsonObject &root);
 
     /**
      * @brief Delete faces, people and rejections but keep photo records

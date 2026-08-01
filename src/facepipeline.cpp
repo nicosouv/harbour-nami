@@ -12,6 +12,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
+#include <algorithm>
 
 FacePipeline::FacePipeline(QObject *parent)
     : QObject(parent)
@@ -1048,4 +1049,127 @@ QString FacePipeline::exportData()
 
     qCDebug(lcNami) << "Data exported to" << filePath;
     return filePath;
+}
+
+QString FacePipeline::exportBackupData()
+{
+    if (!m_initialized || !m_database) {
+        return QString();
+    }
+
+    QJsonObject root = m_database->exportBackup();
+    // Lets importBackupData() know whether these embeddings are compatible
+    // with the engine that will read them back
+    root["embedding_version"] = EMBEDDING_VERSION;
+
+    QString dir = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
+    QString filePath = dir + "/nami-backup-"
+        + QDateTime::currentDateTime().toString("yyyyMMdd-hhmmss") + ".json";
+
+    QFile file(filePath);
+    if (!file.open(QIODevice::WriteOnly)) {
+        emit error("Failed to write backup file: " + filePath);
+        return QString();
+    }
+
+    file.write(QJsonDocument(root).toJson(QJsonDocument::Indented));
+    file.close();
+
+    // Contains names, photo paths and face embeddings
+    QFile::setPermissions(filePath, QFileDevice::ReadOwner | QFileDevice::WriteOwner);
+
+    qCDebug(lcNami) << "Backup written to" << filePath;
+    return filePath;
+}
+
+QVariantList FacePipeline::listBackupFiles(const QString &folderPath)
+{
+    QVariantList result;
+    QDir dir(folderPath);
+    if (!dir.exists()) {
+        return result;
+    }
+
+    // Sort explicitly by modification time (newest first) rather than
+    // relying on QDir's platform-dependent default tie-breaking for QDir::Time
+    QFileInfoList files = dir.entryInfoList(
+        QStringList{"nami-backup-*.json"}, QDir::Files);
+    std::sort(files.begin(), files.end(), [](const QFileInfo &a, const QFileInfo &b) {
+        return a.lastModified() > b.lastModified();
+    });
+
+    for (const QFileInfo &info : files) {
+        QString path = info.absoluteFilePath();
+        QFile file(path);
+        if (!file.open(QIODevice::ReadOnly)) {
+            continue;
+        }
+        QJsonDocument doc = QJsonDocument::fromJson(file.readAll());
+        file.close();
+        if (!doc.isObject()) {
+            continue;
+        }
+
+        QJsonObject root = doc.object();
+        QVariantMap entry;
+        entry["file_path"] = path;
+        entry["exported_at"] = root["exported_at"].toString();
+        entry["total_photos"] = root["photos"].toArray().size();
+        entry["total_people"] = root["people"].toArray().size();
+        result.append(entry);
+    }
+
+    return result;
+}
+
+QVariantMap FacePipeline::importBackupData(const QString &filePath)
+{
+    QVariantMap result;
+    if (!m_initialized || !m_database) {
+        return result;
+    }
+
+    QFile file(filePath);
+    if (!file.open(QIODevice::ReadOnly)) {
+        emit error("Failed to read backup file: " + filePath);
+        return result;
+    }
+
+    QJsonDocument doc = QJsonDocument::fromJson(file.readAll());
+    file.close();
+    if (!doc.isObject()) {
+        emit error("Invalid backup file: " + filePath);
+        return result;
+    }
+
+    QJsonObject root = doc.object();
+    int backupEmbeddingVersion = root["embedding_version"].toInt(-1);
+
+    FaceDatabase::ImportStats stats = m_database->importBackup(root);
+
+    // Same engine version as this backup: the restored embeddings are
+    // usable as-is, so skip the "outdated embeddings" forced rescan that
+    // would otherwise wipe what was just imported
+    if (backupEmbeddingVersion == EMBEDDING_VERSION) {
+        m_database->setSetting("embedding_version", QString::number(EMBEDDING_VERSION));
+        if (m_needsRescan) {
+            m_needsRescan = false;
+            emit needsRescanChanged();
+        }
+    }
+
+    invalidatePersonPrototypes();
+
+    result["photos_imported"] = stats.photosImported;
+    result["photos_skipped"] = stats.photosSkipped;
+    result["people_imported"] = stats.peopleImported;
+    result["faces_imported"] = stats.facesImported;
+    result["trips_imported"] = stats.tripsImported;
+
+    qCDebug(lcNami) << "Backup restored from" << filePath << ":"
+             << stats.photosImported << "photos," << stats.facesImported << "faces,"
+             << stats.peopleImported << "people," << stats.tripsImported << "trips,"
+             << stats.photosSkipped << "photos skipped (missing on this device)";
+
+    return result;
 }

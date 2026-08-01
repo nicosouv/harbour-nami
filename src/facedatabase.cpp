@@ -11,6 +11,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
+#include <QHash>
 
 FaceDatabase::FaceDatabase(QObject *parent)
     : QObject(parent)
@@ -872,6 +873,287 @@ QVariantMap FaceDatabase::exportPersonData(int personId)
     data["total_faces"] = faces.size();
 
     return data;
+}
+
+// === Full backup ===
+
+QJsonObject FaceDatabase::exportBackup()
+{
+    QJsonObject root;
+    root["app"] = "harbour-nami";
+    root["backup_version"] = 1;
+    root["exported_at"] = QDateTime::currentDateTime().toString(Qt::ISODate);
+
+    QVector<Person> people = getAllPeople();
+    QHash<int, int> personIndexById;
+    QJsonArray peopleArray;
+    for (const Person &person : people) {
+        personIndexById[person.id] = peopleArray.size();
+        QJsonObject p;
+        p["name"] = person.name;
+        p["contact_id"] = person.contactId;
+        p["created_at"] = person.createdAt.toString(Qt::ISODate);
+        peopleArray.append(p);
+    }
+    root["people"] = peopleArray;
+
+    QVector<Photo> photos = getAllPhotos();
+    QHash<int, QString> photoPathById;
+    QJsonArray photosArray;
+    for (const Photo &photo : photos) {
+        photoPathById[photo.id] = photo.filePath;
+        QJsonObject ph;
+        ph["file_path"] = photo.filePath;
+        ph["date_taken"] = photo.dateTaken.toString(Qt::ISODate);
+        ph["width"] = photo.width;
+        ph["height"] = photo.height;
+        ph["rotation"] = photo.rotation;
+        if (photo.hasLocation) {
+            ph["latitude"] = photo.latitude;
+            ph["longitude"] = photo.longitude;
+        }
+        photosArray.append(ph);
+    }
+    root["photos"] = photosArray;
+
+    QJsonArray facesArray;
+    QSqlQuery faceQuery(m_db);
+    if (faceQuery.exec("SELECT * FROM faces")) {
+        while (faceQuery.next()) {
+            int photoId = faceQuery.value("photo_id").toInt();
+            if (!photoPathById.contains(photoId)) {
+                continue;
+            }
+            QJsonObject f;
+            f["photo_path"] = photoPathById[photoId];
+            f["bbox"] = QJsonArray{
+                faceQuery.value("bbox_x").toDouble(),
+                faceQuery.value("bbox_y").toDouble(),
+                faceQuery.value("bbox_width").toDouble(),
+                faceQuery.value("bbox_height").toDouble()
+            };
+            f["confidence"] = faceQuery.value("confidence").toDouble();
+            int personId = faceQuery.value("person_id").toInt();
+            f["person_index"] = personIndexById.contains(personId) ? personIndexById[personId] : -1;
+            f["similarity_score"] = faceQuery.value("similarity_score").toDouble();
+            f["verified"] = faceQuery.value("verified").toInt() == 1;
+            f["ignored"] = faceQuery.value("ignored").toInt() == 1;
+            f["detected_at"] = faceQuery.value("detected_at").toString();
+            f["embedding"] = QString::fromLatin1(faceQuery.value("embedding").toByteArray().toBase64());
+            facesArray.append(f);
+        }
+    }
+    root["faces"] = facesArray;
+
+    QJsonArray negativeArray;
+    QSqlQuery negQuery(m_db);
+    if (negQuery.exec(R"(
+        SELECT f.photo_id, f.bbox_x, f.bbox_y, f.bbox_width, f.bbox_height, nm.person_id
+        FROM negative_matches nm
+        JOIN faces f ON f.id = nm.face_id
+    )")) {
+        while (negQuery.next()) {
+            int photoId = negQuery.value(0).toInt();
+            int personId = negQuery.value(5).toInt();
+            if (!photoPathById.contains(photoId) || !personIndexById.contains(personId)) {
+                continue;
+            }
+            QJsonObject n;
+            n["photo_path"] = photoPathById[photoId];
+            n["bbox"] = QJsonArray{
+                negQuery.value(1).toDouble(), negQuery.value(2).toDouble(),
+                negQuery.value(3).toDouble(), negQuery.value(4).toDouble()
+            };
+            n["person_index"] = personIndexById[personId];
+            negativeArray.append(n);
+        }
+    }
+    root["negative_matches"] = negativeArray;
+
+    QJsonArray tripsArray;
+    for (const Trip &trip : getAllTrips()) {
+        QJsonObject t;
+        t["name"] = trip.name;
+        t["date_keys"] = QJsonArray::fromStringList(trip.dateKeys);
+        tripsArray.append(t);
+    }
+    root["trips"] = tripsArray;
+
+    return root;
+}
+
+namespace {
+// Identifies a face across the export/import boundary, since DB ids are
+// not stable: a photo can only have one face at a given bounding box
+QString faceKey(const QString &photoPath, const QJsonArray &bbox)
+{
+    return QString("%1|%2,%3,%4,%5").arg(photoPath)
+        .arg(bbox.at(0).toDouble(), 0, 'f', 6)
+        .arg(bbox.at(1).toDouble(), 0, 'f', 6)
+        .arg(bbox.at(2).toDouble(), 0, 'f', 6)
+        .arg(bbox.at(3).toDouble(), 0, 'f', 6);
+}
+}
+
+FaceDatabase::ImportStats FaceDatabase::importBackup(const QJsonObject &root)
+{
+    ImportStats stats;
+
+    if (root["app"].toString() != "harbour-nami") {
+        return stats;
+    }
+
+    beginTransaction();
+
+    // People: reuse an existing person with the same name rather than
+    // creating a duplicate when merging into a non-empty database
+    QHash<QString, int> personIdByName;
+    for (const Person &p : getAllPeople()) {
+        personIdByName[p.name.toLower()] = p.id;
+    }
+
+    QVector<int> personIdByIndex;
+    for (const QJsonValue &v : root["people"].toArray()) {
+        QJsonObject p = v.toObject();
+        QString name = p["name"].toString();
+        int personId = personIdByName.value(name.toLower(), -1);
+        if (personId == -1) {
+            personId = createPerson(name);
+            if (personId != -1) {
+                QString contactId = p["contact_id"].toString();
+                if (!contactId.isEmpty()) {
+                    setPersonContact(personId, contactId);
+                }
+                personIdByName[name.toLower()] = personId;
+                stats.peopleImported++;
+            }
+        }
+        personIdByIndex.append(personId);
+    }
+
+    // Photos: only those whose file still exists on this device are usable;
+    // matched by path against what's already in the database otherwise
+    QHash<QString, int> photoIdByPath;
+    for (const QJsonValue &v : root["photos"].toArray()) {
+        QJsonObject ph = v.toObject();
+        QString path = ph["file_path"].toString();
+
+        if (!QFileInfo::exists(path)) {
+            stats.photosSkipped++;
+            continue;
+        }
+
+        QSqlQuery check(m_db);
+        check.prepare("SELECT id FROM photos WHERE file_path = :path");
+        check.bindValue(":path", path);
+        int photoId = -1;
+        if (check.exec() && check.next()) {
+            photoId = check.value(0).toInt();
+        } else {
+            bool hasLocation = ph.contains("latitude") && ph.contains("longitude");
+            photoId = addPhoto(path,
+                                QDateTime::fromString(ph["date_taken"].toString(), Qt::ISODate),
+                                ph["width"].toInt(), ph["height"].toInt(),
+                                hasLocation, ph["latitude"].toDouble(), ph["longitude"].toDouble());
+            if (photoId != -1) {
+                int rotation = ph["rotation"].toInt();
+                if (rotation != 0) {
+                    setPhotoRotation(path, rotation);
+                }
+                stats.photosImported++;
+            }
+        }
+
+        if (photoId != -1) {
+            photoIdByPath[path] = photoId;
+            // So a later incremental scan never re-detects and overwrites
+            // what's being restored
+            markPhotoProcessed(photoId);
+        }
+    }
+
+    // Don't duplicate faces for a photo that was already scanned locally
+    QSet<int> photosWithExistingFaces;
+    for (int photoId : photoIdByPath) {
+        QSqlQuery check(m_db);
+        check.prepare("SELECT 1 FROM faces WHERE photo_id = :id LIMIT 1");
+        check.bindValue(":id", photoId);
+        if (check.exec() && check.next()) {
+            photosWithExistingFaces.insert(photoId);
+        }
+    }
+
+    QHash<QString, int> faceIdByKey;
+    for (const QJsonValue &v : root["faces"].toArray()) {
+        QJsonObject f = v.toObject();
+        QString photoPath = f["photo_path"].toString();
+        if (!photoIdByPath.contains(photoPath)) {
+            continue;
+        }
+        int photoId = photoIdByPath[photoPath];
+        if (photosWithExistingFaces.contains(photoId)) {
+            continue;
+        }
+
+        QJsonArray bboxArr = f["bbox"].toArray();
+        QRectF bbox(bboxArr.at(0).toDouble(), bboxArr.at(1).toDouble(),
+                    bboxArr.at(2).toDouble(), bboxArr.at(3).toDouble());
+
+        int personIndex = f["person_index"].toInt(-1);
+        int personId = (personIndex >= 0 && personIndex < personIdByIndex.size())
+            ? personIdByIndex.at(personIndex) : -1;
+
+        FaceEmbedding embedding = deserializeEmbedding(
+            QByteArray::fromBase64(f["embedding"].toString().toLatin1()));
+
+        int faceId = addFace(photoId, bbox, f["confidence"].toDouble(),
+                              embedding, personId,
+                              f["similarity_score"].toDouble(), f["verified"].toBool());
+        if (faceId != -1) {
+            if (f["ignored"].toBool()) {
+                setFaceIgnored(faceId, true);
+            }
+            stats.facesImported++;
+            faceIdByKey[faceKey(photoPath, bboxArr)] = faceId;
+        }
+    }
+
+    for (const QJsonValue &v : root["negative_matches"].toArray()) {
+        QJsonObject n = v.toObject();
+        QString photoPath = n["photo_path"].toString();
+        QJsonArray bboxArr = n["bbox"].toArray();
+        QString key = faceKey(photoPath, bboxArr);
+        if (!faceIdByKey.contains(key)) {
+            continue;
+        }
+        int personIndex = n["person_index"].toInt(-1);
+        if (personIndex < 0 || personIndex >= personIdByIndex.size()) {
+            continue;
+        }
+        addNegativeMatch(faceIdByKey[key], personIdByIndex.at(personIndex));
+    }
+
+    QHash<QString, int> tripIdByName;
+    for (const Trip &t : getAllTrips()) {
+        tripIdByName[t.name.toLower()] = t.id;
+    }
+    for (const QJsonValue &v : root["trips"].toArray()) {
+        QJsonObject t = v.toObject();
+        QString name = t["name"].toString();
+        if (tripIdByName.contains(name.toLower())) {
+            continue;  // already grouped locally, don't override
+        }
+        QStringList dateKeys;
+        for (const QJsonValue &d : t["date_keys"].toArray()) {
+            dateKeys.append(d.toString());
+        }
+        if (createTrip(name, dateKeys) != -1) {
+            stats.tripsImported++;
+        }
+    }
+
+    commitTransaction();
+    return stats;
 }
 
 bool FaceDatabase::deleteAllData()
