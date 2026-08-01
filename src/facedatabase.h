@@ -395,6 +395,36 @@ public:
      */
     QVector<Trip> getAllTrips();
 
+    /**
+     * @brief Merge fromTripId's dates into intoTripId and delete fromTripId
+     */
+    bool mergeTrips(int fromTripId, int intoTripId);
+
+    // === Event covers (user-chosen cover photo for a day or trip) ===
+
+    /**
+     * @brief Set the cover photo for a day ("day:yyyy-MM-dd") or trip
+     *        ("trip:<id>") event key
+     */
+    bool setEventCover(const QString &eventKey, const QString &photoPath);
+
+    /**
+     * @brief Clear a stored cover, reverting to the automatic choice
+     */
+    bool clearEventCover(const QString &eventKey);
+
+    /**
+     * @brief All stored covers, event key -> photo file path
+     */
+    QVariantMap getEventCovers();
+
+    // === Recent photos (cover page) ===
+
+    /**
+     * @brief Most recently taken photos, newest first
+     */
+    QVector<Photo> getRecentPhotos(int limit);
+
 signals:
     void error(const QString &message);
 

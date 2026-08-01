@@ -42,6 +42,14 @@ Page {
         var today = new Date()
         var currentYear = today.getFullYear()
 
+        var trips = faceManager.getTrips()
+        var dateToTripName = {}
+        for (var t = 0; t < trips.length; t++) {
+            for (var td = 0; td < trips[t].date_keys.length; td++) {
+                dateToTripName[trips[t].date_keys[td]] = trips[t].name
+            }
+        }
+
         var people = faceManager.getAllPeople()
         var byYear = {}  // year -> { photos, people, bestDistance }
 
@@ -93,6 +101,17 @@ Page {
                 peopleNames.push(memory.people[personId])
             }
 
+            // If any of this memory's photos fall on a grouped trip's dates,
+            // surface that trip's name instead of a generic date badge
+            var tripName = ""
+            for (var gp = 0; gp < memory.photos.length; gp++) {
+                var photoDateKey = Qt.formatDate(new Date(memory.photos[gp].timestamp * 1000), "yyyy-MM-dd")
+                if (dateToTripName[photoDateKey]) {
+                    tripName = dateToTripName[photoDateKey]
+                    break
+                }
+            }
+
             memoriesList.push({
                 year: memory.year,
                 yearsAgo: currentYear - memory.year,
@@ -101,7 +120,8 @@ Page {
                 photoCount: memory.photos.length,
                 peopleCount: peopleNames.length,
                 peopleNames: peopleNames.join(", "),
-                coverPhoto: memory.photos[0].file_path
+                coverPhoto: memory.photos[0].file_path,
+                tripName: tripName
             })
         }
 
@@ -225,6 +245,15 @@ Page {
                         font.bold: true
                         truncationMode: TruncationMode.Fade
                         width: parent.width
+                    }
+
+                    Label {
+                        text: qsTr("Trip: %1").arg(model.tripName)
+                        color: Theme.highlightColor
+                        font.pixelSize: Theme.fontSizeExtraSmall
+                        truncationMode: TruncationMode.Fade
+                        width: parent.width
+                        visible: model.tripName.length > 0
                     }
 
                     Label {
