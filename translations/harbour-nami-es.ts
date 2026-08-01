@@ -99,6 +99,14 @@
         <source>Technology</source>
         <translation>Tecnología</translation>
     </message>
+    <message>
+        <source>Contributors</source>
+        <translation>Colaboradores</translation>
+    </message>
+    <message>
+        <source>Thanks to Frank Paul Silye for the Norwegian Bokmål translation</source>
+        <translation>Gracias a Frank Paul Silye por la traducción al noruego bokmål</translation>
+    </message>
 </context>
 <context>
     <name>ConfirmDialog</name>
