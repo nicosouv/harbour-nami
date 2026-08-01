@@ -99,6 +99,14 @@
         <source>Technology</source>
         <translation>Tecnología</translation>
     </message>
+    <message>
+        <source>Contributors</source>
+        <translation>Colaboradores</translation>
+    </message>
+    <message>
+        <source>Thanks to Frank Paul Silye for the Norwegian Bokmål translation</source>
+        <translation>Gracias a Frank Paul Silye por la traducción al noruego bokmål</translation>
+    </message>
 </context>
 <context>
     <name>ConfirmDialog</name>
@@ -1036,6 +1044,22 @@
     <message>
         <source>Storage used</source>
         <translation>Espacio utilizado</translation>
+    </message>
+    <message>
+        <source>Language</source>
+        <translation>Idioma</translation>
+    </message>
+    <message>
+        <source>App language</source>
+        <translation>Idioma de la aplicación</translation>
+    </message>
+    <message>
+        <source>System default</source>
+        <translation>Predeterminado del sistema</translation>
+    </message>
+    <message>
+        <source>Restart Nami to apply the new language</source>
+        <translation>Reinicia Nami para aplicar el nuevo idioma</translation>
     </message>
 </context>
 <context>

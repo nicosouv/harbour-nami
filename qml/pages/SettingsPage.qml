@@ -142,6 +142,58 @@ Page {
             }
 
             SectionHeader {
+                text: qsTr("Language")
+            }
+
+            ComboBox {
+                id: languageCombo
+                width: parent.width
+                label: qsTr("App language")
+                enabled: facePipeline && facePipeline.initialized
+
+                readonly property var codes: ["system", "en", "fr", "it", "es", "fi", "de", "nb_NO"]
+                // Guard against writes while the initial value is applied, same as layoutCombo below
+                property bool ready: false
+
+                menu: ContextMenu {
+                    MenuItem { text: qsTr("System default") }
+                    MenuItem { text: "English" }
+                    MenuItem { text: "Français" }
+                    MenuItem { text: "Italiano" }
+                    MenuItem { text: "Español" }
+                    MenuItem { text: "Suomi" }
+                    MenuItem { text: "Deutsch" }
+                    MenuItem { text: "Norsk bokmål" }
+                }
+
+                Component.onCompleted: {
+                    if (facePipeline && facePipeline.initialized) {
+                        var code = facePipeline.getSetting("language", "system")
+                        var idx = codes.indexOf(code)
+                        currentIndex = idx >= 0 ? idx : 0
+                    }
+                    ready = true
+                }
+
+                onCurrentIndexChanged: {
+                    if (!ready) return
+                    facePipeline.setSetting("language", codes[currentIndex])
+                    restartNoticeLabel.visible = true
+                }
+            }
+
+            Label {
+                id: restartNoticeLabel
+                x: Theme.horizontalPageMargin
+                width: parent.width - 2 * Theme.horizontalPageMargin
+                text: qsTr("Restart Nami to apply the new language")
+                font.pixelSize: Theme.fontSizeExtraSmall
+                color: Theme.secondaryHighlightColor
+                wrapMode: Text.WordWrap
+                visible: false
+            }
+
+            SectionHeader {
                 text: qsTr("Display")
             }
 

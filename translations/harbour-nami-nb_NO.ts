@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE TS>
-<TS version="2.1" language="no_NB">
+<TS version="2.1" language="nb_NO">
 <context>
     <name>AboutPage</name>
     <message>
@@ -66,6 +66,14 @@
     <message>
         <source>Technology</source>
         <translation>Teknologi</translation>
+    </message>
+    <message>
+        <source>Contributors</source>
+        <translation>Bidragsytere</translation>
+    </message>
+    <message>
+        <source>Thanks to Frank Paul Silye for the Norwegian Bokmål translation</source>
+        <translation>Takk til Frank Paul Silye for oversettelsen til norsk bokmål</translation>
     </message>
 </context>
 <context>
@@ -803,6 +811,22 @@
     <message>
         <source>Storage used</source>
         <translation>Lagringsplass brukt</translation>
+    </message>
+    <message>
+        <source>Language</source>
+        <translation>Språk</translation>
+    </message>
+    <message>
+        <source>App language</source>
+        <translation>Appspråk</translation>
+    </message>
+    <message>
+        <source>System default</source>
+        <translation>Systemstandard</translation>
+    </message>
+    <message>
+        <source>Restart Nami to apply the new language</source>
+        <translation>Start Nami på nytt for å bruke det nye språket</translation>
     </message>
 </context>
 <context>
