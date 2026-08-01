@@ -67,6 +67,14 @@
         <source>Technology</source>
         <translation>Teknologi</translation>
     </message>
+    <message>
+        <source>Contributors</source>
+        <translation>Bidragsytere</translation>
+    </message>
+    <message>
+        <source>Thanks to Frank Paul Silye for the Norwegian Bokmål translation</source>
+        <translation>Takk til Frank Paul Silye for oversettelsen til norsk bokmål</translation>
+    </message>
 </context>
 <context>
     <name>ConfirmDialog</name>

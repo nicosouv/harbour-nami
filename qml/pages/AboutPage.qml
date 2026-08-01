@@ -120,6 +120,19 @@ Page {
             }
 
             SectionHeader {
+                text: qsTr("Contributors")
+            }
+
+            Label {
+                x: Theme.horizontalPageMargin
+                width: parent.width - 2 * Theme.horizontalPageMargin
+                text: qsTr("Thanks to Frank Paul Silye for the Norwegian Bokmål translation")
+                color: Theme.primaryColor
+                font.pixelSize: Theme.fontSizeSmall
+                wrapMode: Text.WordWrap
+            }
+
+            SectionHeader {
                 text: qsTr("License")
             }
 
