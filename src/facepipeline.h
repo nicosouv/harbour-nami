@@ -48,6 +48,7 @@ struct PhotoExtraction {
     bool hasLocation;
     double latitude;
     double longitude;
+    QString fileHash;
     QVector<ExtractedFace> faces;
 };
 
@@ -274,6 +275,37 @@ public:
     Q_INVOKABLE QString exportData();
 
     /**
+     * @brief Write a complete backup (photos, faces incl. embeddings,
+     *        people, trips) meant to be restored on another device
+     * @return Path of the written file, or empty string on failure
+     */
+    Q_INVOKABLE QString exportBackupData();
+
+    /**
+     * @brief List Nami backup files found directly in a folder
+     * @return List of maps with file_path, exported_at, total_photos,
+     *         total_people, sorted newest first
+     */
+    Q_INVOKABLE QVariantList listBackupFiles(const QString &folderPath);
+
+    /**
+     * @brief Restore a backup written by exportBackupData()
+     * @return Map with photos_imported, photos_relinked, photos_skipped,
+     *         people_imported, faces_imported, trips_imported, or an empty
+     *         map on failure
+     */
+    Q_INVOKABLE QVariantMap importBackupData(const QString &filePath);
+
+    /**
+     * @brief Compute the content hash of every already-scanned photo that
+     *        doesn't have one yet (photos scanned before this feature
+     *        existed). Runs in the background; harmless to call repeatedly,
+     *        a no-op once every photo has a hash. New scans always store a
+     *        hash directly, this only backfills old ones.
+     */
+    Q_INVOKABLE void backfillPhotoHashes();
+
+    /**
      * @brief Read a persisted app setting (settings table)
      */
     Q_INVOKABLE QString getSetting(const QString &key, const QString &defaultValue = QString());
@@ -342,6 +374,9 @@ signals:
 
     void error(const QString &message);
 
+    // Emitted when backfillPhotoHashes() finishes (count of photos hashed)
+    void hashBackfillCompleted(int count);
+
 private:
     FaceDetector *m_detector;
     FaceRecognizer *m_recognizer;
@@ -362,6 +397,10 @@ private:
     // DB commit happens back on the main thread (QSqlDatabase affinity)
     QFutureWatcher<PhotoExtraction> m_extractionWatcher;
 
+    // Backfills file_hash for photos scanned before that column existed;
+    // computed as one batch on a worker thread, applied on completion
+    QFutureWatcher<QVector<QPair<int, QString>>> m_hashBackfillWatcher;
+
     // Person exemplars cache (up to 5 verified embeddings per person);
     // recomputing them from the DB for every detected face is
     // O(persons x faces) queries per photo
@@ -377,6 +416,9 @@ private:
 
     // Helper: Commit a finished extraction and continue the scan loop
     void onExtractionFinished();
+
+    // Helper: Apply hashes computed by backfillPhotoHashes()
+    void onHashBackfillFinished();
 
     // Helper: Finish the scan (completed or cancelled)
     void finishScan(bool cancelled);
