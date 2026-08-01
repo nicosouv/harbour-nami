@@ -1,5 +1,6 @@
 #include "facepipeline.h"
 #include "exifreader.h"
+#include "filehash.h"
 #include <QDebug>
 #include "logging.h"
 #include <QDir>
@@ -12,6 +13,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
+#include <algorithm>
 
 FacePipeline::FacePipeline(QObject *parent)
     : QObject(parent)
@@ -31,6 +33,8 @@ FacePipeline::FacePipeline(QObject *parent)
 {
     connect(&m_extractionWatcher, &QFutureWatcher<PhotoExtraction>::finished,
             this, &FacePipeline::onExtractionFinished);
+    connect(&m_hashBackfillWatcher, &QFutureWatcher<QVector<QPair<int, QString>>>::finished,
+            this, &FacePipeline::onHashBackfillFinished);
 }
 
 FacePipeline::~FacePipeline()
@@ -38,6 +42,9 @@ FacePipeline::~FacePipeline()
     // The worker uses m_detector/m_recognizer; let it finish first
     if (m_extractionWatcher.isRunning()) {
         m_extractionWatcher.waitForFinished();
+    }
+    if (m_hashBackfillWatcher.isRunning()) {
+        m_hashBackfillWatcher.waitForFinished();
     }
 
     delete m_detector;
@@ -99,6 +106,11 @@ bool FacePipeline::initialize(const QString &detectorModelPath,
 
     m_initialized = true;
     emit initializedChanged();
+
+    // One-time, silent maintenance: photos scanned before the file_hash
+    // column existed need it backfilled so backups can find them by
+    // content after a device migration
+    backfillPhotoHashes();
 
     qCDebug(lcNami) << "Face pipeline initialized successfully";
     return true;
@@ -270,6 +282,8 @@ PhotoExtraction FacePipeline::extractPhotoData(const QString &photoPath)
 
     qCDebug(lcNami) << "Processing photo:" << photoPath;
 
+    extraction.fileHash = computeFileSha256(photoPath);
+
     QImage image = loadImage(photoPath);
     if (image.isNull()) {
         return extraction;
@@ -340,7 +354,7 @@ PhotoProcessingResult FacePipeline::commitExtraction(const PhotoExtraction &extr
     int photoId = m_database->addPhoto(extraction.filePath, extraction.dateTaken,
                                        extraction.width, extraction.height,
                                        extraction.hasLocation, extraction.latitude,
-                                       extraction.longitude);
+                                       extraction.longitude, extraction.fileHash);
     if (photoId < 0) {
         m_database->rollbackTransaction();
         result.errorMessage = "Failed to add photo to database";
@@ -1048,4 +1062,172 @@ QString FacePipeline::exportData()
 
     qCDebug(lcNami) << "Data exported to" << filePath;
     return filePath;
+}
+
+QString FacePipeline::exportBackupData()
+{
+    if (!m_initialized || !m_database) {
+        return QString();
+    }
+
+    QJsonObject root = m_database->exportBackup();
+    // Lets importBackupData() know whether these embeddings are compatible
+    // with the engine that will read them back
+    root["embedding_version"] = EMBEDDING_VERSION;
+
+    QString dir = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
+    QString filePath = dir + "/nami-backup-"
+        + QDateTime::currentDateTime().toString("yyyyMMdd-hhmmss") + ".json";
+
+    QFile file(filePath);
+    if (!file.open(QIODevice::WriteOnly)) {
+        emit error("Failed to write backup file: " + filePath);
+        return QString();
+    }
+
+    file.write(QJsonDocument(root).toJson(QJsonDocument::Indented));
+    file.close();
+
+    // Contains names, photo paths and face embeddings
+    QFile::setPermissions(filePath, QFileDevice::ReadOwner | QFileDevice::WriteOwner);
+
+    m_database->setSetting("last_backup_at", QDateTime::currentDateTime().toString(Qt::ISODate));
+
+    qCDebug(lcNami) << "Backup written to" << filePath;
+    return filePath;
+}
+
+QVariantList FacePipeline::listBackupFiles(const QString &folderPath)
+{
+    QVariantList result;
+    QDir dir(folderPath);
+    if (!dir.exists()) {
+        return result;
+    }
+
+    // Sort explicitly by modification time (newest first) rather than
+    // relying on QDir's platform-dependent default tie-breaking for QDir::Time
+    QFileInfoList files = dir.entryInfoList(
+        QStringList{"nami-backup-*.json"}, QDir::Files);
+    std::sort(files.begin(), files.end(), [](const QFileInfo &a, const QFileInfo &b) {
+        return a.lastModified() > b.lastModified();
+    });
+
+    for (const QFileInfo &info : files) {
+        QString path = info.absoluteFilePath();
+        QFile file(path);
+        if (!file.open(QIODevice::ReadOnly)) {
+            continue;
+        }
+        QJsonDocument doc = QJsonDocument::fromJson(file.readAll());
+        file.close();
+        if (!doc.isObject()) {
+            continue;
+        }
+
+        QJsonObject root = doc.object();
+        QVariantMap entry;
+        entry["file_path"] = path;
+        entry["exported_at"] = root["exported_at"].toString();
+        entry["total_photos"] = root["photos"].toArray().size();
+        entry["total_people"] = root["people"].toArray().size();
+        result.append(entry);
+    }
+
+    return result;
+}
+
+QVariantMap FacePipeline::importBackupData(const QString &filePath)
+{
+    QVariantMap result;
+    if (!m_initialized || !m_database) {
+        return result;
+    }
+
+    QFile file(filePath);
+    if (!file.open(QIODevice::ReadOnly)) {
+        emit error("Failed to read backup file: " + filePath);
+        return result;
+    }
+
+    QJsonDocument doc = QJsonDocument::fromJson(file.readAll());
+    file.close();
+    if (!doc.isObject()) {
+        emit error("Invalid backup file: " + filePath);
+        return result;
+    }
+
+    QJsonObject root = doc.object();
+    int backupEmbeddingVersion = root["embedding_version"].toInt(-1);
+
+    FaceDatabase::ImportStats stats = m_database->importBackup(root);
+
+    // Same engine version as this backup: the restored embeddings are
+    // usable as-is, so skip the "outdated embeddings" forced rescan that
+    // would otherwise wipe what was just imported
+    if (backupEmbeddingVersion == EMBEDDING_VERSION) {
+        m_database->setSetting("embedding_version", QString::number(EMBEDDING_VERSION));
+        if (m_needsRescan) {
+            m_needsRescan = false;
+            emit needsRescanChanged();
+        }
+    }
+
+    invalidatePersonPrototypes();
+
+    result["photos_imported"] = stats.photosImported;
+    result["photos_relinked"] = stats.photosRelinked;
+    result["photos_skipped"] = stats.photosSkipped;
+    result["people_imported"] = stats.peopleImported;
+    result["faces_imported"] = stats.facesImported;
+    result["trips_imported"] = stats.tripsImported;
+
+    qCDebug(lcNami) << "Backup restored from" << filePath << ":"
+             << stats.photosImported << "photos," << stats.photosRelinked << "relinked by hash,"
+             << stats.facesImported << "faces," << stats.peopleImported << "people,"
+             << stats.tripsImported << "trips," << stats.photosSkipped << "photos skipped (missing on this device)";
+
+    return result;
+}
+
+void FacePipeline::backfillPhotoHashes()
+{
+    if (!m_initialized || !m_database || m_hashBackfillWatcher.isRunning()) {
+        return;
+    }
+
+    QVector<QPair<int, QString>> missing = m_database->getPhotosMissingHash();
+    if (missing.isEmpty()) {
+        emit hashBackfillCompleted(0);
+        return;
+    }
+
+    qCDebug(lcNami) << "Backfilling file hash for" << missing.size() << "photos";
+
+    m_hashBackfillWatcher.setFuture(QtConcurrent::run([missing]() {
+        QVector<QPair<int, QString>> results;
+        for (const auto &entry : missing) {
+            QString hash = computeFileSha256(entry.second);
+            if (!hash.isEmpty()) {
+                results.append(qMakePair(entry.first, hash));
+            }
+        }
+        return results;
+    }));
+}
+
+void FacePipeline::onHashBackfillFinished()
+{
+    QVector<QPair<int, QString>> results = m_hashBackfillWatcher.result();
+
+    if (!results.isEmpty()) {
+        m_database->beginTransaction();
+        for (const auto &entry : results) {
+            m_database->setPhotoHash(entry.first, entry.second);
+        }
+        m_database->commitTransaction();
+    }
+
+    qCDebug(lcNami) << "Hash backfill applied to" << results.size() << "photos";
+    emit hashBackfillCompleted(results.size());
 }
