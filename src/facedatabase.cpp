@@ -191,6 +191,18 @@ bool FaceDatabase::initializeSchema()
         return false;
     }
 
+    // User-chosen cover photo for a day ("day:yyyy-MM-dd") or trip
+    // ("trip:<id>") event; falls back to an automatic choice when absent
+    if (!query.exec(R"(
+        CREATE TABLE IF NOT EXISTS event_covers (
+            event_key TEXT PRIMARY KEY,
+            photo_path TEXT NOT NULL
+        )
+    )")) {
+        emit error("Failed to create event_covers table: " + query.lastError().text());
+        return false;
+    }
+
     // Create indexes
     query.exec("CREATE INDEX IF NOT EXISTS idx_faces_photo ON faces(photo_id)");
     query.exec("CREATE INDEX IF NOT EXISTS idx_faces_person ON faces(person_id)");
@@ -1252,7 +1264,8 @@ bool FaceDatabase::deleteAllData()
         !query.exec("DELETE FROM people") ||
         !query.exec("DELETE FROM photos") ||
         !query.exec("DELETE FROM trip_dates") ||
-        !query.exec("DELETE FROM trips")) {
+        !query.exec("DELETE FROM trips") ||
+        !query.exec("DELETE FROM event_covers")) {
         m_db.rollback();
         return false;
     }
@@ -1384,6 +1397,8 @@ bool FaceDatabase::renameTrip(int tripId, const QString &name)
 
 bool FaceDatabase::deleteTrip(int tripId)
 {
+    clearEventCover(QString("trip:%1").arg(tripId));
+
     QSqlQuery query(m_db);
     query.prepare("DELETE FROM trips WHERE id = :id");
     query.bindValue(":id", tripId);
@@ -1419,6 +1434,99 @@ QVector<Trip> FaceDatabase::getAllTrips()
     }
 
     return trips;
+}
+
+bool FaceDatabase::mergeTrips(int fromTripId, int intoTripId)
+{
+    if (fromTripId == intoTripId) {
+        return false;
+    }
+
+    QSqlQuery reassign(m_db);
+    reassign.prepare("UPDATE trip_dates SET trip_id = :into WHERE trip_id = :from");
+    reassign.bindValue(":into", intoTripId);
+    reassign.bindValue(":from", fromTripId);
+    if (!reassign.exec()) {
+        emit error("Failed to merge trips: " + reassign.lastError().text());
+        return false;
+    }
+
+    // The dissolved trip's cover no longer applies to anything
+    clearEventCover(QString("trip:%1").arg(fromTripId));
+
+    QSqlQuery del(m_db);
+    del.prepare("DELETE FROM trips WHERE id = :id");
+    del.bindValue(":id", fromTripId);
+    return del.exec();
+}
+
+// === Event covers ===
+
+bool FaceDatabase::setEventCover(const QString &eventKey, const QString &photoPath)
+{
+    QSqlQuery query(m_db);
+    query.prepare("INSERT OR REPLACE INTO event_covers (event_key, photo_path) VALUES (:key, :path)");
+    query.bindValue(":key", eventKey);
+    query.bindValue(":path", photoPath);
+    return query.exec();
+}
+
+bool FaceDatabase::clearEventCover(const QString &eventKey)
+{
+    QSqlQuery query(m_db);
+    query.prepare("DELETE FROM event_covers WHERE event_key = :key");
+    query.bindValue(":key", eventKey);
+    return query.exec();
+}
+
+QVariantMap FaceDatabase::getEventCovers()
+{
+    QVariantMap covers;
+    QSqlQuery query(m_db);
+
+    if (query.exec("SELECT event_key, photo_path FROM event_covers")) {
+        while (query.next()) {
+            covers[query.value(0).toString()] = query.value(1).toString();
+        }
+    }
+
+    return covers;
+}
+
+// === Recent photos ===
+
+QVector<Photo> FaceDatabase::getRecentPhotos(int limit)
+{
+    QVector<Photo> photos;
+    QSqlQuery query(m_db);
+    query.prepare(R"(
+        SELECT * FROM photos
+        WHERE date_taken IS NOT NULL AND date_taken != ''
+        ORDER BY date_taken DESC
+        LIMIT :limit
+    )");
+    query.bindValue(":limit", limit);
+
+    if (query.exec()) {
+        while (query.next()) {
+            Photo photo;
+            photo.id = query.value("id").toInt();
+            photo.filePath = query.value("file_path").toString();
+            photo.dateTaken = QDateTime::fromString(query.value("date_taken").toString(), Qt::ISODate);
+            photo.width = query.value("width").toInt();
+            photo.height = query.value("height").toInt();
+            photo.processedAt = QDateTime::fromString(query.value("processed_at").toString(), Qt::ISODate);
+            photo.rotation = query.value("rotation").toInt();
+            QVariant lat = query.value("latitude");
+            QVariant lon = query.value("longitude");
+            photo.hasLocation = !lat.isNull() && !lon.isNull();
+            photo.latitude = photo.hasLocation ? lat.toDouble() : 0.0;
+            photo.longitude = photo.hasLocation ? lon.toDouble() : 0.0;
+            photos.append(photo);
+        }
+    }
+
+    return photos;
 }
 
 // === Helpers ===

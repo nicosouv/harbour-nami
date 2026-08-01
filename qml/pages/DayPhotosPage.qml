@@ -7,6 +7,7 @@ Page {
 
     property string dateKey: ""   // yyyy-MM-dd
     property string title: ""
+    property string coverPath: ""
 
     allowedOrientations: Orientation.All
 
@@ -17,6 +18,7 @@ Page {
     function loadPhotos() {
         if (!facePipeline || !facePipeline.initialized || dateKey.length === 0) return
 
+        coverPath = facePipeline.getEventCovers()["day:" + dateKey] || ""
         photosModel.clear()
 
         // Collect the day's photos across every person, deduplicated
@@ -63,32 +65,79 @@ Page {
             description: gridView.count + " " + (gridView.count === 1 ? qsTr("photo") : qsTr("photos"))
         }
 
-        delegate: BackgroundItem {
+        delegate: ListItem {
+            id: photoItem
             width: gridView.cellWidth
             height: gridView.cellHeight
+            contentHeight: gridView.cellHeight
 
-            Image {
-                anchors.fill: parent
-                anchors.margins: Theme.paddingSmall / 2
-                source: model.file_path ? "file://" + model.file_path : ""
-                fillMode: Image.PreserveAspectCrop
-                autoTransform: true
-                clip: true
-                asynchronous: true
-                sourceSize.width: 400
-                sourceSize.height: 400
+            // Wrap content in Item to fix ContextMenu positioning
+            contentItem.children: [
+                Image {
+                    anchors.fill: parent
+                    anchors.margins: Theme.paddingSmall / 2
+                    source: model.file_path ? "file://" + model.file_path : ""
+                    fillMode: Image.PreserveAspectCrop
+                    autoTransform: true
+                    clip: true
+                    asynchronous: true
+                    sourceSize.width: 400
+                    sourceSize.height: 400
 
-                BusyIndicator {
-                    anchors.centerIn: parent
-                    running: parent.status === Image.Loading
-                    size: BusyIndicatorSize.Small
+                    BusyIndicator {
+                        anchors.centerIn: parent
+                        running: parent.status === Image.Loading
+                        size: BusyIndicatorSize.Small
+                    }
+
+                    // Marks the photo currently used as this day's cover
+                    Rectangle {
+                        visible: model.file_path === coverPath
+                        anchors {
+                            top: parent.top
+                            right: parent.right
+                            margins: Theme.paddingSmall
+                        }
+                        width: Theme.iconSizeSmall
+                        height: width
+                        radius: width / 2
+                        color: Theme.rgba("#FFC107", 0.95)
+                        border.color: "white"
+                        border.width: 2
+                        z: 100
+
+                        Label {
+                            anchors.centerIn: parent
+                            text: "★"
+                            font.pixelSize: Theme.fontSizeExtraSmall
+                            color: "white"
+                        }
+                    }
                 }
-            }
+            ]
 
             onClicked: {
                 pageStack.push(Qt.resolvedUrl("PhotoViewerPage.qml"), {
                     photoPath: model.file_path
                 })
+            }
+
+            menu: ContextMenu {
+                MenuItem {
+                    text: qsTr("Set as day cover")
+                    onClicked: {
+                        facePipeline.setEventCover("day:" + dateKey, model.file_path)
+                        coverPath = model.file_path
+                    }
+                }
+                MenuItem {
+                    text: qsTr("View full photo")
+                    onClicked: {
+                        pageStack.push(Qt.resolvedUrl("PhotoViewerPage.qml"), {
+                            photoPath: model.file_path
+                        })
+                    }
+                }
             }
         }
 

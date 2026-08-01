@@ -1,6 +1,7 @@
 import QtQuick 2.6
 import Sailfish.Silica 1.0
 import "../components"
+import "../js/geoutils.js" as GeoUtils
 
 // All photos of a trip (several days grouped together), with a choice of
 // browsing them by day or by geographic stop, plus a schematic route map.
@@ -18,6 +19,8 @@ Page {
     property var routePoints: []
     property int totalPhotoCount: 0
     property bool hasLocationData: false
+    property real distanceKm: 0
+    property string coverPath: ""
 
     function loadTrip() {
         if (!faceManager || !faceManager.initialized || tripId < 0) return
@@ -31,6 +34,8 @@ Page {
                 break
             }
         }
+
+        coverPath = faceManager.getEventCovers()["trip:" + tripId] || ""
 
         var dateSet = {}
         for (var d = 0; d < dateKeys.length; d++) {
@@ -72,6 +77,13 @@ Page {
         }
         routePoints = located
         hasLocationData = located.length > 0
+
+        var totalKm = 0
+        for (var k = 1; k < located.length; k++) {
+            totalKm += GeoUtils.haversineKm(located[k - 1].latitude, located[k - 1].longitude,
+                                             located[k].latitude, located[k].longitude)
+        }
+        distanceKm = totalKm
 
         groups = sortMode === "location" ? groupByLocation(items) : groupByDay(items)
     }
@@ -115,7 +127,7 @@ Page {
                 continue
             }
             var cluster = clusters.length > 0 ? clusters[clusters.length - 1] : null
-            if (cluster && haversineKm(cluster.lastLat, cluster.lastLon, it.latitude, it.longitude) <= clusterKm) {
+            if (cluster && GeoUtils.haversineKm(cluster.lastLat, cluster.lastLon, it.latitude, it.longitude) <= clusterKm) {
                 cluster.photos.push(it)
                 cluster.lastLat = it.latitude
                 cluster.lastLon = it.longitude
@@ -136,17 +148,6 @@ Page {
             result.push({ title: qsTr("No location data"), photos: noLocation })
         }
         return result
-    }
-
-    function haversineKm(lat1, lon1, lat2, lon2) {
-        var r = 6371
-        var dLat = (lat2 - lat1) * Math.PI / 180
-        var dLon = (lon2 - lon1) * Math.PI / 180
-        var a = Math.sin(dLat / 2) * Math.sin(dLat / 2)
-                + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180)
-                * Math.sin(dLon / 2) * Math.sin(dLon / 2)
-        var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-        return r * c
     }
 
     Component.onCompleted: loadTrip()
@@ -177,6 +178,20 @@ Page {
                     })
                 }
             }
+            MenuItem {
+                text: qsTr("Merge into another trip…")
+                enabled: faceManager.getTrips().length > 1
+                onClicked: {
+                    var dialog = pageStack.push(Qt.resolvedUrl("../dialogs/SelectTripDialog.qml"), {
+                        trips: faceManager.getTrips(),
+                        excludeTripId: tripId
+                    })
+                    dialog.accepted.connect(function() {
+                        faceManager.mergeTrips(tripId, dialog.selectedTripId)
+                        pageStack.pop()
+                    })
+                }
+            }
         }
 
         Column {
@@ -193,6 +208,15 @@ Page {
                 x: Theme.horizontalPageMargin
                 width: parent.width - 2 * Theme.horizontalPageMargin
                 points: routePoints
+            }
+
+            Label {
+                x: Theme.horizontalPageMargin
+                width: parent.width - 2 * Theme.horizontalPageMargin
+                text: qsTr("~%1 km traveled").arg(Math.round(distanceKm))
+                visible: routePoints.length >= 2
+                color: Theme.secondaryHighlightColor
+                font.pixelSize: Theme.fontSizeSmall
             }
 
             Repeater {
@@ -216,32 +240,79 @@ Page {
                         Repeater {
                             model: modelData.photos
 
-                            delegate: BackgroundItem {
+                            delegate: ListItem {
+                                id: photoItem
                                 width: photoGrid.width / 3
                                 height: width
+                                contentHeight: width
 
-                                Image {
-                                    anchors.fill: parent
-                                    anchors.margins: Theme.paddingSmall / 2
-                                    source: modelData.file_path ? "file://" + modelData.file_path : ""
-                                    fillMode: Image.PreserveAspectCrop
-                                    autoTransform: true
-                                    clip: true
-                                    asynchronous: true
-                                    sourceSize.width: 400
-                                    sourceSize.height: 400
+                                // Wrap content in Item to fix ContextMenu positioning
+                                contentItem.children: [
+                                    Image {
+                                        anchors.fill: parent
+                                        anchors.margins: Theme.paddingSmall / 2
+                                        source: modelData.file_path ? "file://" + modelData.file_path : ""
+                                        fillMode: Image.PreserveAspectCrop
+                                        autoTransform: true
+                                        clip: true
+                                        asynchronous: true
+                                        sourceSize.width: 400
+                                        sourceSize.height: 400
 
-                                    BusyIndicator {
-                                        anchors.centerIn: parent
-                                        running: parent.status === Image.Loading
-                                        size: BusyIndicatorSize.Small
+                                        BusyIndicator {
+                                            anchors.centerIn: parent
+                                            running: parent.status === Image.Loading
+                                            size: BusyIndicatorSize.Small
+                                        }
+
+                                        // Marks the photo currently used as the trip's cover
+                                        Rectangle {
+                                            visible: modelData.file_path === coverPath
+                                            anchors {
+                                                top: parent.top
+                                                right: parent.right
+                                                margins: Theme.paddingSmall
+                                            }
+                                            width: Theme.iconSizeSmall
+                                            height: width
+                                            radius: width / 2
+                                            color: Theme.rgba("#FFC107", 0.95)
+                                            border.color: "white"
+                                            border.width: 2
+                                            z: 100
+
+                                            Label {
+                                                anchors.centerIn: parent
+                                                text: "★"
+                                                font.pixelSize: Theme.fontSizeExtraSmall
+                                                color: "white"
+                                            }
+                                        }
                                     }
-                                }
+                                ]
 
                                 onClicked: {
                                     pageStack.push(Qt.resolvedUrl("PhotoViewerPage.qml"), {
                                         photoPath: modelData.file_path
                                     })
+                                }
+
+                                menu: ContextMenu {
+                                    MenuItem {
+                                        text: qsTr("Set as trip cover")
+                                        onClicked: {
+                                            faceManager.setEventCover("trip:" + tripId, modelData.file_path)
+                                            coverPath = modelData.file_path
+                                        }
+                                    }
+                                    MenuItem {
+                                        text: qsTr("View full photo")
+                                        onClicked: {
+                                            pageStack.push(Qt.resolvedUrl("PhotoViewerPage.qml"), {
+                                                photoPath: modelData.file_path
+                                            })
+                                        }
+                                    }
                                 }
                             }
                         }

@@ -1,5 +1,6 @@
 import QtQuick 2.6
 import Sailfish.Silica 1.0
+import "../js/geoutils.js" as GeoUtils
 
 Page {
     id: page
@@ -11,6 +12,12 @@ Page {
     // Events model: single-day events plus multi-day trips, most recent first
     ListModel {
         id: eventsModel
+    }
+
+    // Suggested trips: runs of consecutive "away from home" days not yet
+    // grouped, offered for one-tap grouping
+    ListModel {
+        id: suggestionsModel
     }
 
     // Selection mode: pick several day-events to combine into a trip
@@ -54,8 +61,182 @@ Page {
         })
     }
 
+    // === Trip suggestions: dates far from "home" grouped into candidate trips ===
+
+    // Parallel to suggestionsModel (kept in sync by index): the date keys
+    // are not stored as a model role, since dynamically appending a plain
+    // JS array as a role value doesn't reliably behave like a nested
+    // ListModel with .get()/.count
+    property var suggestionDateKeysByRow: []
+
+    function loadDismissedSuggestions() {
+        var raw = faceManager.getSetting("dismissed_trip_suggestions", "")
+        return raw.length > 0 ? raw.split("\n") : []
+    }
+
+    function dismissSuggestionAt(row) {
+        var signature = suggestionsModel.get(row).signature
+        var dismissed = loadDismissedSuggestions()
+        if (dismissed.indexOf(signature) === -1) {
+            dismissed.push(signature)
+            faceManager.setSetting("dismissed_trip_suggestions", dismissed.join("\n"))
+        }
+        suggestionsModel.remove(row)
+        suggestionDateKeysByRow.splice(row, 1)
+    }
+
+    function groupSuggestionAt(row) {
+        var dateKeys = suggestionDateKeysByRow[row]
+
+        var dialog = pageStack.push(Qt.resolvedUrl("../dialogs/TripNameDialog.qml"), {
+            titleText: qsTr("Name this trip")
+        })
+        dialog.accepted.connect(function() {
+            faceManager.createTrip(dialog.newName, dateKeys)
+            detectEvents()
+        })
+    }
+
+    // Cluster located day-centroids (5km) and return the one covering the
+    // most distinct days: a proxy for "home" without any manual setup
+    function computeHomeCentroid(dateMap) {
+        var dayCentroids = []
+        for (var dateKey in dateMap) {
+            var bucket = dateMap[dateKey]
+            var sumLat = 0, sumLon = 0, n = 0
+            for (var i = 0; i < bucket.photos.length; i++) {
+                var photo = bucket.photos[i]
+                if (photo.has_location) {
+                    sumLat += photo.latitude
+                    sumLon += photo.longitude
+                    n++
+                }
+            }
+            if (n > 0) {
+                dayCentroids.push({ lat: sumLat / n, lon: sumLon / n })
+            }
+        }
+        if (dayCentroids.length === 0) return null
+
+        var clusters = []
+        for (var d = 0; d < dayCentroids.length; d++) {
+            var dc = dayCentroids[d]
+            var matched = null
+            for (var c = 0; c < clusters.length; c++) {
+                if (GeoUtils.haversineKm(clusters[c].lat, clusters[c].lon, dc.lat, dc.lon) <= 5) {
+                    matched = clusters[c]
+                    break
+                }
+            }
+            if (matched) {
+                matched.sumLat += dc.lat
+                matched.sumLon += dc.lon
+                matched.count++
+                matched.lat = matched.sumLat / matched.count
+                matched.lon = matched.sumLon / matched.count
+            } else {
+                clusters.push({ lat: dc.lat, lon: dc.lon, sumLat: dc.lat, sumLon: dc.lon, count: 1 })
+            }
+        }
+
+        clusters.sort(function(a, b) { return b.count - a.count })
+        return clusters[0]
+    }
+
+    // Runs of consecutive (gap <= 2 days) ungrouped days whose photos sit
+    // far from home; each run of 2+ days becomes a dismissible suggestion
+    function computeTripSuggestions(dateMap, dateToTrip) {
+        var home = computeHomeCentroid(dateMap)
+        if (!home || home.count < 5) return []
+
+        var AWAY_KM = 40
+        var awayDates = []
+        var sortedKeys = Object.keys(dateMap).sort()
+        for (var i = 0; i < sortedKeys.length; i++) {
+            var dateKey = sortedKeys[i]
+            if (dateToTrip[dateKey]) continue
+            var bucket = dateMap[dateKey]
+            if (bucket.photos.length < 2) continue
+
+            var sumLat = 0, sumLon = 0, n = 0
+            for (var p = 0; p < bucket.photos.length; p++) {
+                var photo = bucket.photos[p]
+                if (photo.has_location) {
+                    sumLat += photo.latitude
+                    sumLon += photo.longitude
+                    n++
+                }
+            }
+            if (n === 0) continue
+
+            if (GeoUtils.haversineKm(home.lat, home.lon, sumLat / n, sumLon / n) > AWAY_KM) {
+                awayDates.push(dateKey)
+            }
+        }
+
+        var runs = []
+        var current = []
+        for (var d = 0; d < awayDates.length; d++) {
+            if (current.length === 0) {
+                current.push(awayDates[d])
+            } else {
+                var prevDate = new Date(current[current.length - 1] + "T00:00:00")
+                var curDate = new Date(awayDates[d] + "T00:00:00")
+                var gapDays = Math.round((curDate.getTime() - prevDate.getTime()) / 86400000)
+                if (gapDays <= 2) {
+                    current.push(awayDates[d])
+                } else {
+                    runs.push(current)
+                    current = [awayDates[d]]
+                }
+            }
+        }
+        if (current.length > 0) runs.push(current)
+
+        var dismissed = loadDismissedSuggestions()
+        var suggestions = []
+        for (var r = 0; r < runs.length; r++) {
+            if (runs[r].length < 2) continue
+            var signature = runs[r][0] + "_" + runs[r][runs[r].length - 1]
+            if (dismissed.indexOf(signature) !== -1) continue
+
+            var minD = new Date(runs[r][0] + "T00:00:00")
+            var maxD = new Date(runs[r][runs[r].length - 1] + "T00:00:00")
+            suggestions.push({
+                signature: signature,
+                rangeString: formatTripDateRange(minD, maxD),
+                dayCount: runs[r].length,
+                dateKeys: runs[r]
+            })
+        }
+        return suggestions
+    }
+
+    function refreshSuggestions(dateMap, dateToTrip) {
+        suggestionsModel.clear()
+        var suggestions = computeTripSuggestions(dateMap, dateToTrip)
+        var keysByRow = []
+        for (var i = 0; i < suggestions.length; i++) {
+            suggestionsModel.append({
+                signature: suggestions[i].signature,
+                rangeString: suggestions[i].rangeString,
+                dayCount: suggestions[i].dayCount
+            })
+            keysByRow.push(suggestions[i].dateKeys)
+        }
+        suggestionDateKeysByRow = keysByRow
+    }
+
     Component.onCompleted: {
         detectEvents()
+    }
+
+    // Refresh when coming back from a day/trip page: covers, renames and
+    // merges done there would otherwise not show until next app start
+    onStatusChanged: {
+        if (status === PageStatus.Active) {
+            detectEvents()
+        }
     }
 
     // Same month/year collapse to a short range; different years spell both out
@@ -79,6 +260,7 @@ Page {
 
         eventsModel.clear()
 
+        var eventCovers = faceManager.getEventCovers()
         var trips = faceManager.getTrips()
         var dateToTrip = {}
         for (var t = 0; t < trips.length; t++) {
@@ -170,7 +352,7 @@ Page {
                 photoCount: tripPhotoCount,
                 peopleCount: tripPeopleNames.length,
                 peopleNames: tripPeopleNames.join(", "),
-                coverPhoto: coverPhoto
+                coverPhoto: eventCovers["trip:" + trip.trip_id] || coverPhoto
             })
         }
 
@@ -198,7 +380,7 @@ Page {
                     photoCount: event.photos.length,
                     peopleCount: dayPeopleNames.length,
                     peopleNames: dayPeopleNames.join(", "),
-                    coverPhoto: event.photos[0].file_path
+                    coverPhoto: eventCovers["day:" + dateKey] || event.photos[0].file_path
                 })
             }
         }
@@ -212,6 +394,8 @@ Page {
         for (var n = 0; n < events.length; n++) {
             eventsModel.append(events[n])
         }
+
+        refreshSuggestions(dateMap, dateToTrip)
     }
 
     SilicaListView {
@@ -254,6 +438,63 @@ Page {
                     text: qsTr("Group %n day(s)", "", selectedDates.length)
                     enabled: selectedDates.length >= 2
                     onClicked: groupSelectedDates()
+                }
+            }
+
+            // Suggested trips: days far from home, not yet grouped
+            Column {
+                width: parent.width
+                spacing: Theme.paddingMedium
+                visible: !selectionMode && suggestionsModel.count > 0
+
+                Repeater {
+                    model: suggestionsModel
+
+                    delegate: Item {
+                        width: parent.width
+                        height: banner.height
+
+                        Rectangle {
+                            id: banner
+                            x: Theme.horizontalPageMargin
+                            width: parent.width - 2 * Theme.horizontalPageMargin
+                            height: bannerColumn.height + 2 * Theme.paddingMedium
+                            radius: Theme.paddingSmall
+                            color: Theme.rgba(Theme.highlightBackgroundColor, 0.12)
+                            border.color: Theme.rgba(Theme.highlightColor, 0.3)
+                            border.width: 1
+
+                            Column {
+                                id: bannerColumn
+                                width: parent.width - 2 * Theme.paddingMedium
+                                anchors.centerIn: parent
+                                spacing: Theme.paddingSmall
+
+                                Label {
+                                    width: parent.width
+                                    text: qsTr("Suggested trip: %1 (%2)").arg(model.rangeString)
+                                        .arg(model.dayCount === 1 ? qsTr("1 day") : qsTr("%1 days").arg(model.dayCount))
+                                    color: Theme.highlightColor
+                                    font.pixelSize: Theme.fontSizeSmall
+                                    wrapMode: Text.WordWrap
+                                }
+
+                                Row {
+                                    spacing: Theme.paddingMedium
+
+                                    Button {
+                                        text: qsTr("Dismiss")
+                                        onClicked: dismissSuggestionAt(index)
+                                    }
+
+                                    Button {
+                                        text: qsTr("Group")
+                                        onClicked: groupSuggestionAt(index)
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
 
