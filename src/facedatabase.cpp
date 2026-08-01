@@ -120,6 +120,10 @@ bool FaceDatabase::initializeSchema()
     // NULL means "no GPS data in EXIF", not "0,0"
     query.exec("ALTER TABLE photos ADD COLUMN latitude REAL");
     query.exec("ALTER TABLE photos ADD COLUMN longitude REAL");
+    // Content hash: finds a photo again after a device migration moved it
+    // to a different path (backfilled lazily for photos scanned before
+    // this column existed)
+    query.exec("ALTER TABLE photos ADD COLUMN file_hash TEXT");
 
     // Rejections: "this face is NOT this person", so auto-matching never
     // reassigns a face the user explicitly removed from a person
@@ -191,6 +195,7 @@ bool FaceDatabase::initializeSchema()
     query.exec("CREATE INDEX IF NOT EXISTS idx_faces_photo ON faces(photo_id)");
     query.exec("CREATE INDEX IF NOT EXISTS idx_faces_person ON faces(person_id)");
     query.exec("CREATE INDEX IF NOT EXISTS idx_photos_path ON photos(file_path)");
+    query.exec("CREATE INDEX IF NOT EXISTS idx_photos_hash ON photos(file_hash)");
     query.exec("CREATE INDEX IF NOT EXISTS idx_trip_dates_trip ON trip_dates(trip_id)");
 
     qCDebug(lcNami) << "Database schema initialized";
@@ -218,7 +223,8 @@ bool FaceDatabase::rollbackTransaction()
 
 int FaceDatabase::addPhoto(const QString &filePath, const QDateTime &dateTaken,
                            int width, int height, bool hasLocation,
-                           double latitude, double longitude)
+                           double latitude, double longitude,
+                           const QString &fileHash)
 {
     qCDebug(lcNami) << "  → Attempting to insert photo:" << filePath;
 
@@ -230,18 +236,22 @@ int FaceDatabase::addPhoto(const QString &filePath, const QDateTime &dateTaken,
     if (checkQuery.exec() && checkQuery.next()) {
         int existingId = checkQuery.value(0).toInt();
         qCDebug(lcNami) << "  ℹ Photo already exists in DB with ID:" << existingId;
+        if (!fileHash.isEmpty()) {
+            setPhotoHash(existingId, fileHash);  // no-op if already set
+        }
         return existingId;  // Return existing photo ID
     }
 
     QSqlQuery query(m_db);
     query.prepare(R"(
-        INSERT INTO photos (file_path, date_taken, width, height, latitude, longitude)
-        VALUES (:file_path, :date_taken, :width, :height, :latitude, :longitude)
+        INSERT INTO photos (file_path, date_taken, width, height, latitude, longitude, file_hash)
+        VALUES (:file_path, :date_taken, :width, :height, :latitude, :longitude, :file_hash)
     )");
     query.bindValue(":file_path", filePath);
     query.bindValue(":date_taken", dateTaken.toString(Qt::ISODate));
     query.bindValue(":width", width);
     query.bindValue(":height", height);
+    query.bindValue(":file_hash", fileHash.isEmpty() ? QVariant(QVariant::String) : QVariant(fileHash));
     if (hasLocation) {
         query.bindValue(":latitude", latitude);
         query.bindValue(":longitude", longitude);
@@ -284,10 +294,11 @@ Photo FaceDatabase::getPhoto(int photoId)
         photo.hasLocation = !lat.isNull() && !lon.isNull();
         photo.latitude = photo.hasLocation ? lat.toDouble() : 0.0;
         photo.longitude = photo.hasLocation ? lon.toDouble() : 0.0;
+        photo.fileHash = query.value("file_hash").toString();
         return photo;
     }
 
-    return Photo{-1, "", QDateTime(), 0, 0, QDateTime(), 0, false, 0.0, 0.0};
+    return Photo{-1, "", QDateTime(), 0, 0, QDateTime(), 0, false, 0.0, 0.0, ""};
 }
 
 int FaceDatabase::photoRotation(const QString &filePath)
@@ -312,6 +323,53 @@ bool FaceDatabase::setPhotoRotation(const QString &filePath, int rotation)
     return query.exec();
 }
 
+bool FaceDatabase::setPhotoHash(int photoId, const QString &fileHash)
+{
+    if (fileHash.isEmpty()) {
+        return false;
+    }
+
+    QSqlQuery query(m_db);
+    query.prepare(R"(
+        UPDATE photos SET file_hash = :hash
+        WHERE id = :id AND (file_hash IS NULL OR file_hash = '')
+    )");
+    query.bindValue(":hash", fileHash);
+    query.bindValue(":id", photoId);
+
+    return query.exec();
+}
+
+int FaceDatabase::findPhotoByHash(const QString &fileHash)
+{
+    if (fileHash.isEmpty()) {
+        return -1;
+    }
+
+    QSqlQuery query(m_db);
+    query.prepare("SELECT id FROM photos WHERE file_hash = :hash LIMIT 1");
+    query.bindValue(":hash", fileHash);
+
+    if (query.exec() && query.next()) {
+        return query.value(0).toInt();
+    }
+    return -1;
+}
+
+QVector<QPair<int, QString>> FaceDatabase::getPhotosMissingHash()
+{
+    QVector<QPair<int, QString>> result;
+    QSqlQuery query(m_db);
+
+    if (query.exec("SELECT id, file_path FROM photos WHERE file_hash IS NULL OR file_hash = ''")) {
+        while (query.next()) {
+            result.append(qMakePair(query.value(0).toInt(), query.value(1).toString()));
+        }
+    }
+
+    return result;
+}
+
 QVector<Photo> FaceDatabase::getAllPhotos()
 {
     QVector<Photo> photos;
@@ -332,6 +390,7 @@ QVector<Photo> FaceDatabase::getAllPhotos()
             photo.hasLocation = !lat.isNull() && !lon.isNull();
             photo.latitude = photo.hasLocation ? lat.toDouble() : 0.0;
             photo.longitude = photo.hasLocation ? lon.toDouble() : 0.0;
+            photo.fileHash = query.value("file_hash").toString();
             photos.append(photo);
         }
     }
@@ -908,6 +967,7 @@ QJsonObject FaceDatabase::exportBackup()
         ph["width"] = photo.width;
         ph["height"] = photo.height;
         ph["rotation"] = photo.rotation;
+        ph["file_hash"] = photo.fileHash;
         if (photo.hasLocation) {
             ph["latitude"] = photo.latitude;
             ph["longitude"] = photo.longitude;
@@ -1031,48 +1091,60 @@ FaceDatabase::ImportStats FaceDatabase::importBackup(const QJsonObject &root)
         personIdByIndex.append(personId);
     }
 
-    // Photos: only those whose file still exists on this device are usable;
-    // matched by path against what's already in the database otherwise
+    // Photos: matched by path when the file is still there; otherwise by
+    // content hash, which survives a photo being moved to a different path
+    // (e.g. a renamed SD card after a device migration)
     QHash<QString, int> photoIdByPath;
     for (const QJsonValue &v : root["photos"].toArray()) {
         QJsonObject ph = v.toObject();
         QString path = ph["file_path"].toString();
-
-        if (!QFileInfo::exists(path)) {
-            stats.photosSkipped++;
-            continue;
-        }
-
-        QSqlQuery check(m_db);
-        check.prepare("SELECT id FROM photos WHERE file_path = :path");
-        check.bindValue(":path", path);
+        QString hash = ph["file_hash"].toString();
         int photoId = -1;
-        if (check.exec() && check.next()) {
-            photoId = check.value(0).toInt();
-        } else {
-            bool hasLocation = ph.contains("latitude") && ph.contains("longitude");
-            photoId = addPhoto(path,
-                                QDateTime::fromString(ph["date_taken"].toString(), Qt::ISODate),
-                                ph["width"].toInt(), ph["height"].toInt(),
-                                hasLocation, ph["latitude"].toDouble(), ph["longitude"].toDouble());
-            if (photoId != -1) {
-                int rotation = ph["rotation"].toInt();
-                if (rotation != 0) {
-                    setPhotoRotation(path, rotation);
+
+        if (QFileInfo::exists(path)) {
+            QSqlQuery check(m_db);
+            check.prepare("SELECT id FROM photos WHERE file_path = :path");
+            check.bindValue(":path", path);
+            if (check.exec() && check.next()) {
+                photoId = check.value(0).toInt();
+                if (!hash.isEmpty()) {
+                    setPhotoHash(photoId, hash);
                 }
-                stats.photosImported++;
+            } else {
+                bool hasLocation = ph.contains("latitude") && ph.contains("longitude");
+                photoId = addPhoto(path,
+                                    QDateTime::fromString(ph["date_taken"].toString(), Qt::ISODate),
+                                    ph["width"].toInt(), ph["height"].toInt(),
+                                    hasLocation, ph["latitude"].toDouble(), ph["longitude"].toDouble(),
+                                    hash);
+                if (photoId != -1) {
+                    int rotation = ph["rotation"].toInt();
+                    if (rotation != 0) {
+                        setPhotoRotation(path, rotation);
+                    }
+                    stats.photosImported++;
+                }
+            }
+            if (photoId != -1) {
+                markPhotoProcessed(photoId);
+            }
+        } else if (!hash.isEmpty()) {
+            photoId = findPhotoByHash(hash);
+            if (photoId != -1) {
+                stats.photosRelinked++;
             }
         }
 
         if (photoId != -1) {
             photoIdByPath[path] = photoId;
-            // So a later incremental scan never re-detects and overwrites
-            // what's being restored
-            markPhotoProcessed(photoId);
+        } else {
+            stats.photosSkipped++;
         }
     }
 
-    // Don't duplicate faces for a photo that was already scanned locally
+    // A photo already has faces when it was scanned locally before being
+    // restored (either at its original path, or at a new one and relinked
+    // by hash above); don't duplicate its faces
     QSet<int> photosWithExistingFaces;
     for (int photoId : photoIdByPath) {
         QSqlQuery check(m_db);
@@ -1091,9 +1163,6 @@ FaceDatabase::ImportStats FaceDatabase::importBackup(const QJsonObject &root)
             continue;
         }
         int photoId = photoIdByPath[photoPath];
-        if (photosWithExistingFaces.contains(photoId)) {
-            continue;
-        }
 
         QJsonArray bboxArr = f["bbox"].toArray();
         QRectF bbox(bboxArr.at(0).toDouble(), bboxArr.at(1).toDouble(),
@@ -1102,6 +1171,22 @@ FaceDatabase::ImportStats FaceDatabase::importBackup(const QJsonObject &root)
         int personIndex = f["person_index"].toInt(-1);
         int personId = (personIndex >= 0 && personIndex < personIdByIndex.size())
             ? personIdByIndex.at(personIndex) : -1;
+
+        if (photosWithExistingFaces.contains(photoId)) {
+            // Already scanned locally (found by path or relinked by hash):
+            // carry the identification over onto the matching local face
+            // instead of inserting a duplicate
+            if (personId != -1) {
+                int localFaceId = findClosestUnassignedFace(photoId, bbox);
+                if (localFaceId != -1) {
+                    updateFacePersonMapping(localFaceId, personId);
+                    updateFaceMetadata(localFaceId, f["similarity_score"].toDouble(), f["verified"].toBool());
+                    stats.facesImported++;
+                    faceIdByKey[faceKey(photoPath, bboxArr)] = localFaceId;
+                }
+            }
+            continue;
+        }
 
         FaceEmbedding embedding = deserializeEmbedding(
             QByteArray::fromBase64(f["embedding"].toString().toLatin1()));
@@ -1363,4 +1448,29 @@ FaceEmbedding FaceDatabase::deserializeEmbedding(const QByteArray &data)
     }
 
     return embedding;
+}
+
+int FaceDatabase::findClosestUnassignedFace(int photoId, const QRectF &bbox)
+{
+    int bestId = -1;
+    double bestIoU = 0.5;  // same file, same detector: expect near-perfect overlap
+
+    for (const Face &face : getFacesForPhoto(photoId)) {
+        if (face.personId != -1) {
+            continue;  // never override an identification already made locally
+        }
+
+        QRectF inter = face.bbox.intersected(bbox);
+        double interArea = inter.isValid() ? inter.width() * inter.height() : 0.0;
+        double unionArea = face.bbox.width() * face.bbox.height()
+                          + bbox.width() * bbox.height() - interArea;
+        double iou = unionArea > 0.0 ? interArea / unionArea : 0.0;
+
+        if (iou > bestIoU) {
+            bestIoU = iou;
+            bestId = face.id;
+        }
+    }
+
+    return bestId;
 }

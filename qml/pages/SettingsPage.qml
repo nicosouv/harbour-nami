@@ -367,7 +367,7 @@ Page {
             Label {
                 x: Theme.horizontalPageMargin
                 width: parent.width - 2 * Theme.horizontalPageMargin
-                text: qsTr("A backup includes everyone you've identified, their photos and your trips, so you can restore it all on a new device. Restore it before scanning your gallery for the best result, with your photos back at the same paths.")
+                text: qsTr("A backup includes everyone you've identified, their photos and your trips, so you can restore it all on a new device. If your photos land at the exact same folder as before, restore before your first scan. If they end up somewhere else (e.g. a different SD card), scan first, then restore: Nami recognizes photos by their content too, not just their path.")
                 font.pixelSize: Theme.fontSizeExtraSmall
                 color: Theme.secondaryColor
                 wrapMode: Text.WordWrap
@@ -413,10 +413,10 @@ Page {
                                         var result = facePipeline.importBackupData(rd.selectedFilePath)
                                         backupResultLabel.color = Theme.secondaryHighlightColor
                                         backupResultLabel.text = result && Object.keys(result).length > 0
-                                            ? qsTr("Restored %1 photos, %2 faces, %3 people, %4 trips (%5 photos skipped, not found on this device)")
-                                                .arg(result.photos_imported).arg(result.faces_imported)
-                                                .arg(result.people_imported).arg(result.trips_imported)
-                                                .arg(result.photos_skipped)
+                                            ? qsTr("Restored %1 photos (%2 relinked by content), %3 faces, %4 people, %5 trips (%6 photos skipped, not found on this device)")
+                                                .arg(result.photos_imported).arg(result.photos_relinked)
+                                                .arg(result.faces_imported).arg(result.people_imported)
+                                                .arg(result.trips_imported).arg(result.photos_skipped)
                                             : qsTr("Restore failed")
                                         loadStatistics()
                                     })
