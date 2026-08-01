@@ -10,6 +10,7 @@
 #include <QDateTime>
 #include <QSqlDatabase>
 #include <QJsonObject>
+#include <QPair>
 #include "facerecognizer.h"
 
 /**
@@ -26,6 +27,7 @@ struct Photo {
     bool hasLocation;  // GPS coordinates were present in EXIF
     double latitude;
     double longitude;
+    QString fileHash;  // SHA-256 of the file's bytes, empty until computed
 };
 
 /**
@@ -109,11 +111,32 @@ public:
 
     /**
      * @brief Add photo to database
+     *
+     * If the photo already exists (same file_path) and fileHash is given
+     * while the stored row has none yet, the row is backfilled with it.
+     *
      * @return Photo ID or -1 on error
      */
     int addPhoto(const QString &filePath, const QDateTime &dateTaken,
                  int width, int height, bool hasLocation = false,
-                 double latitude = 0.0, double longitude = 0.0);
+                 double latitude = 0.0, double longitude = 0.0,
+                 const QString &fileHash = QString());
+
+    /**
+     * @brief Store (or backfill) a photo's content hash
+     */
+    bool setPhotoHash(int photoId, const QString &fileHash);
+
+    /**
+     * @brief Find a photo by content hash (used when its path has changed)
+     * @return Photo ID, or -1 if no photo has this hash
+     */
+    int findPhotoByHash(const QString &fileHash);
+
+    /**
+     * @brief (id, file_path) of every photo that has no stored hash yet
+     */
+    QVector<QPair<int, QString>> getPhotosMissingHash();
 
     /**
      * @brief Get photo by ID
@@ -296,7 +319,8 @@ public:
      */
     struct ImportStats {
         int photosImported = 0;
-        int photosSkipped = 0;  // file no longer exists on this device
+        int photosRelinked = 0;  // matched by content hash after its path changed
+        int photosSkipped = 0;   // file no longer exists on this device
         int peopleImported = 0;
         int facesImported = 0;
         int tripsImported = 0;
@@ -387,6 +411,11 @@ private:
 
     // Helper: Execute query and log errors
     bool executeQuery(const QString &query);
+
+    // Helper: Best unassigned face of a photo overlapping the given bbox
+    // (import reconciliation after a photo was relinked by content hash)
+    // Returns -1 when no unassigned face overlaps closely enough
+    int findClosestUnassignedFace(int photoId, const QRectF &bbox);
 };
 
 #endif // FACEDATABASE_H

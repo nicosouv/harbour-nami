@@ -52,6 +52,7 @@ set(SOURCES
     src/facepipeline.cpp
     src/faceimageprovider.cpp
     src/exifreader.cpp
+    src/filehash.cpp
 )
 
 # Headers
@@ -63,6 +64,7 @@ set(HEADERS
     src/facepipeline.h
     src/faceimageprovider.h
     src/exifreader.h
+    src/filehash.h
 )
 
 # QML files are installed as a directory (see install(DIRECTORY qml ...))
