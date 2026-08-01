@@ -347,6 +347,33 @@ public:
      */
     Q_INVOKABLE bool deleteTrip(int tripId);
 
+    /**
+     * @brief Merge fromTripId's dates into intoTripId and delete fromTripId
+     */
+    Q_INVOKABLE bool mergeTrips(int fromTripId, int intoTripId);
+
+    /**
+     * @brief Set the cover photo for a day ("day:yyyy-MM-dd") or trip
+     *        ("trip:<id>") event key
+     */
+    Q_INVOKABLE bool setEventCover(const QString &eventKey, const QString &photoPath);
+
+    /**
+     * @brief Clear a stored cover, reverting to the automatic choice
+     */
+    Q_INVOKABLE bool clearEventCover(const QString &eventKey);
+
+    /**
+     * @brief All stored covers, event key -> photo file path
+     */
+    Q_INVOKABLE QVariantMap getEventCovers();
+
+    /**
+     * @brief Most recently taken photos for the cover page animation
+     * @param limit Maximum number of photos to return
+     */
+    Q_INVOKABLE QVariantList getCoverPhotos(int limit = 30);
+
     // === Property getters ===
 
     bool isInitialized() const { return m_initialized; }
