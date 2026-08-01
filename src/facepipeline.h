@@ -45,6 +45,9 @@ struct PhotoExtraction {
     int width;
     int height;
     QDateTime dateTaken;
+    bool hasLocation;
+    double latitude;
+    double longitude;
     QVector<ExtractedFace> faces;
 };
 
@@ -285,6 +288,32 @@ public:
      * @return Number of faces confirmed
      */
     Q_INVOKABLE int confirmAllFaces(int personId);
+
+    // === Trips (user-named groups of day-events, e.g. a holiday) ===
+
+    /**
+     * @brief Get all trips
+     * @return List of maps with trip_id, name, date_keys (yyyy-MM-dd list)
+     */
+    Q_INVOKABLE QVariantList getTrips();
+
+    /**
+     * @brief Group several day-events into a named trip
+     * @param name Trip name (e.g. "Rome")
+     * @param dateKeys Dates to group, each "yyyy-MM-dd"
+     * @return Trip ID or -1 on error
+     */
+    Q_INVOKABLE int createTrip(const QString &name, const QStringList &dateKeys);
+
+    /**
+     * @brief Rename an existing trip
+     */
+    Q_INVOKABLE bool renameTrip(int tripId, const QString &name);
+
+    /**
+     * @brief Delete a trip; its dates go back to being separate day-events
+     */
+    Q_INVOKABLE bool deleteTrip(int tripId);
 
     // === Property getters ===
 

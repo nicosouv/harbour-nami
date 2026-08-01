@@ -8,26 +8,88 @@ Page {
 
     allowedOrientations: Orientation.All
 
-    // Events model (grouped photos by date)
+    // Events model: single-day events plus multi-day trips, most recent first
     ListModel {
         id: eventsModel
+    }
+
+    // Selection mode: pick several day-events to combine into a trip
+    property bool selectionMode: false
+    property var selectedDates: []
+    property int selectableDayCount: 0
+
+    function isDateSelected(dateKey) {
+        return selectedDates.indexOf(dateKey) !== -1
+    }
+
+    function toggleDateSelection(dateKey) {
+        var idx = selectedDates.indexOf(dateKey)
+        var copy = selectedDates.slice()
+        if (idx === -1) {
+            copy.push(dateKey)
+        } else {
+            copy.splice(idx, 1)
+        }
+        selectedDates = copy
+    }
+
+    function enterSelectionMode() {
+        selectedDates = []
+        selectionMode = true
+    }
+
+    function exitSelectionMode() {
+        selectionMode = false
+        selectedDates = []
+    }
+
+    function groupSelectedDates() {
+        var dialog = pageStack.push(Qt.resolvedUrl("../dialogs/TripNameDialog.qml"), {
+            titleText: qsTr("Name this trip")
+        })
+        dialog.accepted.connect(function() {
+            faceManager.createTrip(dialog.newName, selectedDates)
+            exitSelectionMode()
+            detectEvents()
+        })
     }
 
     Component.onCompleted: {
         detectEvents()
     }
 
-    // Simple event detection: group photos by date
+    // Same month/year collapse to a short range; different years spell both out
+    function formatTripDateRange(minDate, maxDate) {
+        if (minDate.getFullYear() === maxDate.getFullYear()) {
+            if (minDate.getMonth() === maxDate.getMonth() && minDate.getDate() === maxDate.getDate()) {
+                return Qt.formatDate(minDate, "d MMM yyyy")
+            }
+            if (minDate.getMonth() === maxDate.getMonth()) {
+                return Qt.formatDate(minDate, "d") + "–" + Qt.formatDate(maxDate, "d MMM yyyy")
+            }
+            return Qt.formatDate(minDate, "d MMM") + " – " + Qt.formatDate(maxDate, "d MMM yyyy")
+        }
+        return Qt.formatDate(minDate, "d MMM yyyy") + " – " + Qt.formatDate(maxDate, "d MMM yyyy")
+    }
+
+    // Group photos by date, then fold dates already grouped into a trip
+    // into a single trip row instead of listing them separately
     function detectEvents() {
         if (!faceManager || !faceManager.initialized) return
 
         eventsModel.clear()
 
-        // Get all people
-        var people = faceManager.getAllPeople()
-        var dateMap = {}  // Map of date -> { people: Set, photos: Array }
+        var trips = faceManager.getTrips()
+        var dateToTrip = {}
+        for (var t = 0; t < trips.length; t++) {
+            for (var td = 0; td < trips[t].date_keys.length; td++) {
+                dateToTrip[trips[t].date_keys[td]] = true
+            }
+        }
 
-        // Collect all photos grouped by date
+        var people = faceManager.getAllPeople()
+        var dateMap = {}  // dateKey -> { date, people: Set, photos: Array }
+
         for (var i = 0; i < people.length; i++) {
             var person = people[i]
             var photos = faceManager.getPersonPhotos(person.person_id)
@@ -36,22 +98,15 @@ Page {
                 var photo = photos[j]
                 if (!photo.timestamp) continue
 
-                // Get date only (no time)
                 var date = new Date(photo.timestamp * 1000)
                 var dateKey = Qt.formatDate(date, "yyyy-MM-dd")
 
                 if (!dateMap[dateKey]) {
-                    dateMap[dateKey] = {
-                        date: date,
-                        people: {},
-                        photos: []
-                    }
+                    dateMap[dateKey] = { date: date, people: {}, photos: [] }
                 }
 
-                // Track unique people for this date
                 dateMap[dateKey].people[person.person_id] = person.name
 
-                // Add photo if not already present
                 var photoExists = false
                 for (var k = 0; k < dateMap[dateKey].photos.length; k++) {
                     if (dateMap[dateKey].photos[k].file_path === photo.file_path) {
@@ -65,29 +120,89 @@ Page {
             }
         }
 
-        // Convert to plain JS objects first: ListModel.get() returns live
-        // references that are invalidated by clear(), so sorting via the
-        // model produced rows with empty fields ("0 photos" events)
         var events = []
+
+        // Trip rows: fold every date belonging to the trip into one entry
+        for (var ti = 0; ti < trips.length; ti++) {
+            var trip = trips[ti]
+            var tripPhotoCount = 0
+            var tripPeople = {}
+            var minDate = null, maxDate = null
+            var coverPhoto = ""
+            var coverTime = 0
+            var dayCount = 0
+
+            for (var dk = 0; dk < trip.date_keys.length; dk++) {
+                var bucket = dateMap[trip.date_keys[dk]]
+                if (!bucket) continue
+                dayCount++
+                tripPhotoCount += bucket.photos.length
+                for (var pid in bucket.people) {
+                    tripPeople[pid] = bucket.people[pid]
+                }
+                if (!minDate || bucket.date < minDate) minDate = bucket.date
+                if (!maxDate || bucket.date > maxDate) maxDate = bucket.date
+
+                for (var bp = 0; bp < bucket.photos.length; bp++) {
+                    if (coverTime === 0 || bucket.photos[bp].timestamp < coverTime) {
+                        coverTime = bucket.photos[bp].timestamp
+                        coverPhoto = bucket.photos[bp].file_path
+                    }
+                }
+            }
+
+            if (dayCount === 0) continue  // none of the trip's dates have photos yet
+
+            var tripPeopleNames = []
+            for (var tpid in tripPeople) {
+                tripPeopleNames.push(tripPeople[tpid])
+            }
+
+            events.push({
+                type: "trip",
+                dateKey: "",
+                tripId: trip.trip_id,
+                name: trip.name,
+                time: maxDate.getTime(),
+                dateString: "",
+                dateRangeString: formatTripDateRange(minDate, maxDate),
+                dayCount: dayCount,
+                photoCount: tripPhotoCount,
+                peopleCount: tripPeopleNames.length,
+                peopleNames: tripPeopleNames.join(", "),
+                coverPhoto: coverPhoto
+            })
+        }
+
+        // Standalone day rows: everything not folded into a trip
+        var dayCountAvailable = 0
         for (var dateKey in dateMap) {
+            if (dateToTrip[dateKey]) continue
             var event = dateMap[dateKey]
             if (event.photos.length >= 2) {
-                var peopleNames = []
+                dayCountAvailable++
+                var dayPeopleNames = []
                 for (var personId in event.people) {
-                    peopleNames.push(event.people[personId])
+                    dayPeopleNames.push(event.people[personId])
                 }
 
                 events.push({
+                    type: "day",
                     dateKey: dateKey,
+                    tripId: -1,
+                    name: "",
                     time: event.date.getTime(),
                     dateString: Qt.formatDate(event.date, "ddd d MMM yyyy"),
+                    dateRangeString: "",
+                    dayCount: 1,
                     photoCount: event.photos.length,
-                    peopleCount: peopleNames.length,
-                    peopleNames: peopleNames.join(", "),
+                    peopleCount: dayPeopleNames.length,
+                    peopleNames: dayPeopleNames.join(", "),
                     coverPhoto: event.photos[0].file_path
                 })
             }
         }
+        selectableDayCount = dayCountAvailable
 
         // Sort by date (most recent first)
         events.sort(function(a, b) {
@@ -116,10 +231,30 @@ Page {
             Label {
                 x: Theme.horizontalPageMargin
                 width: parent.width - 2 * Theme.horizontalPageMargin
-                text: qsTr("Photos automatically grouped by date")
+                text: selectionMode
+                    ? qsTr("Select the days to combine into a trip")
+                    : qsTr("Photos automatically grouped by date. Group several days into a trip for a multi-day event.")
                 font.pixelSize: Theme.fontSizeSmall
                 color: Theme.secondaryHighlightColor
                 wrapMode: Text.WordWrap
+            }
+
+            Row {
+                x: Theme.horizontalPageMargin
+                width: parent.width - 2 * Theme.horizontalPageMargin
+                spacing: Theme.paddingMedium
+                visible: selectionMode
+
+                Button {
+                    text: qsTr("Cancel")
+                    onClicked: exitSelectionMode()
+                }
+
+                Button {
+                    text: qsTr("Group %n day(s)", "", selectedDates.length)
+                    enabled: selectedDates.length >= 2
+                    onClicked: groupSelectedDates()
+                }
             }
 
             Item {
@@ -128,10 +263,54 @@ Page {
             }
         }
 
-        delegate: BackgroundItem {
+        PullDownMenu {
+            visible: !selectionMode
+            MenuItem {
+                text: qsTr("Select days to group into a trip")
+                enabled: selectableDayCount >= 2
+                onClicked: enterSelectionMode()
+            }
+        }
+
+        delegate: ListItem {
             id: eventItem
             width: ListView.view.width
-            height: Theme.itemSizeExtraLarge + Theme.paddingMedium
+            contentHeight: Theme.itemSizeExtraLarge + Theme.paddingMedium
+            enabled: model.type === "day" || !selectionMode
+            opacity: (selectionMode && model.type === "trip") ? 0.4 : 1.0
+
+            menu: model.type === "trip" ? tripContextMenu : null
+
+            Component {
+                id: tripContextMenu
+
+                ContextMenu {
+                    MenuItem {
+                        text: qsTr("Rename")
+                        onClicked: {
+                            var tid = model.tripId
+                            var dialog = pageStack.push(Qt.resolvedUrl("../dialogs/TripNameDialog.qml"), {
+                                titleText: qsTr("Rename trip"),
+                                currentName: model.name
+                            })
+                            dialog.accepted.connect(function() {
+                                faceManager.renameTrip(tid, dialog.newName)
+                                detectEvents()
+                            })
+                        }
+                    }
+                    MenuItem {
+                        text: qsTr("Ungroup")
+                        onClicked: {
+                            var tid = model.tripId
+                            eventItem.remorseAction(qsTr("Ungrouping trip"), function() {
+                                faceManager.deleteTrip(tid)
+                                detectEvents()
+                            })
+                        }
+                    }
+                }
+            }
 
             Row {
                 anchors {
@@ -140,6 +319,32 @@ Page {
                     rightMargin: Theme.horizontalPageMargin
                 }
                 spacing: Theme.paddingMedium
+
+                // Selection indicator (day rows only, selection mode only)
+                Item {
+                    width: selectionMode && model.type === "day" ? Theme.iconSizeMedium : 0
+                    height: Theme.iconSizeMedium
+                    anchors.verticalCenter: parent.verticalCenter
+                    visible: selectionMode && model.type === "day"
+
+                    Rectangle {
+                        anchors.centerIn: parent
+                        width: Theme.iconSizeSmall
+                        height: width
+                        radius: width / 2
+                        color: isDateSelected(model.dateKey) ? Theme.highlightColor : "transparent"
+                        border.color: Theme.highlightColor
+                        border.width: 1
+
+                        Label {
+                            anchors.centerIn: parent
+                            text: "✓"
+                            font.pixelSize: Theme.fontSizeExtraSmall
+                            color: Theme.primaryColor
+                            visible: isDateSelected(model.dateKey)
+                        }
+                    }
+                }
 
                 // Cover photo
                 Image {
@@ -160,6 +365,29 @@ Page {
                         radius: Theme.paddingSmall
                     }
 
+                    // Trip badge
+                    Rectangle {
+                        anchors {
+                            top: parent.top
+                            left: parent.left
+                            margins: Theme.paddingSmall / 2
+                        }
+                        visible: model.type === "trip"
+                        width: tripBadgeLabel.width + Theme.paddingSmall
+                        height: tripBadgeLabel.height + Theme.paddingSmall / 2
+                        radius: Theme.paddingSmall / 2
+                        color: Theme.rgba(Theme.highlightBackgroundColor, 0.85)
+
+                        Label {
+                            id: tripBadgeLabel
+                            anchors.centerIn: parent
+                            text: qsTr("Trip")
+                            font.pixelSize: Theme.fontSizeExtraSmall
+                            font.bold: true
+                            color: Theme.highlightColor
+                        }
+                    }
+
                     BusyIndicator {
                         anchors.centerIn: parent
                         running: parent.status === Image.Loading
@@ -170,15 +398,27 @@ Page {
                 // Event info
                 Column {
                     width: parent.width - Theme.itemSizeExtraLarge - Theme.paddingMedium
+                        - (selectionMode && model.type === "day" ? Theme.iconSizeMedium + parent.spacing : 0)
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: Theme.paddingSmall
 
                     Label {
-                        text: model.dateString
+                        text: model.type === "trip" ? model.name : model.dateString
                         color: eventItem.highlighted ? Theme.highlightColor : Theme.primaryColor
                         font.pixelSize: Theme.fontSizeMedium
                         truncationMode: TruncationMode.Fade
                         width: parent.width
+                    }
+
+                    Label {
+                        text: model.type === "trip"
+                            ? model.dateRangeString + " · " + model.dayCount + " " + (model.dayCount === 1 ? qsTr("day") : qsTr("days"))
+                            : ""
+                        color: Theme.secondaryHighlightColor
+                        font.pixelSize: Theme.fontSizeExtraSmall
+                        truncationMode: TruncationMode.Fade
+                        width: parent.width
+                        visible: model.type === "trip"
                     }
 
                     Label {
@@ -201,10 +441,24 @@ Page {
             }
 
             onClicked: {
-                pageStack.push(Qt.resolvedUrl("DayPhotosPage.qml"), {
-                    dateKey: model.dateKey,
-                    title: model.dateString
-                })
+                if (selectionMode) {
+                    if (model.type === "day") {
+                        toggleDateSelection(model.dateKey)
+                    }
+                    return
+                }
+
+                if (model.type === "trip") {
+                    pageStack.push(Qt.resolvedUrl("TripDetailPage.qml"), {
+                        tripId: model.tripId,
+                        tripName: model.name
+                    })
+                } else {
+                    pageStack.push(Qt.resolvedUrl("DayPhotosPage.qml"), {
+                        dateKey: model.dateKey,
+                        title: model.dateString
+                    })
+                }
             }
         }
 
