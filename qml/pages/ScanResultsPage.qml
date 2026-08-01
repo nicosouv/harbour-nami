@@ -23,6 +23,14 @@ Page {
         refreshData()
     }
 
+    // Refresh when coming back from identifying faces so the unknown
+    // faces count and recognized people reflect what was just done
+    onStatusChanged: {
+        if (status === PageStatus.Active) {
+            refreshData()
+        }
+    }
+
     function refreshData() {
         if (!faceManager || !faceManager.initialized) return
 
@@ -180,7 +188,7 @@ Page {
                 }
 
                 onClicked: {
-                    pageStack.push(Qt.resolvedUrl("UnknownFacesPage.qml"))
+                    pageStack.push(Qt.resolvedUrl("IdentifyFacesPage.qml"))
                 }
             }
 

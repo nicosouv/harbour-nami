@@ -21,6 +21,33 @@ Dialog {
     property string selectedContactId: ""
     property string selectedContactName: ""
 
+    // Autocomplete: filter existing people as the new-person name is typed,
+    // so a person with a matching name can be picked instead of duplicated
+    property string nameQuery: newNameField.text.trim().toLowerCase()
+
+    function personMatches(name) {
+        return nameQuery.length === 0 || name.toLowerCase().indexOf(nameQuery) !== -1
+    }
+
+    property int matchCount: {
+        if (!peopleModel) return 0
+        var n = 0
+        for (var i = 0; i < peopleModel.count; i++) {
+            var p = peopleModel.get(i)
+            if (p.person_id !== excludePersonId && personMatches(p.name)) n++
+        }
+        return n
+    }
+
+    property var exactMatchPerson: {
+        if (nameQuery.length === 0 || !peopleModel) return null
+        for (var i = 0; i < peopleModel.count; i++) {
+            var p = peopleModel.get(i)
+            if (p.person_id !== excludePersonId && p.name.toLowerCase() === nameQuery) return p
+        }
+        return null
+    }
+
     canAccept: (selectedContactId.length > 0) || (selectedPersonId > 0)
                || (createNew && allowCreate && newNameField.text.trim().length > 0)
 
@@ -108,23 +135,36 @@ Dialog {
                 }
             }
 
+            // Warn before a same-named person gets created twice
+            Label {
+                x: Theme.horizontalPageMargin
+                width: parent.width - 2 * Theme.horizontalPageMargin
+                text: exactMatchPerson ? qsTr("“%1” already exists — tap it below to avoid a duplicate").arg(exactMatchPerson.name) : ""
+                color: Theme.highlightColor
+                font.pixelSize: Theme.fontSizeExtraSmall
+                wrapMode: Text.WordWrap
+                visible: allowCreate && exactMatchPerson !== null && createNew
+            }
+
             // Separator
             Rectangle {
                 width: parent.width - 2 * Theme.horizontalPageMargin
                 height: 1
                 x: Theme.horizontalPageMargin
                 color: Theme.rgba(Theme.highlightColor, 0.1)
-                visible: allowCreate && peopleModel && peopleModel.count > 0
+                visible: allowCreate && matchCount > 0
             }
 
-            // Existing people
+            // Existing people, filtered to matches of the typed name (autocomplete)
             Label {
                 x: Theme.horizontalPageMargin
                 width: parent.width - 2 * Theme.horizontalPageMargin
-                text: allowCreate ? qsTr("Or select existing:") : qsTr("Select person:")
+                text: nameQuery.length > 0
+                    ? qsTr("Matching people:")
+                    : (allowCreate ? qsTr("Or select existing:") : qsTr("Select person:"))
                 color: Theme.secondaryHighlightColor
                 font.pixelSize: Theme.fontSizeSmall
-                visible: peopleModel && peopleModel.count > 0
+                visible: matchCount > 0
             }
 
             Repeater {
@@ -133,7 +173,7 @@ Dialog {
                 delegate: BackgroundItem {
                     width: column.width
                     height: Theme.itemSizeSmall
-                    visible: model.person_id !== dialog.excludePersonId
+                    visible: model.person_id !== dialog.excludePersonId && personMatches(model.name)
                     highlighted: selectedPersonId === model.person_id
 
                     Row {
