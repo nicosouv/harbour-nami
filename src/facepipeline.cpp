@@ -264,6 +264,9 @@ PhotoExtraction FacePipeline::extractPhotoData(const QString &photoPath)
     extraction.loaded = false;
     extraction.width = 0;
     extraction.height = 0;
+    extraction.hasLocation = false;
+    extraction.latitude = 0.0;
+    extraction.longitude = 0.0;
 
     qCDebug(lcNami) << "Processing photo:" << photoPath;
 
@@ -277,10 +280,14 @@ PhotoExtraction FacePipeline::extractPhotoData(const QString &photoPath)
     extraction.height = image.height();
 
     // Capture date from EXIF; mtime only as fallback (it resets on copy/sync)
-    extraction.dateTaken = ExifReader::dateTaken(photoPath);
+    ExifReader::Metadata metadata = ExifReader::readMetadata(photoPath);
+    extraction.dateTaken = metadata.dateTaken;
     if (!extraction.dateTaken.isValid()) {
         extraction.dateTaken = QFileInfo(photoPath).lastModified();
     }
+    extraction.hasLocation = metadata.hasLocation;
+    extraction.latitude = metadata.latitude;
+    extraction.longitude = metadata.longitude;
 
     QVector<FaceDetection> detections = m_detector->detect(image);
     qCDebug(lcNami) << "Detected" << detections.size() << "faces";
@@ -331,7 +338,9 @@ PhotoProcessingResult FacePipeline::commitExtraction(const PhotoExtraction &extr
     m_database->beginTransaction();
 
     int photoId = m_database->addPhoto(extraction.filePath, extraction.dateTaken,
-                                       extraction.width, extraction.height);
+                                       extraction.width, extraction.height,
+                                       extraction.hasLocation, extraction.latitude,
+                                       extraction.longitude);
     if (photoId < 0) {
         m_database->rollbackTransaction();
         result.errorMessage = "Failed to add photo to database";
@@ -675,6 +684,9 @@ QVariantList FacePipeline::getPersonPhotos(int personId)
             photoMap["similarity_score"] = face.similarityScore;
             photoMap["verified"] = face.verified;
             photoMap["rotation"] = photo.rotation;
+            photoMap["has_location"] = photo.hasLocation;
+            photoMap["latitude"] = photo.latitude;
+            photoMap["longitude"] = photo.longitude;
             photoMap["bbox_x"] = face.bbox.x();
             photoMap["bbox_y"] = face.bbox.y();
             photoMap["bbox_width"] = face.bbox.width();
@@ -937,6 +949,49 @@ int FacePipeline::confirmAllFaces(int personId)
     }
 
     return confirmed;
+}
+
+QVariantList FacePipeline::getTrips()
+{
+    QVariantList result;
+
+    if (!m_initialized || !m_database) {
+        return result;
+    }
+
+    for (const Trip &trip : m_database->getAllTrips()) {
+        QVariantMap tripMap;
+        tripMap["trip_id"] = trip.id;
+        tripMap["name"] = trip.name;
+        tripMap["date_keys"] = trip.dateKeys;
+        result.append(tripMap);
+    }
+
+    return result;
+}
+
+int FacePipeline::createTrip(const QString &name, const QStringList &dateKeys)
+{
+    if (!m_initialized || !m_database) {
+        return -1;
+    }
+    return m_database->createTrip(name, dateKeys);
+}
+
+bool FacePipeline::renameTrip(int tripId, const QString &name)
+{
+    if (!m_initialized || !m_database) {
+        return false;
+    }
+    return m_database->renameTrip(tripId, name);
+}
+
+bool FacePipeline::deleteTrip(int tripId)
+{
+    if (!m_initialized || !m_database) {
+        return false;
+    }
+    return m_database->deleteTrip(tripId);
 }
 
 QString FacePipeline::exportData()

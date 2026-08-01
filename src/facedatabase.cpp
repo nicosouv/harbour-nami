@@ -116,6 +116,9 @@ bool FaceDatabase::initializeSchema()
     query.exec("ALTER TABLE faces ADD COLUMN verified INTEGER DEFAULT 0");
     query.exec("ALTER TABLE faces ADD COLUMN ignored INTEGER DEFAULT 0");
     query.exec("ALTER TABLE photos ADD COLUMN rotation INTEGER DEFAULT 0");
+    // NULL means "no GPS data in EXIF", not "0,0"
+    query.exec("ALTER TABLE photos ADD COLUMN latitude REAL");
+    query.exec("ALTER TABLE photos ADD COLUMN longitude REAL");
 
     // Rejections: "this face is NOT this person", so auto-matching never
     // reassigns a face the user explicitly removed from a person
@@ -158,10 +161,36 @@ bool FaceDatabase::initializeSchema()
         return false;
     }
 
+    // Trips: user-named groups of day-events (e.g. a holiday spanning
+    // several non-contiguous dates)
+    if (!query.exec(R"(
+        CREATE TABLE IF NOT EXISTS trips (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        )
+    )")) {
+        emit error("Failed to create trips table: " + query.lastError().text());
+        return false;
+    }
+
+    // date_key is the primary key: a date belongs to at most one trip
+    if (!query.exec(R"(
+        CREATE TABLE IF NOT EXISTS trip_dates (
+            date_key TEXT PRIMARY KEY,
+            trip_id INTEGER NOT NULL,
+            FOREIGN KEY (trip_id) REFERENCES trips(id) ON DELETE CASCADE
+        )
+    )")) {
+        emit error("Failed to create trip_dates table: " + query.lastError().text());
+        return false;
+    }
+
     // Create indexes
     query.exec("CREATE INDEX IF NOT EXISTS idx_faces_photo ON faces(photo_id)");
     query.exec("CREATE INDEX IF NOT EXISTS idx_faces_person ON faces(person_id)");
     query.exec("CREATE INDEX IF NOT EXISTS idx_photos_path ON photos(file_path)");
+    query.exec("CREATE INDEX IF NOT EXISTS idx_trip_dates_trip ON trip_dates(trip_id)");
 
     qCDebug(lcNami) << "Database schema initialized";
     return true;
@@ -187,7 +216,8 @@ bool FaceDatabase::rollbackTransaction()
 // === Photo operations ===
 
 int FaceDatabase::addPhoto(const QString &filePath, const QDateTime &dateTaken,
-                           int width, int height)
+                           int width, int height, bool hasLocation,
+                           double latitude, double longitude)
 {
     qCDebug(lcNami) << "  → Attempting to insert photo:" << filePath;
 
@@ -204,13 +234,20 @@ int FaceDatabase::addPhoto(const QString &filePath, const QDateTime &dateTaken,
 
     QSqlQuery query(m_db);
     query.prepare(R"(
-        INSERT INTO photos (file_path, date_taken, width, height)
-        VALUES (:file_path, :date_taken, :width, :height)
+        INSERT INTO photos (file_path, date_taken, width, height, latitude, longitude)
+        VALUES (:file_path, :date_taken, :width, :height, :latitude, :longitude)
     )");
     query.bindValue(":file_path", filePath);
     query.bindValue(":date_taken", dateTaken.toString(Qt::ISODate));
     query.bindValue(":width", width);
     query.bindValue(":height", height);
+    if (hasLocation) {
+        query.bindValue(":latitude", latitude);
+        query.bindValue(":longitude", longitude);
+    } else {
+        query.bindValue(":latitude", QVariant(QVariant::Double));
+        query.bindValue(":longitude", QVariant(QVariant::Double));
+    }
 
     if (!query.exec()) {
         QString errorMsg = "Failed to add photo: " + query.lastError().text();
@@ -241,10 +278,15 @@ Photo FaceDatabase::getPhoto(int photoId)
         photo.height = query.value("height").toInt();
         photo.processedAt = QDateTime::fromString(query.value("processed_at").toString(), Qt::ISODate);
         photo.rotation = query.value("rotation").toInt();
+        QVariant lat = query.value("latitude");
+        QVariant lon = query.value("longitude");
+        photo.hasLocation = !lat.isNull() && !lon.isNull();
+        photo.latitude = photo.hasLocation ? lat.toDouble() : 0.0;
+        photo.longitude = photo.hasLocation ? lon.toDouble() : 0.0;
         return photo;
     }
 
-    return Photo{-1, "", QDateTime(), 0, 0, QDateTime(), 0};
+    return Photo{-1, "", QDateTime(), 0, 0, QDateTime(), 0, false, 0.0, 0.0};
 }
 
 int FaceDatabase::photoRotation(const QString &filePath)
@@ -284,6 +326,11 @@ QVector<Photo> FaceDatabase::getAllPhotos()
             photo.height = query.value("height").toInt();
             photo.processedAt = QDateTime::fromString(query.value("processed_at").toString(), Qt::ISODate);
             photo.rotation = query.value("rotation").toInt();
+            QVariant lat = query.value("latitude");
+            QVariant lon = query.value("longitude");
+            photo.hasLocation = !lat.isNull() && !lon.isNull();
+            photo.latitude = photo.hasLocation ? lat.toDouble() : 0.0;
+            photo.longitude = photo.hasLocation ? lon.toDouble() : 0.0;
             photos.append(photo);
         }
     }
@@ -836,7 +883,9 @@ bool FaceDatabase::deleteAllData()
     if (!query.exec("DELETE FROM negative_matches") ||
         !query.exec("DELETE FROM faces") ||
         !query.exec("DELETE FROM people") ||
-        !query.exec("DELETE FROM photos")) {
+        !query.exec("DELETE FROM photos") ||
+        !query.exec("DELETE FROM trip_dates") ||
+        !query.exec("DELETE FROM trips")) {
         m_db.rollback();
         return false;
     }
@@ -918,6 +967,91 @@ QVariantMap FaceDatabase::getStatistics()
     stats["db_size_bytes"] = QFileInfo(m_dbPath).size();
 
     return stats;
+}
+
+// === Trips ===
+
+int FaceDatabase::createTrip(const QString &name, const QStringList &dateKeys)
+{
+    if (name.trimmed().isEmpty() || dateKeys.isEmpty()) {
+        return -1;
+    }
+
+    QSqlQuery query(m_db);
+    query.prepare("INSERT INTO trips (name) VALUES (:name)");
+    query.bindValue(":name", name.trimmed());
+
+    if (!query.exec()) {
+        emit error("Failed to create trip: " + query.lastError().text());
+        return -1;
+    }
+
+    int tripId = query.lastInsertId().toInt();
+
+    for (const QString &dateKey : dateKeys) {
+        // A date already grouped into another trip is left alone: the
+        // caller only offers ungrouped days for selection
+        QSqlQuery dateQuery(m_db);
+        dateQuery.prepare("INSERT OR IGNORE INTO trip_dates (date_key, trip_id) VALUES (:date_key, :trip_id)");
+        dateQuery.bindValue(":date_key", dateKey);
+        dateQuery.bindValue(":trip_id", tripId);
+        dateQuery.exec();
+    }
+
+    return tripId;
+}
+
+bool FaceDatabase::renameTrip(int tripId, const QString &name)
+{
+    if (name.trimmed().isEmpty()) {
+        return false;
+    }
+
+    QSqlQuery query(m_db);
+    query.prepare("UPDATE trips SET name = :name WHERE id = :id");
+    query.bindValue(":name", name.trimmed());
+    query.bindValue(":id", tripId);
+
+    return query.exec() && query.numRowsAffected() > 0;
+}
+
+bool FaceDatabase::deleteTrip(int tripId)
+{
+    QSqlQuery query(m_db);
+    query.prepare("DELETE FROM trips WHERE id = :id");
+    query.bindValue(":id", tripId);
+
+    return query.exec() && query.numRowsAffected() > 0;
+}
+
+QVector<Trip> FaceDatabase::getAllTrips()
+{
+    QVector<Trip> trips;
+    QSqlQuery query(m_db);
+
+    if (!query.exec("SELECT id, name, created_at FROM trips ORDER BY created_at DESC")) {
+        return trips;
+    }
+
+    while (query.next()) {
+        Trip trip;
+        trip.id = query.value("id").toInt();
+        trip.name = query.value("name").toString();
+        trip.createdAt = QDateTime::fromString(query.value("created_at").toString(), Qt::ISODate);
+
+        QSqlQuery datesQuery(m_db);
+        datesQuery.prepare("SELECT date_key FROM trip_dates WHERE trip_id = :trip_id ORDER BY date_key");
+        datesQuery.bindValue(":trip_id", trip.id);
+        if (datesQuery.exec()) {
+            while (datesQuery.next()) {
+                trip.dateKeys.append(datesQuery.value(0).toString());
+            }
+        }
+
+        trips.append(trip);
+    }
+
+    return trips;
 }
 
 // === Helpers ===
