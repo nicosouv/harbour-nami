@@ -1008,6 +1008,61 @@ bool FacePipeline::deleteTrip(int tripId)
     return m_database->deleteTrip(tripId);
 }
 
+bool FacePipeline::mergeTrips(int fromTripId, int intoTripId)
+{
+    if (!m_initialized || !m_database) {
+        return false;
+    }
+    return m_database->mergeTrips(fromTripId, intoTripId);
+}
+
+bool FacePipeline::setEventCover(const QString &eventKey, const QString &photoPath)
+{
+    if (!m_initialized || !m_database) {
+        return false;
+    }
+    return m_database->setEventCover(eventKey, photoPath);
+}
+
+bool FacePipeline::clearEventCover(const QString &eventKey)
+{
+    if (!m_initialized || !m_database) {
+        return false;
+    }
+    return m_database->clearEventCover(eventKey);
+}
+
+QVariantMap FacePipeline::getEventCovers()
+{
+    if (!m_initialized || !m_database) {
+        return QVariantMap();
+    }
+    return m_database->getEventCovers();
+}
+
+QVariantList FacePipeline::getCoverPhotos(int limit)
+{
+    QVariantList result;
+
+    if (!m_initialized || !m_database) {
+        return result;
+    }
+
+    for (const Photo &photo : m_database->getRecentPhotos(limit)) {
+        QVariantMap photoMap;
+        photoMap["file_path"] = photo.filePath;
+        photoMap["timestamp"] = photo.dateTaken.isValid()
+            ? photo.dateTaken.toMSecsSinceEpoch() / 1000 : 0;
+        photoMap["rotation"] = photo.rotation;
+        photoMap["has_location"] = photo.hasLocation;
+        photoMap["latitude"] = photo.latitude;
+        photoMap["longitude"] = photo.longitude;
+        result.append(photoMap);
+    }
+
+    return result;
+}
+
 QString FacePipeline::exportData()
 {
     if (!m_initialized || !m_database) {
