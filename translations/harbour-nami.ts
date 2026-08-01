@@ -1036,6 +1036,22 @@
         <source>Storage used</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Language</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>App language</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>System default</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restart Nami to apply the new language</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>UnknownFacesPage</name>

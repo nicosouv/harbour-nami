@@ -1,3 +1,7 @@
+* Sat Aug 01 2026 Nicolas Souveton <souvetonnicolas@gmail.com> 0.8.1-1
+- Add a Language setting to override the app language independently of the system locale
+- Enable the Norwegian Bokmål (nb_NO) translation added in the previous release
+
 * Mon Jul 13 2026 Nicolas Souveton <souvetonnicolas@gmail.com> 0.8.0-1
 - About page: app logo, dynamic version, updated feature list
 - Version bump consolidating all 0.7.x changes since the 0.7.1 release

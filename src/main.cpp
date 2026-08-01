@@ -39,16 +39,6 @@ int main(int argc, char *argv[])
 
     // Model paths (bundled with app)
     QString appDir = QCoreApplication::applicationDirPath() + "/../share/harbour-nami";
-
-    // Load translations (falls back to source English strings)
-    QTranslator *translator = new QTranslator(app.data());
-    QString locale = QLocale::system().name();  // e.g. "fr_FR"
-    QString i18nDir = appDir + "/translations";
-    if (translator->load("harbour-nami-" + locale, i18nDir) ||
-        translator->load("harbour-nami-" + locale.section('_', 0, 0), i18nDir)) {
-        app->installTranslator(translator);
-        qDebug() << "Loaded translation for" << locale;
-    }
     QString detectorModelPath = appDir + "/models/face_detection_yunet_2023mar.onnx";
     QString recognizerModelPath = appDir + "/models/face_recognition_sface_2021dec.onnx";
     QString databasePath = dataDir + "/nami.db";
@@ -76,6 +66,20 @@ int main(int argc, char *argv[])
         qCritical() << "Failed to initialize face pipeline!";
         qCritical() << "Make sure ML models are present in:" << appDir + "/models/";
         // Continue anyway - QML will show error page
+    }
+
+    // Load translations (falls back to source English strings).
+    // The user can override the system locale via Settings ("language" key).
+    QTranslator *translator = new QTranslator(app.data());
+    QString languageOverride = pipeline->getSetting("language", "system");
+    QString locale = (languageOverride.isEmpty() || languageOverride == "system")
+        ? QLocale::system().name()  // e.g. "fr_FR"
+        : languageOverride;
+    QString i18nDir = appDir + "/translations";
+    if (translator->load("harbour-nami-" + locale, i18nDir) ||
+        translator->load("harbour-nami-" + locale.section('_', 0, 0), i18nDir)) {
+        app->installTranslator(translator);
+        qDebug() << "Loaded translation for" << locale;
     }
 
     // Face thumbnail provider (crops cached in the app cache dir)
