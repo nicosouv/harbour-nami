@@ -1037,6 +1037,22 @@
         <source>Storage used</source>
         <translation>Käytetty tila</translation>
     </message>
+    <message>
+        <source>Language</source>
+        <translation>Kieli</translation>
+    </message>
+    <message>
+        <source>App language</source>
+        <translation>Sovelluksen kieli</translation>
+    </message>
+    <message>
+        <source>System default</source>
+        <translation>Järjestelmän oletus</translation>
+    </message>
+    <message>
+        <source>Restart Nami to apply the new language</source>
+        <translation>Käynnistä Nami uudelleen käyttääksesi uutta kieltä</translation>
+    </message>
 </context>
 <context>
     <name>UnknownFacesPage</name>

@@ -1037,6 +1037,22 @@
         <source>Storage used</source>
         <translation>Espace utilisé</translation>
     </message>
+    <message>
+        <source>Language</source>
+        <translation>Langue</translation>
+    </message>
+    <message>
+        <source>App language</source>
+        <translation>Langue de l'application</translation>
+    </message>
+    <message>
+        <source>System default</source>
+        <translation>Système par défaut</translation>
+    </message>
+    <message>
+        <source>Restart Nami to apply the new language</source>
+        <translation>Redémarrez Nami pour appliquer la nouvelle langue</translation>
+    </message>
 </context>
 <context>
     <name>UnknownFacesPage</name>

@@ -1,6 +1,6 @@
 Name: harbour-nami
 Summary: Face Recognition Photo Gallery
-Version: 0.8.0
+Version: 0.8.1
 Release: 1
 # The contents of the Group field should be one of the groups listed here:
 # https://github.com/mer-tools/spectacle/blob/master/data/GROUPS
@@ -19,7 +19,7 @@ Description: |
   - YuNet face detection + SFace recognition (C++ native, OpenCV Zoo models)
   - Smart photo grouping by faces
   - GDPR compliant (data export, right to be forgotten)
-  - Multilingual (EN, FR, DE, IT, ES, FI)
+  - Multilingual (EN, FR, DE, IT, ES, FI, NB), with an in-app language override
   - Optimized C++ implementation for better performance
 
 Configure: cmake
