@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QString>
+#include <QStringList>
 #include <QVector>
 #include <QSet>
 #include <QVariantMap>
@@ -21,6 +22,19 @@ struct Photo {
     int height;
     QDateTime processedAt;
     int rotation;  // user-applied rotation in degrees (0/90/180/270)
+    bool hasLocation;  // GPS coordinates were present in EXIF
+    double latitude;
+    double longitude;
+};
+
+/**
+ * @brief User-named group of day-events (e.g. a multi-day trip)
+ */
+struct Trip {
+    int id;
+    QString name;
+    QDateTime createdAt;
+    QStringList dateKeys;  // "yyyy-MM-dd" dates grouped into this trip
 };
 
 /**
@@ -97,7 +111,8 @@ public:
      * @return Photo ID or -1 on error
      */
     int addPhoto(const QString &filePath, const QDateTime &dateTaken,
-                 int width, int height);
+                 int width, int height, bool hasLocation = false,
+                 double latitude = 0.0, double longitude = 0.0);
 
     /**
      * @brief Get photo by ID
@@ -299,6 +314,29 @@ public:
      * @brief Get database statistics
      */
     QVariantMap getStatistics();
+
+    // === Trips ===
+
+    /**
+     * @brief Create a trip grouping the given day-event dates
+     * @return Trip ID or -1 on error
+     */
+    int createTrip(const QString &name, const QStringList &dateKeys);
+
+    /**
+     * @brief Rename an existing trip
+     */
+    bool renameTrip(int tripId, const QString &name);
+
+    /**
+     * @brief Delete a trip (its dates go back to separate day-events)
+     */
+    bool deleteTrip(int tripId);
+
+    /**
+     * @brief Get all trips with their grouped dates
+     */
+    QVector<Trip> getAllTrips();
 
 signals:
     void error(const QString &message);
