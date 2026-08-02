@@ -371,6 +371,26 @@ public:
     Q_INVOKABLE bool mergeTrips(int fromTripId, int intoTripId);
 
     /**
+     * @brief Add more day-event dates to an existing trip
+     */
+    Q_INVOKABLE bool addDatesToTrip(int tripId, const QStringList &dateKeys);
+
+    /**
+     * @brief Hide a day or trip event key from the Events list
+     */
+    Q_INVOKABLE bool hideEvent(const QString &eventKey);
+
+    /**
+     * @brief Reverse hideEvent()
+     */
+    Q_INVOKABLE bool unhideEvent(const QString &eventKey);
+
+    /**
+     * @brief All currently hidden event keys
+     */
+    Q_INVOKABLE QStringList getHiddenEvents();
+
+    /**
      * @brief Set the cover photo for a day ("day:yyyy-MM-dd") or trip
      *        ("trip:<id>") event key
      */
