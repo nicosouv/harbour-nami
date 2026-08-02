@@ -713,6 +713,31 @@ QVariantList FacePipeline::getPersonPhotos(int personId)
     return result;
 }
 
+QVariantList FacePipeline::getAllPhotos()
+{
+    QVariantList result;
+
+    if (!m_initialized || !m_database) {
+        return result;
+    }
+
+    for (const Photo &photo : m_database->getAllPhotos()) {
+        QVariantMap photoMap;
+        photoMap["photo_id"] = photo.id;
+        photoMap["file_path"] = photo.filePath;
+        photoMap["date_taken"] = photo.dateTaken;
+        photoMap["timestamp"] = photo.dateTaken.isValid()
+            ? photo.dateTaken.toMSecsSinceEpoch() / 1000 : 0;
+        photoMap["rotation"] = photo.rotation;
+        photoMap["has_location"] = photo.hasLocation;
+        photoMap["latitude"] = photo.latitude;
+        photoMap["longitude"] = photo.longitude;
+        result.append(photoMap);
+    }
+
+    return result;
+}
+
 QVariantMap FacePipeline::getPersonBestFace(int personId)
 {
     QVariantMap result;

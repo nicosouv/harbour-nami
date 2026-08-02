@@ -278,6 +278,23 @@ Page {
             }
 
             SectionHeader {
+                text: qsTr("Events")
+            }
+
+            TextSwitch {
+                width: parent.width
+                text: qsTr("Include photos without people")
+                description: qsTr("Show every photo from a day or trip in Events, not just the ones where someone has been identified.")
+                enabled: facePipeline && facePipeline.initialized
+                automaticCheck: false
+                checked: facePipeline && facePipeline.getSetting("events_include_all_photos", "false") === "true"
+                onClicked: {
+                    checked = !checked
+                    facePipeline.setSetting("events_include_all_photos", checked ? "true" : "false")
+                }
+            }
+
+            SectionHeader {
                 text: qsTr("Scanning")
             }
 
