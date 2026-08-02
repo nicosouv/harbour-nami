@@ -1,106 +1,246 @@
 import QtQuick 2.6
 import Sailfish.Silica 1.0
+import "../js/geoutils.js" as GeoUtils
+import "../js/worldcoastlines.js" as WorldCoastlines
 
-// Minimal offline sketch of a trip's route: draws the chronological path
-// between GPS points on a blank canvas. Deliberately not a real map (no
-// tiles, no network, no API key) so the app stays fully offline — just
-// enough to see the shape of a multi-day trip at a glance.
+// A schematic, offline "route map": no tiles, no network, no API key, just
+// a sketch of the trip's shape against a simplified world coastline (bundled
+// from Natural Earth 1:110m, public domain) so the app stays fully offline.
 Item {
     id: root
 
-    // Array of {latitude, longitude} in chronological order
+    // Array of {latitude, longitude} in chronological order, for the route
     property var points: []
+    // Array of {latitude, longitude} in chronological visit order, one per
+    // numbered marker (matches the "Stop N" grouping); optional
+    property var stops: []
 
-    height: visible ? Theme.itemSizeExtraLarge * 1.6 : 0
+    property real revealProgress: 0
+
+    height: visible ? Theme.itemSizeExtraLarge * 1.8 : 0
     visible: points.length >= 2
 
     Rectangle {
         anchors.fill: parent
         radius: Theme.paddingMedium
-        color: Theme.rgba(Theme.highlightBackgroundColor, 0.08)
-        border.color: Theme.rgba(Theme.highlightColor, 0.2)
+        color: "transparent"
+        border.color: Theme.rgba(Theme.highlightColor, 0.25)
         border.width: 1
+        z: 10
     }
 
+    // Bottom layer: paper background, graticule and coastline. Repainted
+    // only when the data or size changes, not on every reveal animation
+    // frame (those are comparatively expensive: up to ~130 world polylines).
     Canvas {
-        id: canvas
+        id: backdropCanvas
         anchors.fill: parent
-        anchors.margins: Theme.paddingLarge * 1.5
-
-        onWidthChanged: requestPaint()
-        onHeightChanged: requestPaint()
+        anchors.margins: 1
 
         onPaint: {
             var ctx = getContext("2d")
             ctx.clearRect(0, 0, width, height)
-            if (root.points.length < 2) return
+            if (root.points.length < 2 || width <= 0 || height <= 0) return
 
-            var minLat = root.points[0].latitude, maxLat = minLat
-            var minLon = root.points[0].longitude, maxLon = minLon
-            for (var i = 1; i < root.points.length; i++) {
-                minLat = Math.min(minLat, root.points[i].latitude)
-                maxLat = Math.max(maxLat, root.points[i].latitude)
-                minLon = Math.min(minLon, root.points[i].longitude)
-                maxLon = Math.max(maxLon, root.points[i].longitude)
+            var viewport = root.computeViewport()
+
+            var grad = ctx.createLinearGradient(0, 0, 0, height)
+            grad.addColorStop(0, "#faf5e8")
+            grad.addColorStop(1, "#f1e8d2")
+            ctx.fillStyle = grad
+            ctx.fillRect(0, 0, width, height)
+
+            // Decorative graticule (not real degree lines, just a map "feel")
+            ctx.strokeStyle = "rgba(110,90,60,0.12)"
+            ctx.lineWidth = 1
+            var divisions = 4
+            for (var g = 1; g < divisions; g++) {
+                var gx = width * g / divisions
+                var gy = height * g / divisions
+                ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, height); ctx.stroke()
+                ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(width, gy); ctx.stroke()
             }
-            var latSpan = Math.max(maxLat - minLat, 0.0002)
-            var lonSpan = Math.max(maxLon - minLon, 0.0002)
 
-            function toXY(pt) {
-                var px = (pt.longitude - minLon) / lonSpan * width
-                // Screen Y grows downward, latitude grows northward
-                var py = height - (pt.latitude - minLat) / latSpan * height
-                return [px, py]
-            }
-
-            ctx.lineWidth = 2
-            ctx.strokeStyle = Theme.highlightColor
-            ctx.beginPath()
-            for (var j = 0; j < root.points.length; j++) {
-                var xy = toXY(root.points[j])
-                if (j === 0) {
-                    ctx.moveTo(xy[0], xy[1])
-                } else {
-                    ctx.lineTo(xy[0], xy[1])
+            // World coastline, clipped to the viewport (cheap bbox reject
+            // per polyline keeps this fast even though the dataset covers
+            // the whole planet)
+            ctx.strokeStyle = "rgba(140,115,85,0.6)"
+            ctx.lineWidth = 1.1
+            var lines = WorldCoastlines.COASTLINES
+            for (var c = 0; c < lines.length; c++) {
+                var line = lines[c]
+                var lMinLon = line[0], lMaxLon = line[0], lMinLat = line[1], lMaxLat = line[1]
+                for (var p = 0; p < line.length; p += 2) {
+                    if (line[p] < lMinLon) lMinLon = line[p]
+                    if (line[p] > lMaxLon) lMaxLon = line[p]
+                    if (line[p + 1] < lMinLat) lMinLat = line[p + 1]
+                    if (line[p + 1] > lMaxLat) lMaxLat = line[p + 1]
                 }
+                if (lMaxLon < viewport.minLon || lMinLon > viewport.maxLon
+                    || lMaxLat < viewport.minLat || lMinLat > viewport.maxLat) {
+                    continue
+                }
+
+                ctx.beginPath()
+                for (var q = 0; q < line.length; q += 2) {
+                    var xy = root.toXY(line[q], line[q + 1], viewport, width, height)
+                    if (q === 0) ctx.moveTo(xy[0], xy[1])
+                    else ctx.lineTo(xy[0], xy[1])
+                }
+                ctx.stroke()
+            }
+        }
+    }
+
+    // Top layer: the route line (animated reveal), numbered stops and the
+    // scale bar. Cheap enough to repaint every animation frame.
+    Canvas {
+        id: routeCanvas
+        anchors.fill: parent
+        anchors.margins: 1
+
+        onPaint: {
+            var ctx = getContext("2d")
+            ctx.clearRect(0, 0, width, height)
+            if (root.points.length < 2 || width <= 0 || height <= 0) return
+
+            var viewport = root.computeViewport()
+
+            // Route line, revealed progressively (root.revealProgress 0..1)
+            var totalSegments = root.points.length - 1
+            var revealCount = totalSegments * Math.max(0, Math.min(1, root.revealProgress))
+            var fullSegments = Math.floor(revealCount)
+            var partial = revealCount - fullSegments
+
+            ctx.lineWidth = 2.5
+            ctx.strokeStyle = "rgba(51,51,51,0.85)"
+            ctx.beginPath()
+            var first = root.toXY(root.points[0].longitude, root.points[0].latitude, viewport, width, height)
+            ctx.moveTo(first[0], first[1])
+            for (var j = 1; j <= fullSegments && j < root.points.length; j++) {
+                var xy = root.toXY(root.points[j].longitude, root.points[j].latitude, viewport, width, height)
+                ctx.lineTo(xy[0], xy[1])
+            }
+            if (partial > 0 && fullSegments < totalSegments) {
+                var p0 = root.toXY(root.points[fullSegments].longitude, root.points[fullSegments].latitude, viewport, width, height)
+                var p1 = root.toXY(root.points[fullSegments + 1].longitude, root.points[fullSegments + 1].latitude, viewport, width, height)
+                ctx.lineTo(p0[0] + (p1[0] - p0[0]) * partial, p0[1] + (p1[1] - p0[1]) * partial)
             }
             ctx.stroke()
 
-            for (var k = 0; k < root.points.length; k++) {
-                var p = toXY(root.points[k])
-                var isStart = k === 0
-                var isEnd = k === root.points.length - 1
+            // Numbered stop markers when available, else plain start/end dots
+            if (root.stops.length > 0) {
+                ctx.font = "bold " + Math.round(Theme.fontSizeExtraSmall) + "px sans-serif"
+                ctx.textAlign = "center"
+                ctx.textBaseline = "middle"
+                for (var s = 0; s < root.stops.length; s++) {
+                    var sp = root.toXY(root.stops[s].longitude, root.stops[s].latitude, viewport, width, height)
+                    ctx.beginPath()
+                    ctx.arc(sp[0], sp[1], 9, 0, 2 * Math.PI)
+                    ctx.fillStyle = Theme.highlightColor
+                    ctx.fill()
+                    ctx.fillStyle = "white"
+                    ctx.fillText(String(s + 1), sp[0], sp[1] + 1)
+                }
+            } else {
+                for (var k = 0; k < root.points.length; k += root.points.length - 1) {
+                    var pt = root.toXY(root.points[k].longitude, root.points[k].latitude, viewport, width, height)
+                    ctx.beginPath()
+                    ctx.arc(pt[0], pt[1], 6, 0, 2 * Math.PI)
+                    ctx.fillStyle = k === 0 ? "#4CAF50" : "#F44336"
+                    ctx.fill()
+                }
+            }
+
+            // Scale bar: km per pixel measured along the horizontal axis at
+            // the viewport's vertical center (the projection isn't a true
+            // equirectangular one, so this is an approximation, not a ruler)
+            var centerLat = (viewport.minLat + viewport.maxLat) / 2
+            var kmPerDegLon = GeoUtils.haversineKm(centerLat, viewport.minLon, centerLat, viewport.minLon + 1)
+            var kmPerPixel = (viewport.lonSpan * kmPerDegLon) / width
+            if (kmPerPixel > 0) {
+                var niceSteps = [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000]
+                var targetKm = width * 0.26 * kmPerPixel
+                var barKm = niceSteps[0]
+                for (var ns = 0; ns < niceSteps.length; ns++) {
+                    if (niceSteps[ns] <= targetKm) barKm = niceSteps[ns]
+                }
+                var barPixels = barKm / kmPerPixel
+                var barX = 10
+                var barY = height - 10
+
+                ctx.strokeStyle = "rgba(40,40,40,0.85)"
+                ctx.lineWidth = 2
                 ctx.beginPath()
-                ctx.arc(p[0], p[1], (isStart || isEnd) ? 6 : 3.5, 0, 2 * Math.PI)
-                ctx.fillStyle = isStart ? "#4CAF50" : (isEnd ? "#F44336" : Theme.highlightColor)
-                ctx.fill()
+                ctx.moveTo(barX, barY)
+                ctx.lineTo(barX + barPixels, barY)
+                ctx.moveTo(barX, barY - 4)
+                ctx.lineTo(barX, barY + 4)
+                ctx.moveTo(barX + barPixels, barY - 4)
+                ctx.lineTo(barX + barPixels, barY + 4)
+                ctx.stroke()
+
+                ctx.fillStyle = "rgba(40,40,40,0.9)"
+                ctx.font = Math.round(Theme.fontSizeTiny) + "px sans-serif"
+                ctx.textAlign = "left"
+                ctx.textBaseline = "bottom"
+                ctx.fillText(barKm + " km", barX, barY - 6)
             }
         }
-
-        Component.onCompleted: requestPaint()
     }
 
-    // Legend
-    Row {
-        anchors {
-            top: parent.top
-            right: parent.right
-            margins: Theme.paddingSmall
+    // Shared bounding box (with padding) for both canvases
+    function computeViewport() {
+        var minLat = points[0].latitude, maxLat = minLat
+        var minLon = points[0].longitude, maxLon = minLon
+        for (var i = 1; i < points.length; i++) {
+            minLat = Math.min(minLat, points[i].latitude)
+            maxLat = Math.max(maxLat, points[i].latitude)
+            minLon = Math.min(minLon, points[i].longitude)
+            maxLon = Math.max(maxLon, points[i].longitude)
         }
-        spacing: Theme.paddingMedium
-        visible: root.points.length >= 2
-
-        Row {
-            spacing: Theme.paddingSmall / 2
-            Rectangle { width: Theme.paddingSmall; height: width; radius: width / 2; color: "#4CAF50"; anchors.verticalCenter: parent.verticalCenter }
-            Label { text: qsTr("Start"); font.pixelSize: Theme.fontSizeExtraSmall; color: Theme.secondaryColor }
-        }
-        Row {
-            spacing: Theme.paddingSmall / 2
-            Rectangle { width: Theme.paddingSmall; height: width; radius: width / 2; color: "#F44336"; anchors.verticalCenter: parent.verticalCenter }
-            Label { text: qsTr("End"); font.pixelSize: Theme.fontSizeExtraSmall; color: Theme.secondaryColor }
+        var latSpanRaw = Math.max(maxLat - minLat, 0.0005)
+        var lonSpanRaw = Math.max(maxLon - minLon, 0.0005)
+        var padLat = latSpanRaw * 0.15
+        var padLon = lonSpanRaw * 0.15
+        minLat -= padLat; maxLat += padLat
+        minLon -= padLon; maxLon += padLon
+        return {
+            minLat: minLat, maxLat: maxLat, minLon: minLon, maxLon: maxLon,
+            latSpan: maxLat - minLat, lonSpan: maxLon - minLon
         }
     }
 
-    onPointsChanged: canvas.requestPaint()
+    function toXY(lon, lat, viewport, w, h) {
+        var x = (lon - viewport.minLon) / viewport.lonSpan * w
+        // Screen Y grows downward, latitude grows northward
+        var y = h - (lat - viewport.minLat) / viewport.latSpan * h
+        return [x, y]
+    }
+
+    NumberAnimation {
+        id: revealAnimation
+        target: root
+        property: "revealProgress"
+        from: 0
+        to: 1
+        duration: 900
+        easing.type: Easing.OutCubic
+    }
+
+    onPointsChanged: {
+        backdropCanvas.requestPaint()
+        revealProgress = 0
+        revealAnimation.restart()
+    }
+    onStopsChanged: routeCanvas.requestPaint()
+    onRevealProgressChanged: routeCanvas.requestPaint()
+    onWidthChanged: {
+        backdropCanvas.requestPaint()
+        routeCanvas.requestPaint()
+    }
+    onHeightChanged: {
+        backdropCanvas.requestPaint()
+        routeCanvas.requestPaint()
+    }
 }
