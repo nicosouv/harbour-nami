@@ -17,6 +17,7 @@ Page {
     property string sortMode: "day"   // "day" or "location"
     property var groups: []
     property var routePoints: []
+    property var mapStops: []
     property int totalPhotoCount: 0
     property bool hasLocationData: false
     property real distanceKm: 0
@@ -85,6 +86,19 @@ Page {
         }
         distanceKm = totalKm
 
+        // Same clustering the location grouping uses, so the map's numbered
+        // markers line up with the "Stop N" section headers below
+        var clustered = clusterLocations(items)
+        var stops = []
+        for (var s = 0; s < clustered.clusters.length; s++) {
+            var cl = clustered.clusters[s]
+            stops.push({
+                latitude: cl.sumLat / cl.photos.length,
+                longitude: cl.sumLon / cl.photos.length
+            })
+        }
+        mapStops = stops
+
         groups = sortMode === "location" ? groupByLocation(items) : groupByDay(items)
     }
 
@@ -112,10 +126,10 @@ Page {
     }
 
     // Greedy single-pass clustering in chronological order: a photo joins
-    // the current stop when it's within ~1.5km of it, otherwise a new stop
-    // starts. No reverse geocoding (the app is fully offline), so stops are
-    // just numbered in visit order rather than named.
-    function groupByLocation(items) {
+    // the current stop when it's within ~1.5km of the cluster's last point,
+    // otherwise a new stop starts. No reverse geocoding (the app is fully
+    // offline), so stops are just numbered in visit order rather than named.
+    function clusterLocations(items) {
         var clusterKm = 1.5
         var clusters = []
         var noLocation = []
@@ -131,21 +145,32 @@ Page {
                 cluster.photos.push(it)
                 cluster.lastLat = it.latitude
                 cluster.lastLon = it.longitude
+                cluster.sumLat += it.latitude
+                cluster.sumLon += it.longitude
             } else {
-                clusters.push({ photos: [it], lastLat: it.latitude, lastLon: it.longitude })
+                clusters.push({
+                    photos: [it],
+                    lastLat: it.latitude, lastLon: it.longitude,
+                    sumLat: it.latitude, sumLon: it.longitude
+                })
             }
         }
 
+        return { clusters: clusters, noLocation: noLocation }
+    }
+
+    function groupByLocation(items) {
+        var clustered = clusterLocations(items)
         var result = []
-        for (var c = 0; c < clusters.length; c++) {
-            var count = clusters[c].photos.length
+        for (var c = 0; c < clustered.clusters.length; c++) {
+            var count = clustered.clusters[c].photos.length
             result.push({
                 title: qsTr("Stop %1").arg(c + 1) + " · " + (count === 1 ? qsTr("1 photo") : qsTr("%1 photos").arg(count)),
-                photos: clusters[c].photos
+                photos: clustered.clusters[c].photos
             })
         }
-        if (noLocation.length > 0) {
-            result.push({ title: qsTr("No location data"), photos: noLocation })
+        if (clustered.noLocation.length > 0) {
+            result.push({ title: qsTr("No location data"), photos: clustered.noLocation })
         }
         return result
     }
@@ -208,6 +233,7 @@ Page {
                 x: Theme.horizontalPageMargin
                 width: parent.width - 2 * Theme.horizontalPageMargin
                 points: routePoints
+                stops: mapStops
             }
 
             Label {
