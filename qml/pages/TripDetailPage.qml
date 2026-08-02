@@ -2,6 +2,7 @@ import QtQuick 2.6
 import Sailfish.Silica 1.0
 import "../components"
 import "../js/geoutils.js" as GeoUtils
+import "../js/eventsettings.js" as EventSettings
 
 // All photos of a trip (several days grouped together), with a choice of
 // browsing them by day or by geographic stop, plus a schematic route map.
@@ -62,6 +63,27 @@ Page {
                         has_location: !!photo.has_location,
                         latitude: photo.latitude,
                         longitude: photo.longitude
+                    })
+                }
+            }
+        }
+
+        // Optionally add photos with no identified person too
+        if (EventSettings.includeAllPhotos(faceManager)) {
+            var allPhotos = faceManager.getAllPhotos()
+            for (var ap = 0; ap < allPhotos.length; ap++) {
+                var extraPhoto = allPhotos[ap]
+                if (!extraPhoto.timestamp || seen[extraPhoto.file_path]) continue
+                var extraKey = Qt.formatDate(new Date(extraPhoto.timestamp * 1000), "yyyy-MM-dd")
+                if (dateSet[extraKey]) {
+                    seen[extraPhoto.file_path] = true
+                    items.push({
+                        file_path: extraPhoto.file_path,
+                        timestamp: extraPhoto.timestamp,
+                        dateKey: extraKey,
+                        has_location: !!extraPhoto.has_location,
+                        latitude: extraPhoto.latitude,
+                        longitude: extraPhoto.longitude
                     })
                 }
             }
