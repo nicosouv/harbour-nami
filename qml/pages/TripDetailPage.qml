@@ -98,6 +98,15 @@ Page {
                 located.push({ latitude: items[n].latitude, longitude: items[n].longitude })
             }
         }
+
+        // A single photo with a corrupted GPS tag (camera/phone GPS glitches
+        // happen) would otherwise blow up the map's viewport and the
+        // distance total to cover half a continent. Drop points far outside
+        // where the rest of the trip actually is before using them for the
+        // map, the route, or the distance - the photo itself still shows up
+        // normally in the grid below, it's just not trusted for location.
+        located = rejectLocationOutliers(located)
+
         routePoints = located
         hasLocationData = located.length > 0
 
@@ -108,18 +117,7 @@ Page {
         }
         distanceKm = totalKm
 
-        // Same clustering the location grouping uses, so the map's numbered
-        // markers line up with the "Stop N" section headers below
-        var clustered = clusterLocations(items)
-        var stops = []
-        for (var s = 0; s < clustered.clusters.length; s++) {
-            var cl = clustered.clusters[s]
-            stops.push({
-                latitude: cl.sumLat / cl.photos.length,
-                longitude: cl.sumLon / cl.photos.length
-            })
-        }
-        mapStops = stops
+        mapStops = clusterStopCentroids(located)
 
         groups = sortMode === "location" ? groupByLocation(items) : groupByDay(items)
     }
@@ -145,6 +143,58 @@ Page {
             })
         }
         return result
+    }
+
+    // Drops points far outside the coordinate-wise median of the set (a
+    // simple, robust "center" unaffected by one bad value), using a
+    // threshold that scales with how spread out the trip already is. A
+    // tight single-city trip flags anything past ~20km; a trip that
+    // legitimately spans several countries won't flag its own spread.
+    function rejectLocationOutliers(pts) {
+        if (pts.length < 3) return pts
+
+        var lats = pts.map(function(p) { return p.latitude }).sort(function(a, b) { return a - b })
+        var lons = pts.map(function(p) { return p.longitude }).sort(function(a, b) { return a - b })
+        var medianLat = lats[Math.floor(lats.length / 2)]
+        var medianLon = lons[Math.floor(lons.length / 2)]
+
+        var distances = pts.map(function(p) {
+            return GeoUtils.haversineKm(medianLat, medianLon, p.latitude, p.longitude)
+        })
+        var sortedDistances = distances.slice().sort(function(a, b) { return a - b })
+        var medianDistance = sortedDistances[Math.floor(sortedDistances.length / 2)]
+        var threshold = Math.max(20, medianDistance * 8)
+
+        var kept = []
+        for (var i = 0; i < pts.length; i++) {
+            if (distances[i] <= threshold) kept.push(pts[i])
+        }
+        // Never end up with an unusable map because the filter was too
+        // aggressive on a legitimately scattered trip
+        return kept.length >= 2 ? kept : pts
+    }
+
+    // Sequential nearest-to-last-point clustering (~1.5km), centroid per
+    // cluster, for the map's numbered stop markers
+    function clusterStopCentroids(locatedPts) {
+        var clusterKm = 1.5
+        var clusters = []
+        for (var i = 0; i < locatedPts.length; i++) {
+            var pt = locatedPts[i]
+            var cluster = clusters.length > 0 ? clusters[clusters.length - 1] : null
+            if (cluster && GeoUtils.haversineKm(cluster.lastLat, cluster.lastLon, pt.latitude, pt.longitude) <= clusterKm) {
+                cluster.lastLat = pt.latitude
+                cluster.lastLon = pt.longitude
+                cluster.sumLat += pt.latitude
+                cluster.sumLon += pt.longitude
+                cluster.count++
+            } else {
+                clusters.push({ lastLat: pt.latitude, lastLon: pt.longitude, sumLat: pt.latitude, sumLon: pt.longitude, count: 1 })
+            }
+        }
+        return clusters.map(function(c) {
+            return { latitude: c.sumLat / c.count, longitude: c.sumLon / c.count }
+        })
     }
 
     // Greedy single-pass clustering in chronological order: a photo joins
