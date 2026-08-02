@@ -1,5 +1,6 @@
 import QtQuick 2.6
 import Sailfish.Silica 1.0
+import "../js/eventsettings.js" as EventSettings
 
 // All photos taken on a given day (opened from the Events page)
 Page {
@@ -36,6 +37,23 @@ Page {
                     items.push({
                         file_path: photo.file_path,
                         timestamp: photo.timestamp
+                    })
+                }
+            }
+        }
+
+        // Optionally add photos with no identified person too
+        if (EventSettings.includeAllPhotos(facePipeline)) {
+            var allPhotos = facePipeline.getAllPhotos()
+            for (var ap = 0; ap < allPhotos.length; ap++) {
+                var extraPhoto = allPhotos[ap]
+                if (!extraPhoto.timestamp || seen[extraPhoto.file_path]) continue
+                var extraKey = Qt.formatDate(new Date(extraPhoto.timestamp * 1000), "yyyy-MM-dd")
+                if (extraKey === dateKey) {
+                    seen[extraPhoto.file_path] = true
+                    items.push({
+                        file_path: extraPhoto.file_path,
+                        timestamp: extraPhoto.timestamp
                     })
                 }
             }

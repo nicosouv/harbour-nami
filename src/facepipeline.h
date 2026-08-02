@@ -167,6 +167,15 @@ public:
     Q_INVOKABLE QVariantList getPersonPhotos(int personId);
 
     /**
+     * @brief Every scanned photo, regardless of whether it has an
+     *        identified person (or any face at all)
+     *
+     * Used to optionally fill out Events with photos that have no
+     * identified person, e.g. landscapes or unidentified faces.
+     */
+    Q_INVOKABLE QVariantList getAllPhotos();
+
+    /**
      * @brief Best face of a person for avatar display
      * @param personId Person ID
      * @return Map with face_id, photo_path and normalized bbox fields,
