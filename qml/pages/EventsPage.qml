@@ -2,6 +2,7 @@ import QtQuick 2.6
 import Sailfish.Silica 1.0
 import "../js/geoutils.js" as GeoUtils
 import "../js/eventsettings.js" as EventSettings
+import "../js/eventsmodel.js" as EventsModel
 
 Page {
     id: page
@@ -267,16 +268,7 @@ Page {
 
     // Same month/year collapse to a short range; different years spell both out
     function formatTripDateRange(minDate, maxDate) {
-        if (minDate.getFullYear() === maxDate.getFullYear()) {
-            if (minDate.getMonth() === maxDate.getMonth() && minDate.getDate() === maxDate.getDate()) {
-                return Qt.formatDate(minDate, "d MMM yyyy")
-            }
-            if (minDate.getMonth() === maxDate.getMonth()) {
-                return Qt.formatDate(minDate, "d") + "–" + Qt.formatDate(maxDate, "d MMM yyyy")
-            }
-            return Qt.formatDate(minDate, "d MMM") + " – " + Qt.formatDate(maxDate, "d MMM yyyy")
-        }
-        return Qt.formatDate(minDate, "d MMM yyyy") + " – " + Qt.formatDate(maxDate, "d MMM yyyy")
+        return EventsModel.formatTripDateRange(minDate, maxDate)
     }
 
     // Group photos by date, then fold dates already grouped into a trip
@@ -287,81 +279,15 @@ Page {
         eventsModel.clear()
 
         var eventCovers = faceManager.getEventCovers()
-        var hiddenSet = {}
-        var hiddenList = faceManager.getHiddenEvents()
-        for (var h = 0; h < hiddenList.length; h++) {
-            hiddenSet[hiddenList[h]] = true
-        }
+        var hiddenSet = EventsModel.computeHiddenSet(faceManager)
         var trips = faceManager.getTrips()
+        var dateToTripId = EventsModel.computeDateToTrip(trips)
         var dateToTrip = {}
-        for (var t = 0; t < trips.length; t++) {
-            for (var td = 0; td < trips[t].date_keys.length; td++) {
-                dateToTrip[trips[t].date_keys[td]] = true
-            }
+        for (var dk0 in dateToTripId) {
+            dateToTrip[dk0] = true
         }
 
-        var people = faceManager.getAllPeople()
-        var dateMap = {}  // dateKey -> { date, people: Set, photos: Array }
-
-        for (var i = 0; i < people.length; i++) {
-            var person = people[i]
-            var photos = faceManager.getPersonPhotos(person.person_id)
-
-            for (var j = 0; j < photos.length; j++) {
-                var photo = photos[j]
-                if (!photo.timestamp) continue
-
-                var date = new Date(photo.timestamp * 1000)
-                var dateKey = Qt.formatDate(date, "yyyy-MM-dd")
-
-                if (!dateMap[dateKey]) {
-                    dateMap[dateKey] = { date: date, people: {}, photos: [] }
-                }
-
-                dateMap[dateKey].people[person.person_id] = person.name
-
-                var photoExists = false
-                for (var k = 0; k < dateMap[dateKey].photos.length; k++) {
-                    if (dateMap[dateKey].photos[k].file_path === photo.file_path) {
-                        photoExists = true
-                        break
-                    }
-                }
-                if (!photoExists) {
-                    dateMap[dateKey].photos.push(photo)
-                }
-            }
-        }
-
-        // Optionally fold in every scanned photo, including ones with no
-        // identified person (landscapes, unidentified faces): counts and
-        // covers below then reflect the whole day/trip, not just the
-        // photos tied to someone named
-        if (EventSettings.includeAllPhotos(faceManager)) {
-            var allPhotos = faceManager.getAllPhotos()
-            for (var ap = 0; ap < allPhotos.length; ap++) {
-                var extraPhoto = allPhotos[ap]
-                if (!extraPhoto.timestamp) continue
-
-                var extraDate = new Date(extraPhoto.timestamp * 1000)
-                var extraDateKey = Qt.formatDate(extraDate, "yyyy-MM-dd")
-
-                if (!dateMap[extraDateKey]) {
-                    dateMap[extraDateKey] = { date: extraDate, people: {}, photos: [] }
-                }
-
-                var extraExists = false
-                for (var ek = 0; ek < dateMap[extraDateKey].photos.length; ek++) {
-                    if (dateMap[extraDateKey].photos[ek].file_path === extraPhoto.file_path) {
-                        extraExists = true
-                        break
-                    }
-                }
-                if (!extraExists) {
-                    dateMap[extraDateKey].photos.push(extraPhoto)
-                }
-            }
-        }
+        var dateMap = EventsModel.computeDateMap(faceManager, EventSettings.includeAllPhotos(faceManager))
 
         var events = []
 
@@ -581,6 +507,10 @@ Page {
 
         PullDownMenu {
             visible: !selectionMode
+            MenuItem {
+                text: qsTr("Year in review")
+                onClicked: pageStack.push(Qt.resolvedUrl("YearsPage.qml"))
+            }
             MenuItem {
                 text: qsTr("Select days to group into a trip")
                 enabled: selectableDayCount >= 2

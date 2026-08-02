@@ -92,7 +92,7 @@ Page {
                       "• " + qsTr("People gallery in list or grid layout") + "\n" +
                       "• " + qsTr("Link people to your device contacts") + "\n" +
                       "• " + qsTr("Events grouped by day, with multi-day trips and an offline route map") + "\n" +
-                      "• " + qsTr("Memories from previous years") + "\n" +
+                      "• " + qsTr("Memories from previous years, plus a year-by-year recap") + "\n" +
                       "• " + qsTr("Scan folders of your choice, SD card included") + "\n" +
                       "• " + qsTr("Data export and full deletion (GDPR)")
                 color: Theme.primaryColor
