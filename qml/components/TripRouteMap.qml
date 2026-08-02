@@ -50,23 +50,18 @@ Item {
             ctx.fillStyle = grad
             ctx.fillRect(0, 0, width, height)
 
-            // Decorative graticule (not real degree lines, just a map "feel")
-            ctx.strokeStyle = "rgba(110,90,60,0.12)"
-            ctx.lineWidth = 1
-            var divisions = 4
-            for (var g = 1; g < divisions; g++) {
-                var gx = width * g / divisions
-                var gy = height * g / divisions
-                ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, height); ctx.stroke()
-                ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(width, gy); ctx.stroke()
-            }
-
             // World coastline, clipped to the viewport (cheap bbox reject
             // per polyline keeps this fast even though the dataset covers
-            // the whole planet)
-            ctx.strokeStyle = "rgba(140,115,85,0.6)"
-            ctx.lineWidth = 1.1
+            // the whole planet). Drawn faint and thin, and decimated in
+            // pixel space (skip points under ~2.5px from the last kept
+            // one) so a dense/jagged coastline doesn't turn into visual
+            // noise in a small map - real coastlines are highly detailed
+            // at any zoom level, so without this the mini map reads as
+            // "the whole world crammed in" even when correctly cropped.
+            ctx.strokeStyle = "rgba(150,130,100,0.4)"
+            ctx.lineWidth = 0.9
             var lines = WorldCoastlines.COASTLINES
+            var minPixelStep = 2.5 * 2.5
             for (var c = 0; c < lines.length; c++) {
                 var line = lines[c]
                 var lMinLon = line[0], lMaxLon = line[0], lMinLat = line[1], lMaxLat = line[1]
@@ -82,10 +77,20 @@ Item {
                 }
 
                 ctx.beginPath()
+                var lastX = 0, lastY = 0
+                var lastIdx = line.length - 2
                 for (var q = 0; q < line.length; q += 2) {
                     var xy = root.toXY(line[q], line[q + 1], viewport, width, height)
-                    if (q === 0) ctx.moveTo(xy[0], xy[1])
-                    else ctx.lineTo(xy[0], xy[1])
+                    if (q === 0) {
+                        ctx.moveTo(xy[0], xy[1])
+                        lastX = xy[0]; lastY = xy[1]
+                        continue
+                    }
+                    var dx = xy[0] - lastX, dy = xy[1] - lastY
+                    if (q === lastIdx || dx * dx + dy * dy >= minPixelStep) {
+                        ctx.lineTo(xy[0], xy[1])
+                        lastX = xy[0]; lastY = xy[1]
+                    }
                 }
                 ctx.stroke()
             }
