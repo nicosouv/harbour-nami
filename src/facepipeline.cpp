@@ -1042,6 +1042,38 @@ bool FacePipeline::mergeTrips(int fromTripId, int intoTripId)
     return m_database->mergeTrips(fromTripId, intoTripId);
 }
 
+bool FacePipeline::addDatesToTrip(int tripId, const QStringList &dateKeys)
+{
+    if (!m_initialized || !m_database) {
+        return false;
+    }
+    return m_database->addDatesToTrip(tripId, dateKeys);
+}
+
+bool FacePipeline::hideEvent(const QString &eventKey)
+{
+    if (!m_initialized || !m_database) {
+        return false;
+    }
+    return m_database->hideEvent(eventKey);
+}
+
+bool FacePipeline::unhideEvent(const QString &eventKey)
+{
+    if (!m_initialized || !m_database) {
+        return false;
+    }
+    return m_database->unhideEvent(eventKey);
+}
+
+QStringList FacePipeline::getHiddenEvents()
+{
+    if (!m_initialized || !m_database) {
+        return QStringList();
+    }
+    return m_database->getHiddenEvents();
+}
+
 bool FacePipeline::setEventCover(const QString &eventKey, const QString &photoPath)
 {
     if (!m_initialized || !m_database) {

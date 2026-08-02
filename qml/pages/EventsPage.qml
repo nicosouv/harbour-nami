@@ -21,10 +21,15 @@ Page {
         id: suggestionsModel
     }
 
-    // Selection mode: pick several day-events to combine into a trip
+    // Selection mode: pick several day-events to combine into a trip, or
+    // (when editingTripId >= 0) to add more days to an existing trip
     property bool selectionMode: false
     property var selectedDates: []
     property int selectableDayCount: 0
+    property int editingTripId: -1
+
+    // Hidden day/trip events stay out of the list unless toggled on
+    property bool showHidden: false
 
     function isDateSelected(dateKey) {
         return selectedDates.indexOf(dateKey) !== -1
@@ -43,12 +48,32 @@ Page {
 
     function enterSelectionMode() {
         selectedDates = []
+        editingTripId = -1
+        selectionMode = true
+    }
+
+    // Reuses the same day-picker, but confirming adds to an existing trip
+    // instead of naming a new one
+    function enterAddDaysMode(tripId) {
+        selectedDates = []
+        editingTripId = tripId
         selectionMode = true
     }
 
     function exitSelectionMode() {
         selectionMode = false
         selectedDates = []
+        editingTripId = -1
+    }
+
+    function confirmSelection() {
+        if (editingTripId >= 0) {
+            faceManager.addDatesToTrip(editingTripId, selectedDates)
+            exitSelectionMode()
+            detectEvents()
+        } else {
+            groupSelectedDates()
+        }
     }
 
     function groupSelectedDates() {
@@ -262,6 +287,11 @@ Page {
         eventsModel.clear()
 
         var eventCovers = faceManager.getEventCovers()
+        var hiddenSet = {}
+        var hiddenList = faceManager.getHiddenEvents()
+        for (var h = 0; h < hiddenList.length; h++) {
+            hiddenSet[hiddenList[h]] = true
+        }
         var trips = faceManager.getTrips()
         var dateToTrip = {}
         for (var t = 0; t < trips.length; t++) {
@@ -366,6 +396,10 @@ Page {
 
             if (dayCount === 0) continue  // none of the trip's dates have photos yet
 
+            var tripKey = "trip:" + trip.trip_id
+            var tripHidden = hiddenSet[tripKey] === true
+            if (tripHidden && !showHidden) continue
+
             var tripPeopleNames = []
             for (var tpid in tripPeople) {
                 tripPeopleNames.push(tripPeople[tpid])
@@ -383,7 +417,8 @@ Page {
                 photoCount: tripPhotoCount,
                 peopleCount: tripPeopleNames.length,
                 peopleNames: tripPeopleNames.join(", "),
-                coverPhoto: eventCovers["trip:" + trip.trip_id] || coverPhoto
+                coverPhoto: eventCovers["trip:" + trip.trip_id] || coverPhoto,
+                hidden: tripHidden
             })
         }
 
@@ -393,7 +428,11 @@ Page {
             if (dateToTrip[dateKey]) continue
             var event = dateMap[dateKey]
             if (event.photos.length >= 2) {
-                dayCountAvailable++
+                var dayKey = "day:" + dateKey
+                var dayHidden = hiddenSet[dayKey] === true
+                if (!dayHidden) dayCountAvailable++  // hidden days aren't offered for grouping
+                if (dayHidden && !showHidden) continue
+
                 var dayPeopleNames = []
                 for (var personId in event.people) {
                     dayPeopleNames.push(event.people[personId])
@@ -411,7 +450,8 @@ Page {
                     photoCount: event.photos.length,
                     peopleCount: dayPeopleNames.length,
                     peopleNames: dayPeopleNames.join(", "),
-                    coverPhoto: eventCovers["day:" + dateKey] || event.photos[0].file_path
+                    coverPhoto: eventCovers["day:" + dateKey] || event.photos[0].file_path,
+                    hidden: dayHidden
                 })
             }
         }
@@ -447,7 +487,9 @@ Page {
                 x: Theme.horizontalPageMargin
                 width: parent.width - 2 * Theme.horizontalPageMargin
                 text: selectionMode
-                    ? qsTr("Select the days to combine into a trip")
+                    ? (editingTripId >= 0
+                        ? qsTr("Select the days to add to this trip")
+                        : qsTr("Select the days to combine into a trip"))
                     : qsTr("Photos automatically grouped by date. Group several days into a trip for a multi-day event.")
                 font.pixelSize: Theme.fontSizeSmall
                 color: Theme.secondaryHighlightColor
@@ -466,9 +508,11 @@ Page {
                 }
 
                 Button {
-                    text: qsTr("Group %n day(s)", "", selectedDates.length)
-                    enabled: selectedDates.length >= 2
-                    onClicked: groupSelectedDates()
+                    text: editingTripId >= 0
+                        ? qsTr("Add %n day(s)", "", selectedDates.length)
+                        : qsTr("Group %n day(s)", "", selectedDates.length)
+                    enabled: editingTripId >= 0 ? selectedDates.length >= 1 : selectedDates.length >= 2
+                    onClicked: confirmSelection()
                 }
             }
 
@@ -542,44 +586,83 @@ Page {
                 enabled: selectableDayCount >= 2
                 onClicked: enterSelectionMode()
             }
+            MenuItem {
+                text: showHidden ? qsTr("Hide hidden events") : qsTr("Show hidden events")
+                onClicked: {
+                    showHidden = !showHidden
+                    detectEvents()
+                }
+            }
         }
 
         delegate: ListItem {
             id: eventItem
             width: ListView.view.width
             contentHeight: Theme.itemSizeExtraLarge + Theme.paddingMedium
-            enabled: model.type === "day" || !selectionMode
-            opacity: (selectionMode && model.type === "trip") ? 0.4 : 1.0
+            enabled: (model.type === "day" && !model.hidden) || !selectionMode
+            opacity: model.hidden ? 0.5 : ((selectionMode && model.type === "trip") ? 0.4 : 1.0)
 
-            menu: model.type === "trip" ? tripContextMenu : null
-
-            Component {
-                id: tripContextMenu
-
-                ContextMenu {
-                    MenuItem {
-                        text: qsTr("Rename")
-                        onClicked: {
-                            var tid = model.tripId
-                            var dialog = pageStack.push(Qt.resolvedUrl("../dialogs/TripNameDialog.qml"), {
-                                titleText: qsTr("Rename trip"),
-                                currentName: model.name
-                            })
-                            dialog.accepted.connect(function() {
-                                faceManager.renameTrip(tid, dialog.newName)
-                                detectEvents()
-                            })
-                        }
+            menu: ContextMenu {
+                MenuItem {
+                    text: qsTr("Rename")
+                    visible: model.type === "trip" && !model.hidden
+                    onClicked: {
+                        var tid = model.tripId
+                        var dialog = pageStack.push(Qt.resolvedUrl("../dialogs/TripNameDialog.qml"), {
+                            titleText: qsTr("Rename trip"),
+                            currentName: model.name
+                        })
+                        dialog.accepted.connect(function() {
+                            faceManager.renameTrip(tid, dialog.newName)
+                            detectEvents()
+                        })
                     }
-                    MenuItem {
-                        text: qsTr("Ungroup")
-                        onClicked: {
-                            var tid = model.tripId
-                            eventItem.remorseAction(qsTr("Ungrouping trip"), function() {
-                                faceManager.deleteTrip(tid)
-                                detectEvents()
-                            })
-                        }
+                }
+                MenuItem {
+                    text: qsTr("Add more days…")
+                    visible: model.type === "trip" && !model.hidden
+                    onClicked: enterAddDaysMode(model.tripId)
+                }
+                MenuItem {
+                    text: qsTr("Merge into another trip…")
+                    visible: model.type === "trip" && !model.hidden
+                    onClicked: {
+                        var tid = model.tripId
+                        var dialog = pageStack.push(Qt.resolvedUrl("../dialogs/SelectTripDialog.qml"), {
+                            trips: faceManager.getTrips(),
+                            excludeTripId: tid
+                        })
+                        dialog.accepted.connect(function() {
+                            faceManager.mergeTrips(tid, dialog.selectedTripId)
+                            detectEvents()
+                        })
+                    }
+                }
+                MenuItem {
+                    text: qsTr("Ungroup")
+                    visible: model.type === "trip" && !model.hidden
+                    onClicked: {
+                        var tid = model.tripId
+                        Remorse.popupAction(page, qsTr("Ungrouping trip"), function() {
+                            faceManager.deleteTrip(tid)
+                            detectEvents()
+                        })
+                    }
+                }
+                MenuItem {
+                    text: qsTr("Hide")
+                    visible: !model.hidden
+                    onClicked: {
+                        faceManager.hideEvent(model.type === "trip" ? ("trip:" + model.tripId) : ("day:" + model.dateKey))
+                        detectEvents()
+                    }
+                }
+                MenuItem {
+                    text: qsTr("Unhide")
+                    visible: model.hidden
+                    onClicked: {
+                        faceManager.unhideEvent(model.type === "trip" ? ("trip:" + model.tripId) : ("day:" + model.dateKey))
+                        detectEvents()
                     }
                 }
             }
@@ -657,6 +740,29 @@ Page {
                             font.pixelSize: Theme.fontSizeExtraSmall
                             font.bold: true
                             color: Theme.highlightColor
+                        }
+                    }
+
+                    // Hidden badge
+                    Rectangle {
+                        anchors {
+                            top: parent.top
+                            right: parent.right
+                            margins: Theme.paddingSmall / 2
+                        }
+                        visible: model.hidden
+                        width: hiddenBadgeLabel.width + Theme.paddingSmall
+                        height: hiddenBadgeLabel.height + Theme.paddingSmall / 2
+                        radius: Theme.paddingSmall / 2
+                        color: Theme.rgba(Theme.secondaryColor, 0.85)
+
+                        Label {
+                            id: hiddenBadgeLabel
+                            anchors.centerIn: parent
+                            text: qsTr("Hidden")
+                            font.pixelSize: Theme.fontSizeExtraSmall
+                            font.bold: true
+                            color: Theme.primaryColor
                         }
                     }
 

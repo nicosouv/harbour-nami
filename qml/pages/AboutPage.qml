@@ -91,7 +91,7 @@ Page {
                       "• " + qsTr("Automatic face detection and recognition") + "\n" +
                       "• " + qsTr("People gallery in list or grid layout") + "\n" +
                       "• " + qsTr("Link people to your device contacts") + "\n" +
-                      "• " + qsTr("Events grouped by day") + "\n" +
+                      "• " + qsTr("Events grouped by day, with multi-day trips and an offline route map") + "\n" +
                       "• " + qsTr("Memories from previous years") + "\n" +
                       "• " + qsTr("Scan folders of your choice, SD card included") + "\n" +
                       "• " + qsTr("Data export and full deletion (GDPR)")
