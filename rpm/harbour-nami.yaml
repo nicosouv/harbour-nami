@@ -32,6 +32,7 @@ PkgConfigBR:
   - Qt5Quick
   - Qt5Concurrent
   - Qt5Sql
+  - openssl
 
 PkgBR:
   - qt5-qttools-linguist
@@ -43,6 +44,7 @@ Requires:
   - qt5-plugin-sqldriver-sqlite
   - nemo-qml-plugin-contacts-qt5
   - nemo-qml-plugin-dbus-qt5
+  - openssl-libs
 
 # All installed files
 Files:

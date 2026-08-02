@@ -381,7 +381,7 @@ Page {
             Label {
                 x: Theme.horizontalPageMargin
                 width: parent.width - 2 * Theme.horizontalPageMargin
-                text: qsTr("A backup includes everyone you've identified, their photos and your trips, so you can restore it all on a new device. On the new phone, scan your gallery first, then restore: this is always safe, whether your photos ended up at the same path or not, and whatever Nami version you're running.")
+                text: qsTr("A backup includes everyone you've identified, their photos and your trips, so you can restore it all on a new device. It's encrypted with a passphrase you choose — if you forget it, the backup can't be recovered. On the new phone, scan your gallery first, then restore: this is always safe, whether your photos ended up at the same path or not, and whatever Nami version you're running.")
                 font.pixelSize: Theme.fontSizeExtraSmall
                 color: Theme.secondaryColor
                 wrapMode: Text.WordWrap
@@ -401,14 +401,21 @@ Page {
                     text: qsTr("Create backup")
                     enabled: facePipeline && facePipeline.initialized
                     onClicked: {
-                        var path = facePipeline.exportBackupData()
-                        backupResultLabel.color = Theme.secondaryHighlightColor
-                        backupResultLabel.text = path
-                            ? qsTr("Backup written to %1").arg(path)
-                            : qsTr("Backup failed")
-                        if (path) {
-                            lastBackupAt = facePipeline.getSetting("last_backup_at", "")
-                        }
+                        var pd = pageStack.push(Qt.resolvedUrl("../dialogs/PassphraseDialog.qml"), {
+                            "titleText": qsTr("Protect this backup"),
+                            "infoText": qsTr("Choose a passphrase to encrypt the backup. There is no way to recover it if you forget the passphrase, so keep it somewhere safe."),
+                            "confirmRequired": true
+                        })
+                        pd.accepted.connect(function() {
+                            var path = facePipeline.exportBackupData(pd.passphrase)
+                            backupResultLabel.color = Theme.secondaryHighlightColor
+                            backupResultLabel.text = path
+                                ? qsTr("Backup written to %1").arg(path)
+                                : qsTr("Backup failed")
+                            if (path) {
+                                lastBackupAt = facePipeline.getSetting("last_backup_at", "")
+                            }
+                        })
                     }
                 }
 
@@ -436,15 +443,21 @@ Page {
                                         "message": qsTr("Identifications and trips will be added to what's already on this device. Nothing is deleted.")
                                     })
                                     cd.accepted.connect(function() {
-                                        var result = facePipeline.importBackupData(rd.selectedFilePath)
-                                        backupResultLabel.color = Theme.secondaryHighlightColor
-                                        backupResultLabel.text = result && Object.keys(result).length > 0
-                                            ? qsTr("Restored %1 photos (%2 relinked by content), %3 faces, %4 people, %5 trips (%6 photos skipped, not found on this device)")
-                                                .arg(result.photos_imported).arg(result.photos_relinked)
-                                                .arg(result.faces_imported).arg(result.people_imported)
-                                                .arg(result.trips_imported).arg(result.photos_skipped)
-                                            : qsTr("Restore failed")
-                                        loadStatistics()
+                                        var pd = pageStack.push(Qt.resolvedUrl("../dialogs/PassphraseDialog.qml"), {
+                                            "titleText": qsTr("Enter the backup's passphrase"),
+                                            "confirmRequired": false
+                                        })
+                                        pd.accepted.connect(function() {
+                                            var result = facePipeline.importBackupData(rd.selectedFilePath, pd.passphrase)
+                                            backupResultLabel.color = Theme.secondaryHighlightColor
+                                            backupResultLabel.text = result && Object.keys(result).length > 0
+                                                ? qsTr("Restored %1 photos (%2 relinked by content), %3 faces, %4 people, %5 trips (%6 photos skipped, not found on this device)")
+                                                    .arg(result.photos_imported).arg(result.photos_relinked)
+                                                    .arg(result.faces_imported).arg(result.people_imported)
+                                                    .arg(result.trips_imported).arg(result.photos_skipped)
+                                                : qsTr("Restore failed — wrong passphrase or corrupted file")
+                                            loadStatistics()
+                                        })
                                     })
                                 })
                             }

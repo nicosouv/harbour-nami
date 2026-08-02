@@ -277,9 +277,13 @@ public:
     /**
      * @brief Write a complete backup (photos, faces incl. embeddings,
      *        people, trips) meant to be restored on another device
+     *
+     * Encrypted with the given passphrase (AES-256-GCM); there is no way
+     * to recover the backup if the passphrase is lost.
+     *
      * @return Path of the written file, or empty string on failure
      */
-    Q_INVOKABLE QString exportBackupData();
+    Q_INVOKABLE QString exportBackupData(const QString &passphrase);
 
     /**
      * @brief List Nami backup files found directly in a folder
@@ -290,11 +294,16 @@ public:
 
     /**
      * @brief Restore a backup written by exportBackupData()
+     *
+     * passphrase is ignored for a (legacy, pre-encryption) plaintext
+     * backup file.
+     *
      * @return Map with photos_imported, photos_relinked, photos_skipped,
      *         people_imported, faces_imported, trips_imported, or an empty
-     *         map on failure
+     *         map if the file couldn't be read, or the passphrase was
+     *         wrong / the file is corrupted
      */
-    Q_INVOKABLE QVariantMap importBackupData(const QString &filePath);
+    Q_INVOKABLE QVariantMap importBackupData(const QString &filePath, const QString &passphrase);
 
     /**
      * @brief Compute the content hash of every already-scanned photo that

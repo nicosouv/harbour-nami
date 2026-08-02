@@ -1,6 +1,7 @@
 #include "facepipeline.h"
 #include "exifreader.h"
 #include "filehash.h"
+#include "backupcrypto.h"
 #include <QDebug>
 #include "logging.h"
 #include <QDir>
@@ -1119,9 +1120,9 @@ QString FacePipeline::exportData()
     return filePath;
 }
 
-QString FacePipeline::exportBackupData()
+QString FacePipeline::exportBackupData(const QString &passphrase)
 {
-    if (!m_initialized || !m_database) {
+    if (!m_initialized || !m_database || passphrase.isEmpty()) {
         return QString();
     }
 
@@ -1129,6 +1130,34 @@ QString FacePipeline::exportBackupData()
     // Lets importBackupData() know whether these embeddings are compatible
     // with the engine that will read them back
     root["embedding_version"] = EMBEDDING_VERSION;
+
+    int totalPhotos = root["photos"].toArray().size();
+    int totalPeople = root["people"].toArray().size();
+    QString exportedAt = root["exported_at"].toString();
+
+    BackupCrypto::EncryptedPayload payload;
+    if (!BackupCrypto::encrypt(QJsonDocument(root).toJson(QJsonDocument::Compact),
+                               passphrase, payload)) {
+        emit error("Failed to encrypt backup");
+        return QString();
+    }
+
+    // Everything below is unencrypted: enough to list and pick a backup
+    // (date, rough size) without needing the passphrase, but nothing
+    // sensitive (no names, paths or embeddings - those are all inside
+    // "ciphertext")
+    QJsonObject envelope;
+    envelope["app"] = "harbour-nami";
+    envelope["backup_format"] = "encrypted-v1";
+    envelope["exported_at"] = exportedAt;
+    envelope["total_photos"] = totalPhotos;
+    envelope["total_people"] = totalPeople;
+    envelope["kdf"] = "pbkdf2-sha256";
+    envelope["iterations"] = payload.iterations;
+    envelope["salt"] = QString::fromLatin1(payload.salt.toBase64());
+    envelope["iv"] = QString::fromLatin1(payload.iv.toBase64());
+    envelope["tag"] = QString::fromLatin1(payload.tag.toBase64());
+    envelope["ciphertext"] = QString::fromLatin1(payload.ciphertext.toBase64());
 
     QString dir = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
     QString filePath = dir + "/nami-backup-"
@@ -1140,15 +1169,14 @@ QString FacePipeline::exportBackupData()
         return QString();
     }
 
-    file.write(QJsonDocument(root).toJson(QJsonDocument::Indented));
+    file.write(QJsonDocument(envelope).toJson(QJsonDocument::Indented));
     file.close();
 
-    // Contains names, photo paths and face embeddings
     QFile::setPermissions(filePath, QFileDevice::ReadOwner | QFileDevice::WriteOwner);
 
     m_database->setSetting("last_backup_at", QDateTime::currentDateTime().toString(Qt::ISODate));
 
-    qCDebug(lcNami) << "Backup written to" << filePath;
+    qCDebug(lcNami) << "Encrypted backup written to" << filePath;
     return filePath;
 }
 
@@ -1184,15 +1212,22 @@ QVariantList FacePipeline::listBackupFiles(const QString &folderPath)
         QVariantMap entry;
         entry["file_path"] = path;
         entry["exported_at"] = root["exported_at"].toString();
-        entry["total_photos"] = root["photos"].toArray().size();
-        entry["total_people"] = root["people"].toArray().size();
+        if (root.contains("ciphertext")) {
+            // Encrypted backup: counts are kept in the clear for the picker
+            entry["total_photos"] = root["total_photos"].toInt();
+            entry["total_people"] = root["total_people"].toInt();
+        } else {
+            // Legacy plaintext backup (written before encryption was added)
+            entry["total_photos"] = root["photos"].toArray().size();
+            entry["total_people"] = root["people"].toArray().size();
+        }
         result.append(entry);
     }
 
     return result;
 }
 
-QVariantMap FacePipeline::importBackupData(const QString &filePath)
+QVariantMap FacePipeline::importBackupData(const QString &filePath, const QString &passphrase)
 {
     QVariantMap result;
     if (!m_initialized || !m_database) {
@@ -1212,7 +1247,39 @@ QVariantMap FacePipeline::importBackupData(const QString &filePath)
         return result;
     }
 
-    QJsonObject root = doc.object();
+    QJsonObject envelope = doc.object();
+    QJsonObject root;
+
+    if (envelope.contains("ciphertext")) {
+        if (passphrase.isEmpty()) {
+            emit error("A passphrase is required to restore this backup");
+            return result;
+        }
+
+        BackupCrypto::EncryptedPayload payload;
+        payload.iterations = envelope["iterations"].toInt();
+        payload.salt = QByteArray::fromBase64(envelope["salt"].toString().toLatin1());
+        payload.iv = QByteArray::fromBase64(envelope["iv"].toString().toLatin1());
+        payload.tag = QByteArray::fromBase64(envelope["tag"].toString().toLatin1());
+        payload.ciphertext = QByteArray::fromBase64(envelope["ciphertext"].toString().toLatin1());
+
+        QByteArray plaintext = BackupCrypto::decrypt(payload, passphrase);
+        if (plaintext.isNull()) {
+            emit error("Wrong passphrase or corrupted backup file");
+            return result;
+        }
+
+        QJsonDocument innerDoc = QJsonDocument::fromJson(plaintext);
+        if (!innerDoc.isObject()) {
+            emit error("Corrupted backup file");
+            return result;
+        }
+        root = innerDoc.object();
+    } else {
+        // Legacy plaintext backup (written before encryption was added)
+        root = envelope;
+    }
+
     int backupEmbeddingVersion = root["embedding_version"].toInt(-1);
 
     FaceDatabase::ImportStats stats = m_database->importBackup(root);
