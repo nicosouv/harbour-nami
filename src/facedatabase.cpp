@@ -203,6 +203,16 @@ bool FaceDatabase::initializeSchema()
         return false;
     }
 
+    // Day/trip event keys dismissed from the Events list (photos untouched)
+    if (!query.exec(R"(
+        CREATE TABLE IF NOT EXISTS hidden_events (
+            event_key TEXT PRIMARY KEY
+        )
+    )")) {
+        emit error("Failed to create hidden_events table: " + query.lastError().text());
+        return false;
+    }
+
     // Create indexes
     query.exec("CREATE INDEX IF NOT EXISTS idx_faces_photo ON faces(photo_id)");
     query.exec("CREATE INDEX IF NOT EXISTS idx_faces_person ON faces(person_id)");
@@ -1265,7 +1275,8 @@ bool FaceDatabase::deleteAllData()
         !query.exec("DELETE FROM photos") ||
         !query.exec("DELETE FROM trip_dates") ||
         !query.exec("DELETE FROM trips") ||
-        !query.exec("DELETE FROM event_covers")) {
+        !query.exec("DELETE FROM event_covers") ||
+        !query.exec("DELETE FROM hidden_events")) {
         m_db.rollback();
         return false;
     }
@@ -1458,6 +1469,57 @@ bool FaceDatabase::mergeTrips(int fromTripId, int intoTripId)
     del.prepare("DELETE FROM trips WHERE id = :id");
     del.bindValue(":id", fromTripId);
     return del.exec();
+}
+
+bool FaceDatabase::addDatesToTrip(int tripId, const QStringList &dateKeys)
+{
+    if (dateKeys.isEmpty()) {
+        return false;
+    }
+
+    bool anyAdded = false;
+    for (const QString &dateKey : dateKeys) {
+        QSqlQuery query(m_db);
+        query.prepare("INSERT OR IGNORE INTO trip_dates (date_key, trip_id) VALUES (:date_key, :trip_id)");
+        query.bindValue(":date_key", dateKey);
+        query.bindValue(":trip_id", tripId);
+        if (query.exec() && query.numRowsAffected() > 0) {
+            anyAdded = true;
+        }
+    }
+    return anyAdded;
+}
+
+// === Hidden events ===
+
+bool FaceDatabase::hideEvent(const QString &eventKey)
+{
+    QSqlQuery query(m_db);
+    query.prepare("INSERT OR IGNORE INTO hidden_events (event_key) VALUES (:key)");
+    query.bindValue(":key", eventKey);
+    return query.exec();
+}
+
+bool FaceDatabase::unhideEvent(const QString &eventKey)
+{
+    QSqlQuery query(m_db);
+    query.prepare("DELETE FROM hidden_events WHERE event_key = :key");
+    query.bindValue(":key", eventKey);
+    return query.exec();
+}
+
+QStringList FaceDatabase::getHiddenEvents()
+{
+    QStringList keys;
+    QSqlQuery query(m_db);
+
+    if (query.exec("SELECT event_key FROM hidden_events")) {
+        while (query.next()) {
+            keys.append(query.value(0).toString());
+        }
+    }
+
+    return keys;
 }
 
 // === Event covers ===

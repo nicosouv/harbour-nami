@@ -400,6 +400,33 @@ public:
      */
     bool mergeTrips(int fromTripId, int intoTripId);
 
+    /**
+     * @brief Add more day-event dates to an existing trip
+     *
+     * Dates already claimed by another trip are left alone (a date belongs
+     * to at most one trip); the caller is expected to only offer ungrouped
+     * days for selection.
+     */
+    bool addDatesToTrip(int tripId, const QStringList &dateKeys);
+
+    // === Hidden events (user dismissed a day or trip from the Events list) ===
+
+    /**
+     * @brief Hide a day ("day:yyyy-MM-dd") or trip ("trip:<id>") event key
+     *        from the Events list without touching its photos
+     */
+    bool hideEvent(const QString &eventKey);
+
+    /**
+     * @brief Reverse hideEvent()
+     */
+    bool unhideEvent(const QString &eventKey);
+
+    /**
+     * @brief All currently hidden event keys
+     */
+    QStringList getHiddenEvents();
+
     // === Event covers (user-chosen cover photo for a day or trip) ===
 
     /**
