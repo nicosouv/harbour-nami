@@ -19,6 +19,9 @@ find_package(Qt5 REQUIRED COMPONENTS Core Gui Qml Quick Sql Concurrent)
 # Translations (lrelease); optional so builds still work without linguist tools
 find_package(Qt5LinguistTools QUIET)
 
+# OpenSSL: AES-256-GCM + PBKDF2 for the passphrase-encrypted backup
+find_package(OpenSSL REQUIRED)
+
 # Find OpenCV
 # For Sailfish OS: use bundled minimal OpenCV build
 if(EXISTS "${CMAKE_SOURCE_DIR}/3rdparty/opencv/lib")
@@ -53,6 +56,7 @@ set(SOURCES
     src/faceimageprovider.cpp
     src/exifreader.cpp
     src/filehash.cpp
+    src/backupcrypto.cpp
 )
 
 # Headers
@@ -65,6 +69,7 @@ set(HEADERS
     src/faceimageprovider.h
     src/exifreader.h
     src/filehash.h
+    src/backupcrypto.h
 )
 
 # QML files are installed as a directory (see install(DIRECTORY qml ...))
@@ -82,6 +87,7 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE APP_VERSION="${PROJECT_VERSIO
 target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_SOURCE_DIR}/src
     ${OpenCV_INCLUDE_DIRS}
+    ${OPENSSL_INCLUDE_DIR}
 )
 
 # Link libraries
@@ -93,6 +99,7 @@ target_link_libraries(${PROJECT_NAME}
     Qt5::Sql
     Qt5::Concurrent
     ${OpenCV_LIBS}
+    OpenSSL::Crypto
 )
 
 # Installation
