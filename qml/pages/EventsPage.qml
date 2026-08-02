@@ -1,6 +1,7 @@
 import QtQuick 2.6
 import Sailfish.Silica 1.0
 import "../js/geoutils.js" as GeoUtils
+import "../js/eventsettings.js" as EventSettings
 
 Page {
     id: page
@@ -298,6 +299,36 @@ Page {
                 }
                 if (!photoExists) {
                     dateMap[dateKey].photos.push(photo)
+                }
+            }
+        }
+
+        // Optionally fold in every scanned photo, including ones with no
+        // identified person (landscapes, unidentified faces): counts and
+        // covers below then reflect the whole day/trip, not just the
+        // photos tied to someone named
+        if (EventSettings.includeAllPhotos(faceManager)) {
+            var allPhotos = faceManager.getAllPhotos()
+            for (var ap = 0; ap < allPhotos.length; ap++) {
+                var extraPhoto = allPhotos[ap]
+                if (!extraPhoto.timestamp) continue
+
+                var extraDate = new Date(extraPhoto.timestamp * 1000)
+                var extraDateKey = Qt.formatDate(extraDate, "yyyy-MM-dd")
+
+                if (!dateMap[extraDateKey]) {
+                    dateMap[extraDateKey] = { date: extraDate, people: {}, photos: [] }
+                }
+
+                var extraExists = false
+                for (var ek = 0; ek < dateMap[extraDateKey].photos.length; ek++) {
+                    if (dateMap[extraDateKey].photos[ek].file_path === extraPhoto.file_path) {
+                        extraExists = true
+                        break
+                    }
+                }
+                if (!extraExists) {
+                    dateMap[extraDateKey].photos.push(extraPhoto)
                 }
             }
         }
