@@ -106,27 +106,55 @@ Item {
 
             var viewport = root.computeViewport()
 
-            // Route line, revealed progressively (root.revealProgress 0..1)
-            var totalSegments = root.points.length - 1
-            var revealCount = totalSegments * Math.max(0, Math.min(1, root.revealProgress))
-            var fullSegments = Math.floor(revealCount)
-            var partial = revealCount - fullSegments
+            // Route line: dashed, gently curved through the points (a
+            // quadratic Bezier per interior point, using the midpoint to
+            // the next point as the curve's anchor keeps it close to the
+            // real path instead of a wide swing), revealed progressively
+            var pix = []
+            for (var i = 0; i < root.points.length; i++) {
+                pix.push(root.toXY(root.points[i].longitude, root.points[i].latitude, viewport, width, height))
+            }
 
             ctx.lineWidth = 2.5
             ctx.strokeStyle = "rgba(51,51,51,0.85)"
+            ctx.lineCap = "round"
+            ctx.lineJoin = "round"
+            ctx.setLineDash([7, 5])
             ctx.beginPath()
-            var first = root.toXY(root.points[0].longitude, root.points[0].latitude, viewport, width, height)
-            ctx.moveTo(first[0], first[1])
-            for (var j = 1; j <= fullSegments && j < root.points.length; j++) {
-                var xy = root.toXY(root.points[j].longitude, root.points[j].latitude, viewport, width, height)
-                ctx.lineTo(xy[0], xy[1])
-            }
-            if (partial > 0 && fullSegments < totalSegments) {
-                var p0 = root.toXY(root.points[fullSegments].longitude, root.points[fullSegments].latitude, viewport, width, height)
-                var p1 = root.toXY(root.points[fullSegments + 1].longitude, root.points[fullSegments + 1].latitude, viewport, width, height)
-                ctx.lineTo(p0[0] + (p1[0] - p0[0]) * partial, p0[1] + (p1[1] - p0[1]) * partial)
+            ctx.moveTo(pix[0][0], pix[0][1])
+
+            var revealFraction = Math.max(0, Math.min(1, root.revealProgress))
+            if (pix.length === 2) {
+                ctx.lineTo(pix[0][0] + (pix[1][0] - pix[0][0]) * revealFraction,
+                           pix[0][1] + (pix[1][1] - pix[0][1]) * revealFraction)
+            } else {
+                var mids = []
+                for (var m = 0; m < pix.length - 1; m++) {
+                    mids.push([(pix[m][0] + pix[m + 1][0]) / 2, (pix[m][1] + pix[m + 1][1]) / 2])
+                }
+
+                // Units: straight to mid[0], one quadratic curve per interior
+                // point ending at its midpoint, then a final straight to the
+                // last point - "pix.length" units total, revealed by count
+                var totalUnits = pix.length
+                var revealUnits = Math.ceil(totalUnits * revealFraction)
+                var drawn = 0
+
+                if (revealUnits > drawn) {
+                    ctx.lineTo(mids[0][0], mids[0][1])
+                    drawn++
+                }
+                for (var u = 1; u <= pix.length - 2 && drawn < revealUnits; u++) {
+                    ctx.quadraticCurveTo(pix[u][0], pix[u][1], mids[u][0], mids[u][1])
+                    drawn++
+                }
+                if (drawn < revealUnits) {
+                    ctx.lineTo(pix[pix.length - 1][0], pix[pix.length - 1][1])
+                    drawn++
+                }
             }
             ctx.stroke()
+            ctx.setLineDash([])
 
             // Numbered stop markers when available, else plain start/end dots
             if (root.stops.length > 0) {
