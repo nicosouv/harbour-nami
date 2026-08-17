@@ -228,6 +228,24 @@ public:
     bool hasNegativeMatch(int faceId, int personId);
 
     /**
+     * @brief Every person this face was rejected for, in one query
+     *
+     * Same answer as calling hasNegativeMatch() for each person, without
+     * one round-trip per person when ranking suggestions.
+     */
+    QSet<int> getNegativeMatches(int faceId);
+
+    /**
+     * @brief People with a face on a photo taken around the given date
+     *
+     * Who you were with that day: a weak but useful hint when ranking
+     * identification suggestions.
+     *
+     * @param days Half-width of the window, in days
+     */
+    QSet<int> getPeopleAroundDate(const QDateTime &date, int days = 1);
+
+    /**
      * @brief Delete all faces of a photo (used when re-processing)
      */
     bool deleteFacesForPhoto(int photoId);
@@ -329,8 +347,9 @@ public:
     /**
      * @brief Export every table needed to fully restore the app on another
      *        device: photos, faces (including embeddings), people, trips
-     *        and rejections. Unlike exportPersonData()/GDPR export, nothing
-     *        is omitted here since this is meant to be re-imported.
+     *        and rejections. Unlike exportPersonData()/GDPR export, only
+     *        the links to the local address book are omitted, since those
+     *        contacts are unlikely to exist on the target device.
      */
     QJsonObject exportBackup();
 

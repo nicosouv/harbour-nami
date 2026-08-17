@@ -494,15 +494,17 @@ bool FacePipeline::identifyFace(int faceId, int personId, const QString &personN
         return false;
     }
 
-    // Verified faces define the person prototype
-    invalidatePersonPrototypes();
+    // Verified faces define the person prototype. Only this person changed,
+    // so patch the cache instead of dropping it: suggestPeopleForFace() runs
+    // right after every identification and would pay a full rebuild each time
+    // (a query per person) while reviewing a scan.
+    QVector<FaceEmbedding> exemplars = m_database->getPersonExemplars(personId);
+    refreshPersonExemplars(personId, exemplars);
 
     // Automatic re-matching: After identifying a face, re-match unmapped faces
     // against the updated person profile
     qCDebug(lcNami) << "Re-matching unmapped faces against person" << personId;
 
-    // Exemplars built from user-verified faces (see getPersonExemplars)
-    QVector<FaceEmbedding> exemplars = m_database->getPersonExemplars(personId);
     if (exemplars.isEmpty()) {
         qCDebug(lcNami) << "No exemplars for person" << personId;
         return true;  // Still return success, re-matching is optional
@@ -639,6 +641,30 @@ const QVector<QPair<int, QVector<FaceEmbedding>>> &FacePipeline::personExemplars
 void FacePipeline::invalidatePersonPrototypes()
 {
     m_personProtoCacheValid = false;
+}
+
+void FacePipeline::refreshPersonExemplars(int personId, const QVector<FaceEmbedding> &exemplars)
+{
+    // Nothing to patch: the whole cache is rebuilt on next use anyway
+    if (!m_personProtoCacheValid) {
+        return;
+    }
+
+    for (int i = 0; i < m_personExemplarCache.size(); i++) {
+        if (m_personExemplarCache[i].first == personId) {
+            if (exemplars.isEmpty()) {
+                m_personExemplarCache.remove(i);
+            } else {
+                m_personExemplarCache[i].second = exemplars;
+            }
+            return;
+        }
+    }
+
+    // A person only enters the cache once they have at least one face
+    if (!exemplars.isEmpty()) {
+        m_personExemplarCache.append(qMakePair(personId, exemplars));
+    }
 }
 
 QVariantList FacePipeline::getAllPeople()
@@ -907,6 +933,85 @@ QVariantList FacePipeline::getUnmappedFaces()
         faceMap["bbox_height"] = face.bbox.height();
         faceMap["confidence"] = face.confidence;
         result.append(faceMap);
+    }
+
+    return result;
+}
+
+QVariantList FacePipeline::suggestPeopleForFace(int faceId, int maxCount)
+{
+    QVariantList result;
+
+    if (!m_initialized || !m_database || faceId < 0 || maxCount <= 0) {
+        return result;
+    }
+
+    Face face = m_database->getFace(faceId);
+    if (face.id < 0 || face.embedding.empty()) {
+        return result;
+    }
+
+    // Someone already tagged on another face of this photo is almost never
+    // this face too, and suggesting them invites a wrong tap
+    QSet<int> alreadyInPhoto;
+    for (const Face &other : m_database->getFacesForPhoto(face.photoId)) {
+        if (other.id != face.id && other.personId > 0) {
+            alreadyInPhoto.insert(other.personId);
+        }
+    }
+
+    QSet<int> rejected = m_database->getNegativeMatches(faceId);
+
+    Photo photo = m_database->getPhoto(face.photoId);
+    QSet<int> sameDay = m_database->getPeopleAroundDate(photo.dateTaken);
+
+    struct Candidate {
+        int personId;
+        float score;   // facial similarity, what gets shown
+        float rank;    // score plus context, what sorts
+        bool sameDay;
+    };
+
+    std::vector<Candidate> candidates;
+    for (const auto &entry : personExemplars()) {
+        int personId = entry.first;
+        if (alreadyInPhoto.contains(personId) || rejected.contains(personId)) {
+            continue;
+        }
+
+        float best = 0.0f;
+        for (const FaceEmbedding &exemplar : entry.second) {
+            best = qMax(best, FaceRecognizer::computeSimilarity(face.embedding, exemplar));
+        }
+
+        if (best < SUGGEST_THRESHOLD) {
+            continue;
+        }
+
+        bool nearby = sameDay.contains(personId);
+        candidates.push_back(Candidate{personId, best,
+                                       best + (nearby ? SAME_DAY_BONUS : 0.0f), nearby});
+    }
+
+    // Stable so people the exemplar cache lists first keep their order on ties
+    std::stable_sort(candidates.begin(), candidates.end(),
+                     [](const Candidate &a, const Candidate &b) { return a.rank > b.rank; });
+
+    for (const Candidate &c : candidates) {
+        if (result.size() >= maxCount) {
+            break;
+        }
+        Person person = m_database->getPerson(c.personId);
+        if (person.id < 0) {
+            continue;
+        }
+        QVariantMap map;
+        map["person_id"] = person.id;
+        map["name"] = person.name;
+        map["score"] = c.score;
+        map["strong"] = c.score >= GROUPING_THRESHOLD;
+        map["same_day"] = c.sameDay;
+        result.append(map);
     }
 
     return result;

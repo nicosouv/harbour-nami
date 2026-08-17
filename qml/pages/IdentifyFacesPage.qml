@@ -43,6 +43,9 @@ Page {
         if (!currentFace) return
 
         facePipeline.identifyFace(currentFace.face_id, personId, personName, contactId || "")
+        // A person created for this face must show up in the next face's
+        // suggestions, otherwise the same name gets created over and over
+        loadPeople()
         nextFace()
     }
 
@@ -51,16 +54,38 @@ Page {
         id: peopleModel
     }
 
+    // Ranked candidates for the current face: when the top one is right,
+    // identifying costs a single tap instead of opening the dialog
+    property var suggestions: []
+
+    // Words, not a percentage: a cosine similarity is not a probability and
+    // showing it as one would read as far more certain than it is
+    function suggestionHint(suggestion) {
+        var hint = suggestion.strong ? qsTr("Very likely") : qsTr("Possible match")
+        return suggestion.same_day ? hint + " · " + qsTr("photographed the same day") : hint
+    }
+
+    function loadSuggestions() {
+        suggestions = (currentFace && facePipeline && facePipeline.initialized)
+            ? facePipeline.suggestPeopleForFace(currentFace.face_id, 2)
+            : []
+    }
+
+    onCurrentFaceChanged: loadSuggestions()
+
+    function loadPeople() {
+        if (!facePipeline || !facePipeline.initialized) return
+
+        peopleModel.clear()
+        var people = facePipeline.getAllPeople()
+        for (var i = 0; i < people.length; i++) {
+            peopleModel.append(people[i])
+        }
+    }
+
     Component.onCompleted: {
         loadUnmappedFaces()
-
-        // Load existing people
-        if (facePipeline && facePipeline.initialized) {
-            var people = facePipeline.getAllPeople()
-            for (var i = 0; i < people.length; i++) {
-                peopleModel.append(people[i])
-            }
-        }
+        loadPeople()
     }
 
     SilicaFlickable {
@@ -155,6 +180,79 @@ Page {
                             font.bold: true
                             color: Theme.primaryColor
                         }
+                    }
+                }
+            }
+
+            // One-tap suggestions, best first
+            Column {
+                width: parent.width
+                spacing: Theme.paddingSmall
+                visible: currentFace !== null && suggestions.length > 0
+
+                Label {
+                    x: Theme.horizontalPageMargin
+                    width: parent.width - 2 * Theme.horizontalPageMargin
+                    text: qsTr("Is this…")
+                    font.pixelSize: Theme.fontSizeSmall
+                    color: Theme.secondaryHighlightColor
+                }
+
+                Repeater {
+                    model: suggestions
+
+                    delegate: BackgroundItem {
+                        width: parent.width
+                        height: Theme.itemSizeSmall
+
+                        Row {
+                            anchors {
+                                left: parent.left
+                                leftMargin: Theme.horizontalPageMargin
+                                right: parent.right
+                                rightMargin: Theme.horizontalPageMargin
+                                verticalCenter: parent.verticalCenter
+                            }
+                            spacing: Theme.paddingMedium
+
+                            Item {
+                                width: Theme.iconSizeMedium
+                                height: Theme.iconSizeMedium
+                                anchors.verticalCenter: parent.verticalCenter
+
+                                Image {
+                                    id: suggestionAvatar
+                                    anchors.fill: parent
+                                    source: FaceUtils.personAvatarUrl(facePipeline, modelData.person_id)
+                                    sourceSize.width: width
+                                    sourceSize.height: height
+                                    asynchronous: true
+                                }
+
+                                Icon {
+                                    anchors.centerIn: parent
+                                    source: "image://theme/icon-m-person"
+                                    visible: suggestionAvatar.status !== Image.Ready
+                                }
+                            }
+
+                            Column {
+                                anchors.verticalCenter: parent.verticalCenter
+
+                                Label {
+                                    text: modelData.name
+                                    color: Theme.primaryColor
+                                }
+
+                                Label {
+                                    text: suggestionHint(modelData)
+                                    font.pixelSize: Theme.fontSizeExtraSmall
+                                    color: Theme.secondaryColor
+                                }
+                            }
+                        }
+
+                        onClicked: identifyFace(modelData.person_id, "")
                     }
                 }
             }

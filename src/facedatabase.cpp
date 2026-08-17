@@ -637,6 +637,50 @@ bool FaceDatabase::hasNegativeMatch(int faceId, int personId)
     return query.exec() && query.next();
 }
 
+QSet<int> FaceDatabase::getNegativeMatches(int faceId)
+{
+    QSet<int> people;
+    QSqlQuery query(m_db);
+    query.prepare("SELECT person_id FROM negative_matches WHERE face_id = :face_id");
+    query.bindValue(":face_id", faceId);
+
+    if (query.exec()) {
+        while (query.next()) {
+            people.insert(query.value(0).toInt());
+        }
+    }
+
+    return people;
+}
+
+QSet<int> FaceDatabase::getPeopleAroundDate(const QDateTime &date, int days)
+{
+    QSet<int> people;
+    if (!date.isValid()) {
+        return people;
+    }
+
+    // date_taken is stored as ISO 8601, which sorts chronologically as text
+    QSqlQuery query(m_db);
+    query.prepare(R"(
+        SELECT DISTINCT f.person_id
+        FROM faces f
+        JOIN photos p ON p.id = f.photo_id
+        WHERE f.person_id > 0
+          AND p.date_taken >= :from AND p.date_taken <= :to
+    )");
+    query.bindValue(":from", date.addDays(-days).toString(Qt::ISODate));
+    query.bindValue(":to", date.addDays(days).toString(Qt::ISODate));
+
+    if (query.exec()) {
+        while (query.next()) {
+            people.insert(query.value(0).toInt());
+        }
+    }
+
+    return people;
+}
+
 bool FaceDatabase::deleteFacesForPhoto(int photoId)
 {
     QSqlQuery cleanup(m_db);
@@ -972,7 +1016,9 @@ QJsonObject FaceDatabase::exportBackup()
         personIndexById[person.id] = peopleArray.size();
         QJsonObject p;
         p["name"] = person.name;
-        p["contact_id"] = person.contactId;
+        // contact_id is deliberately left out: it points to a contact of the
+        // address book of *this* device, which most likely does not exist on
+        // the device the backup is restored on
         p["created_at"] = person.createdAt.toString(Qt::ISODate);
         peopleArray.append(p);
     }
@@ -1102,10 +1148,8 @@ FaceDatabase::ImportStats FaceDatabase::importBackup(const QJsonObject &root)
         if (personId == -1) {
             personId = createPerson(name);
             if (personId != -1) {
-                QString contactId = p["contact_id"].toString();
-                if (!contactId.isEmpty()) {
-                    setPersonContact(personId, contactId);
-                }
+                // contact_id from older backups is ignored on purpose: the
+                // contact it refers to belongs to the source device
                 personIdByName[name.toLower()] = personId;
                 stats.peopleImported++;
             }
