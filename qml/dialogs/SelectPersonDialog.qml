@@ -29,6 +29,22 @@ Dialog {
         return nameQuery.length === 0 || name.toLowerCase().indexOf(nameQuery) !== -1
     }
 
+    // Set while the name field is filled from a tapped suggestion, so the
+    // "user is typing" handler below doesn't undo the selection right away
+    property bool _fillingName: false
+
+    function selectPerson(personId, name) {
+        selectedPersonId = personId
+        createNew = false
+        // Keep the name visible in the field: emptying it here used to make
+        // the pick look like it never happened
+        if (allowCreate) {
+            _fillingName = true
+            newNameField.text = name
+            _fillingName = false
+        }
+    }
+
     property int matchCount: {
         if (!peopleModel) return 0
         var n = 0
@@ -116,7 +132,7 @@ Dialog {
             TextField {
                 id: newNameField
                 width: parent.width
-                label: qsTr("New person")
+                label: createNew ? qsTr("New person") : qsTr("Selected person")
                 placeholderText: qsTr("Enter name")
                 focus: allowCreate
                 visible: allowCreate
@@ -127,11 +143,14 @@ Dialog {
                     if (canAccept) dialog.accept()
                 }
 
+                // Editing the name by hand means a new person again, unless
+                // the text was just filled in by selectPerson()
                 onTextChanged: {
-                    if (text.trim().length > 0) {
-                        createNew = true
-                        selectedPersonId = -1
+                    if (_fillingName) {
+                        return
                     }
+                    createNew = true
+                    selectedPersonId = -1
                 }
             }
 
@@ -219,11 +238,18 @@ Dialog {
                         }
                     }
 
-                    onClicked: {
-                        selectedPersonId = model.person_id
-                        createNew = false
-                        newNameField.text = ""
+                    Icon {
+                        anchors {
+                            right: parent.right
+                            rightMargin: Theme.horizontalPageMargin
+                            verticalCenter: parent.verticalCenter
+                        }
+                        source: "image://theme/icon-s-installed"
+                        color: Theme.highlightColor
+                        visible: selectedPersonId === model.person_id
                     }
+
+                    onClicked: dialog.selectPerson(model.person_id, model.name)
                 }
             }
 

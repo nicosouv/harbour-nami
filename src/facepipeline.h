@@ -87,6 +87,16 @@ public:
     static constexpr float AUTO_MATCH_THRESHOLD = 0.72f;
     static constexpr float GROUPING_THRESHOLD = 0.68f;
 
+    // Floor for offering a person as an identification suggestion. Well
+    // below the same-identity threshold on purpose: the user confirms, so a
+    // plausible-but-wrong name costs a glance, while a missing one costs
+    // typing the whole name.
+    static constexpr float SUGGEST_THRESHOLD = 0.55f;
+
+    // Nudge for someone photographed around the same day. Small enough that
+    // it only ever reorders candidates of comparable facial similarity.
+    static constexpr float SAME_DAY_BONUS = 0.02f;
+
     explicit FacePipeline(QObject *parent = nullptr);
     ~FacePipeline();
 
@@ -237,6 +247,21 @@ public:
      * @return List of faces as QVariantList
      */
     Q_INVOKABLE QVariantList getUnmappedFaces();
+
+    /**
+     * @brief People this face most likely belongs to, best first
+     *
+     * Ranks known people by how close their exemplars are to this face,
+     * so identification usually costs one tap instead of typing a name.
+     * Only candidates the user could plausibly accept are returned: people
+     * already rejected for this face, or already tagged on another face of
+     * the same photo, are left out.
+     *
+     * @return List of {person_id, name, score, strong, same_day}, where
+     *         score is the raw similarity in [0,1] and strong marks a match
+     *         above the same-identity threshold
+     */
+    Q_INVOKABLE QVariantList suggestPeopleForFace(int faceId, int maxCount = 3);
 
     /**
      * @brief Remove face from person (unassign)
@@ -508,6 +533,9 @@ private:
     // Helper: Person exemplars, cached
     const QVector<QPair<int, QVector<FaceEmbedding>>> &personExemplars();
     void invalidatePersonPrototypes();
+
+    // Helper: Replace one person's cached exemplars, when only they changed
+    void refreshPersonExemplars(int personId, const QVector<FaceEmbedding> &exemplars);
 };
 
 #endif // FACEPIPELINE_H
