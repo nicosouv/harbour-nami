@@ -484,8 +484,6 @@ bool FacePipeline::identifyFace(int faceId, int personId, const QString &personN
         }
     }
 
-    qCDebug(lcNami) << "identifyFace: face" << faceId << "-> person" << personId;
-
     // Update face mapping
     if (!m_database->updateFacePersonMapping(faceId, personId)) {
         return false;
@@ -502,7 +500,6 @@ bool FacePipeline::identifyFace(int faceId, int personId, const QString &personN
     // (a query per person) while reviewing a scan.
     QVector<FaceEmbedding> exemplars = m_database->getPersonExemplars(personId);
     refreshPersonExemplars(personId, exemplars);
-    qCDebug(lcNami) << "identifyFace: exemplar cache patched," << exemplars.size() << "exemplars";
 
     // Automatic re-matching: After identifying a face, re-match unmapped faces
     // against the updated person profile
@@ -545,7 +542,6 @@ bool FacePipeline::identifyFace(int faceId, int personId, const QString &personN
     }
 
     qCDebug(lcNami) << "Auto-matched" << autoMatched << "faces to person" << personId;
-    qCDebug(lcNami) << "identifyFace: done";
 
     return true;
 }
@@ -950,11 +946,8 @@ QVariantList FacePipeline::suggestPeopleForFace(int faceId, int maxCount)
         return result;
     }
 
-    qCDebug(lcNami) << "suggestPeopleForFace: face" << faceId;
-
     Face face = m_database->getFace(faceId);
     if (face.id < 0 || face.embedding.empty()) {
-        qCDebug(lcNami) << "suggestPeopleForFace: no usable face, giving up";
         return result;
     }
 
@@ -978,10 +971,6 @@ QVariantList FacePipeline::suggestPeopleForFace(int faceId, int maxCount)
         float rank;    // score plus context, what sorts
         bool sameDay;
     };
-
-    qCDebug(lcNami) << "suggestPeopleForFace: context ready,"
-                    << alreadyInPhoto.size() << "in photo," << rejected.size() << "rejected,"
-                    << sameDay.size() << "same day";
 
     std::vector<Candidate> candidates;
     for (const auto &entry : personExemplars()) {
@@ -1024,9 +1013,6 @@ QVariantList FacePipeline::suggestPeopleForFace(int faceId, int maxCount)
         map["same_day"] = c.sameDay;
         result.append(map);
     }
-
-    qCDebug(lcNami) << "suggestPeopleForFace: returning" << result.size() << "of"
-                    << static_cast<int>(candidates.size()) << "candidates";
 
     return result;
 }

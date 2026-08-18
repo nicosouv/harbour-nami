@@ -17,6 +17,7 @@
 #include "facerecognizer.h"
 #include "facedatabase.h"
 #include "faceimageprovider.h"
+#include "logging.h"
 
 #include <csignal>
 #include <cstring>
@@ -87,14 +88,17 @@ int main(int argc, char *argv[])
     QString recognizerModelPath = appDir + "/models/face_recognition_sface_2021dec.onnx";
     QString databasePath = dataDir + "/nami.db";
 
-    qDebug() << "=== Harbour Nami Face Recognition ===";
-    qDebug() << "Application directory:" << appDir;
-    qDebug() << "Data directory:" << dataDir;
-    qDebug() << "Cache directory:" << cacheDir;
-    qDebug() << "Pictures directory:" << picturesDir;
-    qDebug() << "Detector model:" << detectorModelPath;
-    qDebug() << "Recognizer model:" << recognizerModelPath;
-    qDebug() << "Database:" << databasePath;
+    // Under the app's logging category rather than plain qDebug: this ran on
+    // every launch and put the user's private paths in the system journal.
+    // Enable with QT_LOGGING_RULES="nami.pipeline.debug=true".
+    qCDebug(lcNami) << "=== Harbour Nami Face Recognition ===";
+    qCDebug(lcNami) << "Application directory:" << appDir;
+    qCDebug(lcNami) << "Data directory:" << dataDir;
+    qCDebug(lcNami) << "Cache directory:" << cacheDir;
+    qCDebug(lcNami) << "Pictures directory:" << picturesDir;
+    qCDebug(lcNami) << "Detector model:" << detectorModelPath;
+    qCDebug(lcNami) << "Recognizer model:" << recognizerModelPath;
+    qCDebug(lcNami) << "Database:" << databasePath;
 
     // Create face pipeline
     FacePipeline *pipeline = new FacePipeline(app.data());
@@ -123,7 +127,7 @@ int main(int argc, char *argv[])
     if (translator->load("harbour-nami-" + locale, i18nDir) ||
         translator->load("harbour-nami-" + locale.section('_', 0, 0), i18nDir)) {
         app->installTranslator(translator);
-        qDebug() << "Loaded translation for" << locale;
+        qCDebug(lcNami) << "Loaded translation for" << locale;
     }
 
     // Face thumbnail provider (crops cached in the app cache dir)

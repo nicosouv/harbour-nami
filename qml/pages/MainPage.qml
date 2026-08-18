@@ -45,7 +45,6 @@ Page {
     function refreshPeople() {
         if (!facePipeline || !facePipeline.initialized) return
 
-        peopleModel.clear()
         var people = facePipeline.getAllPeople()
 
         // Calculate statistics
@@ -54,14 +53,25 @@ Page {
         var maxPhotos = 0
         topPerson = ""
 
+        // Updated in place: this model is handed to SelectPersonDialog when
+        // merging, and refreshPeople() runs from that dialog's accepted
+        // handler, while it is still alive and bound to it. clear() would
+        // destroy the delegates it is using at that very moment.
         for (var i = 0; i < people.length; i++) {
-            peopleModel.append(people[i])
+            if (i < peopleModel.count) {
+                peopleModel.set(i, people[i])
+            } else {
+                peopleModel.append(people[i])
+            }
             totalPhotos += people[i].photo_count
 
             if (people[i].photo_count > maxPhotos) {
                 maxPhotos = people[i].photo_count
                 topPerson = people[i].name
             }
+        }
+        while (peopleModel.count > people.length) {
+            peopleModel.remove(peopleModel.count - 1)
         }
 
         // Apply filter and sort
