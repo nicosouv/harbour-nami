@@ -174,29 +174,10 @@ if(DESKTOP_FILE_VALIDATE)
     )
 endif()
 
-# Unit tests. Off by default so the packaged build is unaffected; CI turns
-# them on with -DBUILD_TESTS=ON and runs ctest.
+# Unit tests live in their own project so they can be built without OpenCV,
+# the ML models or a cross-compiler: see tests/CMakeLists.txt. Enable them
+# here to build everything in one go.
 option(BUILD_TESTS "Build the unit tests" OFF)
 if(BUILD_TESTS)
-    enable_testing()
-    find_package(Qt5 REQUIRED COMPONENTS Test)
-
-    # Only the database layer: no models to load, no camera, no GPU, so this
-    # runs headless in a container in a second
-    add_executable(tst_facedatabase
-        tests/tst_facedatabase.cpp
-        src/facedatabase.cpp
-        src/logging.cpp
-    )
-    target_include_directories(tst_facedatabase PRIVATE
-        ${CMAKE_SOURCE_DIR}/src
-        ${OpenCV_INCLUDE_DIRS}
-    )
-    target_link_libraries(tst_facedatabase
-        Qt5::Core
-        Qt5::Sql
-        Qt5::Test
-        ${OpenCV_LIBS}
-    )
-    add_test(NAME facedatabase COMMAND tst_facedatabase)
+    add_subdirectory(tests)
 endif()

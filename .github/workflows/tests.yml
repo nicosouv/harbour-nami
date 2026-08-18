@@ -21,38 +21,28 @@ jobs:
       - name: JavaScript unit tests
         run: node tests/js/run.js
 
-  # Qt lane: the SDK container has Qt5 and Silica, and the OpenCV cache is
-  # shared with the release build
+  # Qt lane: plain ubuntu, no container and no OpenCV - the tests build
+  # against Qt and OpenSSL only, which is the whole point of keeping the
+  # storage and crypto layers free of the vision stack
   unit:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
 
-      - name: Cache OpenCV Build
-        id: cache-opencv
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
-        with:
-          path: 3rdparty/opencv
-          key: opencv-minimal-4.8.0-aarch64-${{ hashFiles('scripts/build_opencv_minimal.sh') }}
-          restore-keys: |
-            opencv-minimal-4.8.0-aarch64-
-
-      - name: Prepare Build Directories
-        run: chmod -R 777 .
-
-      # The tests only need OpenCV's headers (FaceEmbedding lives behind
-      # facerecognizer.h), so an x86_64 host build is enough and there is no
-      # need to cross-compile or run an emulator
-      - name: Build and run unit tests
+      - name: Install Qt5 and OpenSSL
         run: |
-          docker run --rm \
-            -v $(pwd):/home/mersdk/src:z \
-            coderus/sailfishos-platform-sdk:5.0.0.43 \
-            bash -c "cd /home/mersdk/src && \
-              cmake -B build-tests -DBUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Debug && \
-              cmake --build build-tests --target tst_facedatabase -j\$(nproc) && \
-              QT_QPA_PLATFORM=offscreen ctest --test-dir build-tests --output-on-failure"
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            qtbase5-dev libqt5sql5-sqlite libssl-dev cmake ninja-build
+
+      - name: Build tests
+        run: |
+          cmake -S tests -B build-tests -G Ninja -DCMAKE_BUILD_TYPE=Debug
+          cmake --build build-tests
+
+      - name: Run tests
+        run: QT_QPA_PLATFORM=offscreen ctest --test-dir build-tests --output-on-failure
 
   # QML syntax, in the container because Silica lives there
   qmllint:
