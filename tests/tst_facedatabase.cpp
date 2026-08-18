@@ -150,7 +150,7 @@ void TstFaceDatabase::backupRoundTripKeepsPeopleFacesAndTrips()
 
     QCOMPARE(fresh.getAllPeople().size(), 2);
     QCOMPARE(fresh.getAllPhotos().size(), 2);
-    QCOMPARE(fresh.getTrips().size(), 1);
+    QCOMPARE(fresh.getAllTrips().size(), 1);
 
     // And the restored people carry no contact link
     for (const Person &person : fresh.getAllPeople()) {

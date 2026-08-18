@@ -11,6 +11,7 @@
 #include <QSqlDatabase>
 #include <QJsonObject>
 #include <QPair>
+#include <QRectF>
 #include "faceembedding.h"
 
 /**
