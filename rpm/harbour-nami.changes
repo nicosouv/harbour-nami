@@ -1,3 +1,11 @@
+* Tue Aug 18 2026 Nicolas Souveton <souvetonnicolas@gmail.com> 0.8.4-1
+- Fix the trip route map drawing as an empty sheet of paper
+- Trip map now fills in land and sea instead of sketching a bare coastline
+- Trip map keeps true proportions, with a scale bar valid in every direction
+- Trip stops are grouped by place at the scale of the trip, and the map marks
+  the places you spent time in rather than every photo taken along the way
+- Slightly rounder Trip and Hidden badges in the Events list
+
 * Tue Aug 18 2026 Nicolas Souveton <souvetonnicolas@gmail.com> 0.8.3-1
 - Suggest who a face belongs to while identifying, confirmed with a single tap
 - Fix tapping a name in the identification autocomplete not selecting it
