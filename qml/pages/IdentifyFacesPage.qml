@@ -33,7 +33,10 @@ Page {
         if (currentIndex < currentFaces.length - 1) {
             currentIndex++
         } else {
-            // No more faces
+            // No more faces. This runs from a dialog's accepted handler, so
+            // that dialog is still on its way out: let its transition finish
+            // before starting ours, rather than stacking two.
+            pageStack.completeAnimation()
             pageStack.pop()
         }
     }
