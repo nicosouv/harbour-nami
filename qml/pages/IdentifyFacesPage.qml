@@ -43,10 +43,39 @@ Page {
         if (!currentFace) return
 
         facePipeline.identifyFace(currentFace.face_id, personId, personName, contactId || "")
-        // A person created for this face must show up in the next face's
-        // suggestions, otherwise the same name gets created over and over
-        loadPeople()
         nextFace()
+        // Models are refreshed by refreshTimer, never from here: see the
+        // timer's comment
+        refreshTimer.restart()
+    }
+
+    // Identification can be triggered from deep inside a dialog being torn
+    // down - the contact flow accepts SelectContactDialog from one of its
+    // delegates, which accepts SelectPersonDialog in turn, while the page
+    // transition is still running. Rebuilding peopleModel right there pulls
+    // the ground from under the delegates of a dialog that is still alive
+    // and bound to that very model. So every model refresh is pushed to the
+    // next pass of the event loop, once the dialogs are gone.
+    Timer {
+        id: refreshTimer
+        interval: 0
+        onTriggered: {
+            // A dialog above us stays alive, and bound to peopleModel, until
+            // the stack transition finishes - later than the next event loop
+            // pass. Leave it alone; onStatusChanged fires the refresh again
+            // once the page is really back in front.
+            if (page.status !== PageStatus.Active) {
+                return
+            }
+            loadPeople()
+            loadSuggestions()
+        }
+    }
+
+    onStatusChanged: {
+        if (status === PageStatus.Active) {
+            refreshTimer.restart()
+        }
     }
 
     // People model for selection
@@ -71,15 +100,24 @@ Page {
             : []
     }
 
-    onCurrentFaceChanged: loadSuggestions()
+    onCurrentFaceChanged: refreshTimer.restart()
 
+    // Updated in place rather than cleared and refilled, the same way
+    // MainPage does it: clear() destroys every delegate at once, including
+    // those of a dialog that may still be bound to this model
     function loadPeople() {
         if (!facePipeline || !facePipeline.initialized) return
 
-        peopleModel.clear()
         var people = facePipeline.getAllPeople()
         for (var i = 0; i < people.length; i++) {
-            peopleModel.append(people[i])
+            if (i < peopleModel.count) {
+                peopleModel.set(i, people[i])
+            } else {
+                peopleModel.append(people[i])
+            }
+        }
+        while (peopleModel.count > people.length) {
+            peopleModel.remove(peopleModel.count - 1)
         }
     }
 

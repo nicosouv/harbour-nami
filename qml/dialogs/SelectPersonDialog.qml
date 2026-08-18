@@ -55,11 +55,16 @@ Dialog {
         return n
     }
 
+    // Holds a copy, never the model item itself: keeping a reference to a
+    // ListModel row and reading it after the model has been rebuilt is a
+    // dangling read
     property var exactMatchPerson: {
         if (nameQuery.length === 0 || !peopleModel) return null
         for (var i = 0; i < peopleModel.count; i++) {
             var p = peopleModel.get(i)
-            if (p.person_id !== excludePersonId && p.name.toLowerCase() === nameQuery) return p
+            if (p.person_id !== excludePersonId && p.name.toLowerCase() === nameQuery) {
+                return { person_id: p.person_id, name: p.name }
+            }
         }
         return null
     }
@@ -112,6 +117,12 @@ Dialog {
                         if (cd.selectedContactId.length > 0) {
                             selectedContactId = cd.selectedContactId
                             selectedContactName = cd.selectedContactName
+                            // Let the contact dialog finish leaving before
+                            // accepting this one: stacking a second stack
+                            // transition on top of a running one is what the
+                            // rest of the app avoids the same way (see
+                            // MainPage.linkContact)
+                            pageStack.completeAnimation()
                             dialog.accept()
                         }
                     })
