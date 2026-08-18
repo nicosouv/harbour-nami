@@ -29,6 +29,48 @@ Item {
     // expose pixelRatio.
     readonly property real uiScale: Theme.pixelRatio > 0 ? Theme.pixelRatio : 1
 
+    // Markers only for the places that carry the trip. A photo taken from
+    // the car is a legitimate stop in the list below, but a numbered dot for
+    // every one of them buries the places you actually spent time in. The
+    // line still passes through every stop, and a marker keeps the number it
+    // has in the list, so "Stop 7" is the same thing in both.
+    readonly property int maxMarkers: 8
+    readonly property var markerStops: {
+        if (stops.length <= maxMarkers) {
+            return stops
+        }
+        var order = []
+        for (var i = 0; i < stops.length; i++) {
+            order.push(i)
+        }
+        order.sort(function(a, b) {
+            return (stops[b].photo_count || 0) - (stops[a].photo_count || 0)
+        })
+
+        var keep = []
+        for (var k = 0; k < stops.length; k++) {
+            keep.push(false)
+        }
+        // Where the trip started and ended always earn their marker
+        keep[0] = true
+        keep[stops.length - 1] = true
+        var kept = 2
+        for (var o = 0; o < order.length && kept < maxMarkers; o++) {
+            if (!keep[order[o]]) {
+                keep[order[o]] = true
+                kept++
+            }
+        }
+
+        var result = []
+        for (var s = 0; s < stops.length; s++) {
+            if (keep[s]) {
+                result.push(stops[s])
+            }
+        }
+        return result
+    }
+
     // Never zoom in tighter than this. A trip spent inside one town would
     // otherwise fill the map with a few hundred metres of empty paper, with
     // no coastline in sight and nothing to tell you where you are.
@@ -61,21 +103,25 @@ Item {
 
             var viewport = root.computeViewport(width, height)
 
-            var grad = ctx.createLinearGradient(0, 0, 0, height)
-            grad.addColorStop(0, "#faf5e8")
-            grad.addColorStop(1, "#f1e8d2")
-            ctx.fillStyle = grad
+            // Sea first, land painted over it: the coastline data is a set
+            // of closed rings ordered from largest to smallest, so a small
+            // island drawn after its continent stays visible
+            var sea = ctx.createLinearGradient(0, 0, 0, height)
+            sea.addColorStop(0, "#dde9f0")
+            sea.addColorStop(1, "#cadbe6")
+            ctx.fillStyle = sea
             ctx.fillRect(0, 0, width, height)
 
-            // World coastline, clipped to the viewport (cheap bbox reject
-            // per polyline keeps this fast even though the dataset covers
-            // the whole planet). Drawn faint and thin, and decimated in
-            // pixel space (skip points under ~2.5px from the last kept
-            // one) so a dense/jagged coastline doesn't turn into visual
-            // noise in a small map - real coastlines are highly detailed
-            // at any zoom level, so without this the mini map reads as
-            // "the whole world crammed in" even when correctly cropped.
-            ctx.strokeStyle = "rgba(150,130,100,0.4)"
+            // Land rings, clipped to the viewport (cheap bbox reject per
+            // ring keeps this fast even though the dataset covers the whole
+            // planet). Decimated in pixel space (skip points under ~2.5px
+            // from the last kept one) so a dense/jagged coastline doesn't
+            // turn into visual noise in a small map - real coastlines are
+            // highly detailed at any zoom level, so without this the mini
+            // map reads as "the whole world crammed in" even when correctly
+            // cropped.
+            ctx.fillStyle = "#f7f0dc"
+            ctx.strokeStyle = "rgba(120,105,80,0.55)"
             ctx.lineWidth = 0.9 * root.uiScale
             var lines = WorldCoastlines.COASTLINES
             var minPixelStep = Math.pow(2.5 * root.uiScale, 2)
@@ -109,6 +155,8 @@ Item {
                         lastX = xy[0]; lastY = xy[1]
                     }
                 }
+                ctx.closePath()
+                ctx.fill()
                 ctx.stroke()
             }
         }
@@ -152,8 +200,10 @@ Item {
                 ctx.font = "bold " + Math.round(Theme.fontSizeExtraSmall) + "px sans-serif"
                 ctx.textAlign = "center"
                 ctx.textBaseline = "middle"
-                for (var s = 0; s < pix.length; s++) {
-                    var label = String(s + 1)
+                for (var s = 0; s < root.markerStops.length; s++) {
+                    var stop = root.markerStops[s]
+                    var at = root.toXY(stop.longitude, stop.latitude, viewport, width, height)
+                    var label = String(stop.label !== undefined ? stop.label : s + 1)
                     // Wide enough for the number it holds: two-digit stops
                     // used to spill out of a fixed 9px dot. Measured when
                     // the canvas supports it, estimated otherwise, since a
@@ -164,16 +214,16 @@ Item {
                     var radius = Math.max(Theme.fontSizeExtraSmall * 0.8,
                                           labelWidth / 2 + 4 * scale)
                     ctx.beginPath()
-                    ctx.arc(pix[s][0], pix[s][1], radius, 0, 2 * Math.PI)
+                    ctx.arc(at[0], at[1], radius, 0, 2 * Math.PI)
                     ctx.fillStyle = Theme.highlightColor
                     ctx.fill()
-                    // Paper-coloured rim so a marker sitting on the route
-                    // line still reads as a separate thing
-                    ctx.strokeStyle = "rgba(250,245,232,0.9)"
+                    // Light rim so a marker sitting on the route line still
+                    // reads as a separate thing, over land or over sea
+                    ctx.strokeStyle = "rgba(255,255,255,0.92)"
                     ctx.lineWidth = 1.5 * scale
                     ctx.stroke()
                     ctx.fillStyle = "white"
-                    ctx.fillText(label, pix[s][0], pix[s][1] + scale)
+                    ctx.fillText(label, at[0], at[1] + scale)
                 }
             } else {
                 var ends = pix.length >= 2 ? [0, pix.length - 1] : [0]
