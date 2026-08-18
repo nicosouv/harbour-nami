@@ -658,9 +658,9 @@ Page {
                             margins: Theme.paddingSmall / 2
                         }
                         visible: model.type === "trip"
-                        width: tripBadgeLabel.width + Theme.paddingSmall
-                        height: tripBadgeLabel.height + Theme.paddingSmall / 2
-                        radius: Theme.paddingSmall / 2
+                        width: tripBadgeLabel.width + Theme.paddingMedium
+                        height: tripBadgeLabel.height + Theme.paddingSmall
+                        radius: Theme.paddingSmall
                         color: Theme.rgba(Theme.highlightBackgroundColor, 0.85)
 
                         Label {
@@ -681,9 +681,9 @@ Page {
                             margins: Theme.paddingSmall / 2
                         }
                         visible: model.hidden
-                        width: hiddenBadgeLabel.width + Theme.paddingSmall
-                        height: hiddenBadgeLabel.height + Theme.paddingSmall / 2
-                        radius: Theme.paddingSmall / 2
+                        width: hiddenBadgeLabel.width + Theme.paddingMedium
+                        height: hiddenBadgeLabel.height + Theme.paddingSmall
+                        radius: Theme.paddingSmall
                         color: Theme.rgba(Theme.secondaryColor, 0.85)
 
                         Label {
