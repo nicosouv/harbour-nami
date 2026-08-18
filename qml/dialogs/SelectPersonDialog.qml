@@ -76,7 +76,12 @@ Dialog {
         if (createNew && allowCreate && selectedContactId.length === 0) {
             personName = newNameField.text.trim()
         }
+        console.log("[identify] dialog accepted: createNew=", createNew,
+                    "personId=", selectedPersonId, "name=", personName,
+                    "contact=", selectedContactId)
     }
+
+    Component.onDestruction: console.log("[identify] SelectPersonDialog destroyed")
 
     SilicaFlickable {
         anchors.fill: parent

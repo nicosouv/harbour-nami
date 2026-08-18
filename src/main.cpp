@@ -18,8 +18,52 @@
 #include "facedatabase.h"
 #include "faceimageprovider.h"
 
+#include <csignal>
+#include <cstring>
+#include <exception>
+#include <execinfo.h>
+#include <unistd.h>
+
+namespace {
+
+// Writes a native backtrace straight to stderr, which journald records
+// alongside the app's other output. Deliberately allocation-free and
+// lock-free: it runs from a terminate or signal handler, where the process
+// is already in no state to be doing anything clever.
+void dumpBacktrace(const char *reason)
+{
+    ssize_t written = write(STDERR_FILENO, reason, strlen(reason));
+    written = write(STDERR_FILENO, "\n", 1);
+    (void)written;
+
+    void *frames[64];
+    int count = backtrace(frames, 64);
+    backtrace_symbols_fd(frames, count, STDERR_FILENO);
+}
+
+// "pure virtual method called" ends up here, with the stack still holding
+// whoever made the call - which is exactly what we cannot see otherwise
+void onTerminate()
+{
+    dumpBacktrace("=== nami: std::terminate ===");
+    std::_Exit(134);
+}
+
+void onFatalSignal(int signum)
+{
+    dumpBacktrace(signum == SIGSEGV ? "=== nami: SIGSEGV ===" : "=== nami: SIGABRT ===");
+    signal(signum, SIG_DFL);
+    raise(signum);
+}
+
+}
+
 int main(int argc, char *argv[])
 {
+    std::set_terminate(onTerminate);
+    signal(SIGSEGV, onFatalSignal);
+    signal(SIGABRT, onFatalSignal);
+
     // Setup application
     QScopedPointer<QGuiApplication> app(new QGuiApplication(argc, argv));
     app->setApplicationName("harbour-nami");

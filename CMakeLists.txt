@@ -83,6 +83,10 @@ add_executable(${PROJECT_NAME}
 # App version shown in the About page (single source: project() above)
 target_compile_definitions(${PROJECT_NAME} PRIVATE APP_VERSION="${PROJECT_VERSION}")
 
+# Export the dynamic symbol table so the crash handler in main.cpp can put
+# function names, not bare addresses, in the backtrace it writes to the journal
+set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "-rdynamic")
+
 # Include directories
 target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_SOURCE_DIR}/src
