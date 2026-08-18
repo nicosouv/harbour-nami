@@ -45,29 +45,44 @@ Dialog {
         }
     }
 
-    property int matchCount: {
-        if (!peopleModel) return 0
-        var n = 0
-        for (var i = 0; i < peopleModel.count; i++) {
-            var p = peopleModel.get(i)
-            if (p.person_id !== excludePersonId && personMatches(p.name)) n++
-        }
-        return n
-    }
+    // Both recomputed by hand rather than through bindings. ListModel.get()
+    // hands back a transient wrapper object, and a binding that calls it
+    // keeps a dependency guard on that wrapper. The model releases the
+    // wrapper on its own schedule, so when the dialog is torn down the
+    // binding's destructor can end up calling a virtual on an object that is
+    // already gone - which aborts the process ("pure virtual method called")
+    // right after every identification. Called from a signal handler, the
+    // same get() registers no guard at all.
+    property int matchCount: 0
+    property var exactMatchPerson: null
 
-    // Holds a copy, never the model item itself: keeping a reference to a
-    // ListModel row and reading it after the model has been rebuilt is a
-    // dangling read
-    property var exactMatchPerson: {
-        if (nameQuery.length === 0 || !peopleModel) return null
-        for (var i = 0; i < peopleModel.count; i++) {
-            var p = peopleModel.get(i)
-            if (p.person_id !== excludePersonId && p.name.toLowerCase() === nameQuery) {
-                return { person_id: p.person_id, name: p.name }
+    function updateMatches() {
+        var count = 0
+        var exact = null
+
+        if (peopleModel) {
+            for (var i = 0; i < peopleModel.count; i++) {
+                var p = peopleModel.get(i)
+                if (p.person_id === excludePersonId) {
+                    continue
+                }
+                if (personMatches(p.name)) {
+                    count++
+                }
+                // A copy, never the model row itself
+                if (exact === null && nameQuery.length > 0
+                        && p.name.toLowerCase() === nameQuery) {
+                    exact = { person_id: p.person_id, name: p.name }
+                }
             }
         }
-        return null
+
+        matchCount = count
+        exactMatchPerson = exact
     }
+
+    onNameQueryChanged: updateMatches()
+    Component.onCompleted: updateMatches()
 
     canAccept: (selectedContactId.length > 0) || (selectedPersonId > 0)
                || (createNew && allowCreate && newNameField.text.trim().length > 0)
@@ -76,12 +91,7 @@ Dialog {
         if (createNew && allowCreate && selectedContactId.length === 0) {
             personName = newNameField.text.trim()
         }
-        console.log("[identify] dialog accepted: createNew=", createNew,
-                    "personId=", selectedPersonId, "name=", personName,
-                    "contact=", selectedContactId)
     }
-
-    Component.onDestruction: console.log("[identify] SelectPersonDialog destroyed")
 
     SilicaFlickable {
         anchors.fill: parent

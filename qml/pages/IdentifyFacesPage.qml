@@ -31,13 +31,11 @@ Page {
 
     function nextFace() {
         if (currentIndex < currentFaces.length - 1) {
-            console.log("[identify] nextFace ->", currentIndex + 1, "of", currentFaces.length)
             currentIndex++
         } else {
             // No more faces. Leaving from here would destroy the very item
             // whose click handler is running (a suggestion row, a dialog),
             // so the page leaves once the handler has returned.
-            console.log("[identify] nextFace: last face, scheduling pop")
             popTimer.restart()
         }
     }
@@ -46,7 +44,6 @@ Page {
         id: popTimer
         interval: 0
         onTriggered: {
-            console.log("[identify] popTimer: leaving the page")
             pageStack.completeAnimation()
             pageStack.pop()
         }
@@ -56,15 +53,11 @@ Page {
     function identifyFace(personId, personName, contactId) {
         if (!currentFace) return
 
-        console.log("[identify] identifyFace face=", currentFace.face_id,
-                    "personId=", personId, "name=", personName, "contact=", contactId || "")
         facePipeline.identifyFace(currentFace.face_id, personId, personName, contactId || "")
-        console.log("[identify] pipeline.identifyFace returned")
         nextFace()
         // Models are refreshed by refreshTimer, never from here: see the
         // timer's comment
         refreshTimer.restart()
-        console.log("[identify] identifyFace done")
     }
 
     // Identification can be triggered from deep inside a dialog being torn
@@ -83,18 +76,14 @@ Page {
             // pass. Leave it alone; onStatusChanged fires the refresh again
             // once the page is really back in front.
             if (page.status !== PageStatus.Active) {
-                console.log("[identify] refreshTimer: page not active yet, waiting")
                 return
             }
-            console.log("[identify] refreshTimer: refreshing models")
             loadPeople()
             loadSuggestions()
-            console.log("[identify] refreshTimer: done")
         }
     }
 
     onStatusChanged: {
-        console.log("[identify] page status ->", status)
         if (status === PageStatus.Active) {
             refreshTimer.restart()
         }
@@ -117,11 +106,9 @@ Page {
     }
 
     function loadSuggestions() {
-        console.log("[identify] loadSuggestions for face", currentFace ? currentFace.face_id : -1)
         suggestions = (currentFace && facePipeline && facePipeline.initialized)
             ? facePipeline.suggestPeopleForFace(currentFace.face_id, 2)
             : []
-        console.log("[identify] loadSuggestions ->", suggestions.length, "candidates")
     }
 
     onCurrentFaceChanged: refreshTimer.restart()
@@ -132,7 +119,6 @@ Page {
     function loadPeople() {
         if (!facePipeline || !facePipeline.initialized) return
 
-        console.log("[identify] loadPeople")
         var people = facePipeline.getAllPeople()
         for (var i = 0; i < people.length; i++) {
             if (i < peopleModel.count) {
@@ -315,10 +301,7 @@ Page {
                             }
                         }
 
-                        onClicked: {
-                            console.log("[identify] suggestion tapped, person", modelData.person_id)
-                            identifyFace(modelData.person_id, "")
-                        }
+                        onClicked: identifyFace(modelData.person_id, "")
                     }
                 }
             }
