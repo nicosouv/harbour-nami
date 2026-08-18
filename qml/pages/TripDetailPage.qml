@@ -93,9 +93,12 @@ Page {
         totalPhotoCount = items.length
 
         var located = []
+        var unlocated = []
         for (var n = 0; n < items.length; n++) {
             if (items[n].has_location) {
-                located.push({ latitude: items[n].latitude, longitude: items[n].longitude })
+                located.push(items[n])
+            } else {
+                unlocated.push(items[n])
             }
         }
 
@@ -105,21 +108,42 @@ Page {
         // where the rest of the trip actually is before using them for the
         // map, the route, or the distance - the photo itself still shows up
         // normally in the grid below, it's just not trusted for location.
-        located = rejectLocationOutliers(located)
+        var trusted = rejectLocationOutliers(located)
+        var isTrusted = {}
+        for (var t = 0; t < trusted.length; t++) {
+            isTrusted[trusted[t].file_path] = true
+        }
+        for (var o = 0; o < located.length; o++) {
+            if (!isTrusted[located[o].file_path]) {
+                unlocated.push(located[o])
+            }
+        }
+        unlocated.sort(function(a, b) { return a.timestamp - b.timestamp })
 
-        routePoints = located
-        hasLocationData = located.length > 0
+        routePoints = trusted
+        hasLocationData = trusted.length > 0
 
         var totalKm = 0
-        for (var k = 1; k < located.length; k++) {
-            totalKm += GeoUtils.haversineKm(located[k - 1].latitude, located[k - 1].longitude,
-                                             located[k].latitude, located[k].longitude)
+        for (var k = 1; k < trusted.length; k++) {
+            totalKm += GeoUtils.haversineKm(trusted[k - 1].latitude, trusted[k - 1].longitude,
+                                             trusted[k].latitude, trusted[k].longitude)
         }
         distanceKm = totalKm
 
-        mapStops = clusterStopCentroids(located)
+        // One clustering feeds both the map's numbered markers and the
+        // "Stop N" sections below, so the numbers always refer to the same
+        // places
+        var places = clusterByPlace(trusted)
+        mapStops = places.map(function(c, i) {
+            return {
+                latitude: c.latitude, longitude: c.longitude,
+                // The map labels its markers with the list's own numbering,
+                // and uses the photo count to decide which ones to show
+                label: i + 1, photo_count: c.photos.length
+            }
+        })
 
-        groups = sortMode === "location" ? groupByLocation(items) : groupByDay(items)
+        groups = sortMode === "location" ? groupByLocation(places, unlocated) : groupByDay(items)
     }
 
     function groupByDay(items) {
@@ -174,75 +198,72 @@ Page {
         return kept.length >= 2 ? kept : pts
     }
 
-    // Sequential nearest-to-last-point clustering (~1.5km), centroid per
-    // cluster, for the map's numbered stop markers
-    function clusterStopCentroids(locatedPts) {
-        var clusterKm = 1.5
-        var clusters = []
-        for (var i = 0; i < locatedPts.length; i++) {
-            var pt = locatedPts[i]
-            var cluster = clusters.length > 0 ? clusters[clusters.length - 1] : null
-            if (cluster && GeoUtils.haversineKm(cluster.lastLat, cluster.lastLon, pt.latitude, pt.longitude) <= clusterKm) {
-                cluster.lastLat = pt.latitude
-                cluster.lastLon = pt.longitude
-                cluster.sumLat += pt.latitude
-                cluster.sumLon += pt.longitude
-                cluster.count++
-            } else {
-                clusters.push({ lastLat: pt.latitude, lastLon: pt.longitude, sumLat: pt.latitude, sumLon: pt.longitude, count: 1 })
-            }
+    // How far apart two photos can be and still count as the same place.
+    // Fixed at 1.5km, a day spent walking around one city split into a
+    // dozen "stops" and the map grew a numbered marker every few pixels; on
+    // a cross-country road trip the same 1.5km made every fuel stop a stop
+    // of its own. So it scales with how far the trip actually reaches,
+    // which keeps markers a readable distance apart at any zoom.
+    function placeRadiusKm(pts) {
+        if (pts.length < 2) {
+            return 1.5
         }
-        return clusters.map(function(c) {
-            return { latitude: c.sumLat / c.count, longitude: c.sumLon / c.count }
-        })
+        var minLat = pts[0].latitude, maxLat = minLat
+        var minLon = pts[0].longitude, maxLon = minLon
+        for (var i = 1; i < pts.length; i++) {
+            minLat = Math.min(minLat, pts[i].latitude)
+            maxLat = Math.max(maxLat, pts[i].latitude)
+            minLon = Math.min(minLon, pts[i].longitude)
+            maxLon = Math.max(maxLon, pts[i].longitude)
+        }
+        var extentKm = GeoUtils.haversineKm(minLat, minLon, maxLat, maxLon)
+        return Math.max(1.5, Math.min(25, extentKm * 0.03))
     }
 
     // Greedy single-pass clustering in chronological order: a photo joins
-    // the current stop when it's within ~1.5km of the cluster's last point,
-    // otherwise a new stop starts. No reverse geocoding (the app is fully
-    // offline), so stops are just numbered in visit order rather than named.
-    function clusterLocations(items) {
-        var clusterKm = 1.5
+    // the current stop while it stays within the radius above of that
+    // stop's centre, otherwise a new stop starts. Comparing against the
+    // running centroid rather than the previous photo matters: chaining off
+    // the last photo lets a stop drift across a whole city, or shatter into
+    // one stop per street corner. No reverse geocoding (the app is fully
+    // offline), so stops are numbered in visit order rather than named.
+    function clusterByPlace(locatedItems) {
+        var radiusKm = placeRadiusKm(locatedItems)
         var clusters = []
-        var noLocation = []
 
-        for (var i = 0; i < items.length; i++) {
-            var it = items[i]
-            if (!it.has_location) {
-                noLocation.push(it)
-                continue
-            }
+        for (var i = 0; i < locatedItems.length; i++) {
+            var it = locatedItems[i]
             var cluster = clusters.length > 0 ? clusters[clusters.length - 1] : null
-            if (cluster && GeoUtils.haversineKm(cluster.lastLat, cluster.lastLon, it.latitude, it.longitude) <= clusterKm) {
+            if (cluster && GeoUtils.haversineKm(cluster.latitude, cluster.longitude,
+                                                it.latitude, it.longitude) <= radiusKm) {
                 cluster.photos.push(it)
-                cluster.lastLat = it.latitude
-                cluster.lastLon = it.longitude
                 cluster.sumLat += it.latitude
                 cluster.sumLon += it.longitude
+                cluster.latitude = cluster.sumLat / cluster.photos.length
+                cluster.longitude = cluster.sumLon / cluster.photos.length
             } else {
                 clusters.push({
                     photos: [it],
-                    lastLat: it.latitude, lastLon: it.longitude,
-                    sumLat: it.latitude, sumLon: it.longitude
+                    sumLat: it.latitude, sumLon: it.longitude,
+                    latitude: it.latitude, longitude: it.longitude
                 })
             }
         }
 
-        return { clusters: clusters, noLocation: noLocation }
+        return clusters
     }
 
-    function groupByLocation(items) {
-        var clustered = clusterLocations(items)
+    function groupByLocation(places, unlocated) {
         var result = []
-        for (var c = 0; c < clustered.clusters.length; c++) {
-            var count = clustered.clusters[c].photos.length
+        for (var c = 0; c < places.length; c++) {
+            var count = places[c].photos.length
             result.push({
                 title: qsTr("Stop %1").arg(c + 1) + " · " + (count === 1 ? qsTr("1 photo") : qsTr("%1 photos").arg(count)),
-                photos: clustered.clusters[c].photos
+                photos: places[c].photos
             })
         }
-        if (clustered.noLocation.length > 0) {
-            result.push({ title: qsTr("No location data"), photos: clustered.noLocation })
+        if (unlocated.length > 0) {
+            result.push({ title: qsTr("No location data"), photos: unlocated })
         }
         return result
     }
