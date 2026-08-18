@@ -7,6 +7,9 @@
 - Trip stops are grouped by place at the scale of the trip, and the map marks
   the places you spent time in rather than every photo taken along the way
 - Slightly rounder Trip and Hidden badges in the Events list
+- Fix a crash when merging two people, same cause as the one above
+- The app no longer writes its private file paths to the system journal on
+  every launch, and reports a diagnosable backtrace if it ever does crash
 
 * Tue Aug 18 2026 Nicolas Souveton <souvetonnicolas@gmail.com> 0.8.3-1
 - Suggest who a face belongs to while identifying, confirmed with a single tap
