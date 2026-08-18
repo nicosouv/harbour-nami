@@ -7,11 +7,7 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/objdetect.hpp>
 #include "facedetector.h"
-
-/**
- * @brief Face embedding (128-d vector for SFace)
- */
-using FaceEmbedding = std::vector<float>;
+#include "faceembedding.h"
 
 /**
  * @brief Match result

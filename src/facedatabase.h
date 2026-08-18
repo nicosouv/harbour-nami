@@ -11,7 +11,7 @@
 #include <QSqlDatabase>
 #include <QJsonObject>
 #include <QPair>
-#include "facerecognizer.h"
+#include "faceembedding.h"
 
 /**
  * @brief Photo record

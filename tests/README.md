@@ -24,16 +24,32 @@ Runs anywhere, no Qt. Every rule comes from a bug that shipped:
 the integrity of the bundled coastline dataset (closed rings, ordered by area,
 valid coordinates) that `TripRouteMap` relies on to fill land.
 
-## `tests/tst_facedatabase.cpp` — C++ unit tests
+## C++ unit tests
 
-Needs Qt and OpenCV headers, so it runs in the Sailfish SDK container:
+Qt5 and OpenSSL are the only dependencies - no OpenCV, no ML models, no
+cross-compiler, no device:
 
 ```
-cmake -B build-tests -DBUILD_TESTS=ON
-cmake --build build-tests --target tst_facedatabase
+cmake -S tests -B build-tests
+cmake --build build-tests
 QT_QPA_PLATFORM=offscreen ctest --test-dir build-tests --output-on-failure
 ```
 
-Covers the schema, the backup format (including that contact links stay out
-of it), the import being additive and skipping missing photos, and the
-helpers behind identification suggestions.
+`tst_facedatabase` covers the schema, the backup format (including that
+contact links stay out of it), the import being additive and skipping photos
+that no longer exist, and the helpers behind identification suggestions.
+
+`tst_backupcrypto` covers the passphrase encryption both ways: a good
+passphrase round-trips a multi-megabyte payload, and a wrong passphrase,
+flipped ciphertext bit, tampered tag or truncated payload all fail instead of
+returning something that looks like data.
+
+Keeping these two layers free of OpenCV is deliberate - `FaceEmbedding` lives
+in its own `src/faceembedding.h` precisely so the storage layer can be tested
+without the vision stack.
+
+## Not covered
+
+There is no end-to-end test: nothing exercises detection, recognition and the
+UI together, and nothing drives the real interface. See the notes in the pull
+request discussion for what that would take.
