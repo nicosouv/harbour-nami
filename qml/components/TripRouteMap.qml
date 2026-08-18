@@ -9,13 +9,30 @@ import "../js/worldcoastlines.js" as WorldCoastlines
 Item {
     id: root
 
-    // Array of {latitude, longitude} in chronological order, for the route
+    // Array of {latitude, longitude} in chronological order: every geotagged
+    // photo of the trip. Used for the viewport, not for the drawn line.
     property var points: []
     // Array of {latitude, longitude} in chronological visit order, one per
     // numbered marker (matches the "Stop N" grouping); optional
     property var stops: []
 
     property real revealProgress: 0
+
+    // The line follows the stops when there are any: a line through every
+    // geotagged photo turns a day spent in one city into an unreadable
+    // scribble, since hundreds of photos land within a few pixels
+    readonly property var routeLine: stops.length > 0 ? stops : points
+
+    // Hairlines, dots and dashes are the only sizes here not coming from
+    // Theme, so they need the device scaling factor applied by hand. The
+    // fallback keeps the map drawn rather than blank should Theme not
+    // expose pixelRatio.
+    readonly property real uiScale: Theme.pixelRatio > 0 ? Theme.pixelRatio : 1
+
+    // Never zoom in tighter than this. A trip spent inside one town would
+    // otherwise fill the map with a few hundred metres of empty paper, with
+    // no coastline in sight and nothing to tell you where you are.
+    readonly property real minSpanKm: 5
 
     height: visible ? Theme.itemSizeExtraLarge * 1.8 : 0
     visible: points.length >= 2
@@ -29,9 +46,9 @@ Item {
         z: 10
     }
 
-    // Bottom layer: paper background, graticule and coastline. Repainted
-    // only when the data or size changes, not on every reveal animation
-    // frame (those are comparatively expensive: up to ~130 world polylines).
+    // Bottom layer: paper background, coastline. Repainted only when the
+    // data or size changes, not on every reveal animation frame (those are
+    // comparatively expensive: up to ~130 world polylines).
     Canvas {
         id: backdropCanvas
         anchors.fill: parent
@@ -40,9 +57,9 @@ Item {
         onPaint: {
             var ctx = getContext("2d")
             ctx.clearRect(0, 0, width, height)
-            if (root.points.length < 2 || width <= 0 || height <= 0) return
+            if (root.routeLine.length < 1 || width <= 0 || height <= 0) return
 
-            var viewport = root.computeViewport()
+            var viewport = root.computeViewport(width, height)
 
             var grad = ctx.createLinearGradient(0, 0, 0, height)
             grad.addColorStop(0, "#faf5e8")
@@ -59,9 +76,9 @@ Item {
             // at any zoom level, so without this the mini map reads as
             // "the whole world crammed in" even when correctly cropped.
             ctx.strokeStyle = "rgba(150,130,100,0.4)"
-            ctx.lineWidth = 0.9
+            ctx.lineWidth = 0.9 * root.uiScale
             var lines = WorldCoastlines.COASTLINES
-            var minPixelStep = 2.5 * 2.5
+            var minPixelStep = Math.pow(2.5 * root.uiScale, 2)
             for (var c = 0; c < lines.length; c++) {
                 var line = lines[c]
                 var lMinLon = line[0], lMaxLon = line[0], lMinLat = line[1], lMaxLat = line[1]
@@ -107,90 +124,71 @@ Item {
         onPaint: {
             var ctx = getContext("2d")
             ctx.clearRect(0, 0, width, height)
-            if (root.points.length < 2 || width <= 0 || height <= 0) return
+            if (root.routeLine.length < 1 || width <= 0 || height <= 0) return
 
-            var viewport = root.computeViewport()
+            var viewport = root.computeViewport(width, height)
+            var scale = root.uiScale
 
-            // Route line: dashed, gently curved through the points (a
-            // quadratic Bezier per interior point, using the midpoint to
-            // the next point as the curve's anchor keeps it close to the
-            // real path instead of a wide swing), revealed progressively
             var pix = []
-            for (var i = 0; i < root.points.length; i++) {
-                pix.push(root.toXY(root.points[i].longitude, root.points[i].latitude, viewport, width, height))
+            for (var i = 0; i < root.routeLine.length; i++) {
+                pix.push(root.toXY(root.routeLine[i].longitude, root.routeLine[i].latitude,
+                                   viewport, width, height))
             }
 
-            ctx.lineWidth = 2.5
-            ctx.strokeStyle = "rgba(51,51,51,0.85)"
-            ctx.lineCap = "round"
-            ctx.lineJoin = "round"
-            ctx.setLineDash([7, 5])
-            ctx.beginPath()
-            ctx.moveTo(pix[0][0], pix[0][1])
-
-            var revealFraction = Math.max(0, Math.min(1, root.revealProgress))
-            if (pix.length === 2) {
-                ctx.lineTo(pix[0][0] + (pix[1][0] - pix[0][0]) * revealFraction,
-                           pix[0][1] + (pix[1][1] - pix[0][1]) * revealFraction)
-            } else {
-                var mids = []
-                for (var m = 0; m < pix.length - 1; m++) {
-                    mids.push([(pix[m][0] + pix[m + 1][0]) / 2, (pix[m][1] + pix[m + 1][1]) / 2])
-                }
-
-                // Units: straight to mid[0], one quadratic curve per interior
-                // point ending at its midpoint, then a final straight to the
-                // last point - "pix.length" units total, revealed by count
-                var totalUnits = pix.length
-                var revealUnits = Math.ceil(totalUnits * revealFraction)
-                var drawn = 0
-
-                if (revealUnits > drawn) {
-                    ctx.lineTo(mids[0][0], mids[0][1])
-                    drawn++
-                }
-                for (var u = 1; u <= pix.length - 2 && drawn < revealUnits; u++) {
-                    ctx.quadraticCurveTo(pix[u][0], pix[u][1], mids[u][0], mids[u][1])
-                    drawn++
-                }
-                if (drawn < revealUnits) {
-                    ctx.lineTo(pix[pix.length - 1][0], pix[pix.length - 1][1])
-                    drawn++
-                }
+            // Route line: dashed, gently curved through the stops, revealed
+            // progressively. Both the curve and the dashes are walked by
+            // hand along a sampled polyline (see routePolyline/strokeDashed)
+            if (pix.length >= 2) {
+                ctx.lineWidth = 2.5 * scale
+                ctx.strokeStyle = "rgba(51,51,51,0.85)"
+                ctx.lineCap = "round"
+                ctx.lineJoin = "round"
+                root.strokeDashed(ctx, root.routePolyline(pix), 7 * scale, 5 * scale,
+                                  root.revealProgress)
             }
-            ctx.stroke()
-            ctx.setLineDash([])
 
             // Numbered stop markers when available, else plain start/end dots
             if (root.stops.length > 0) {
                 ctx.font = "bold " + Math.round(Theme.fontSizeExtraSmall) + "px sans-serif"
                 ctx.textAlign = "center"
                 ctx.textBaseline = "middle"
-                for (var s = 0; s < root.stops.length; s++) {
-                    var sp = root.toXY(root.stops[s].longitude, root.stops[s].latitude, viewport, width, height)
+                for (var s = 0; s < pix.length; s++) {
+                    var label = String(s + 1)
+                    // Wide enough for the number it holds: two-digit stops
+                    // used to spill out of a fixed 9px dot. Measured when
+                    // the canvas supports it, estimated otherwise, since a
+                    // throwing call here would cost every marker below.
+                    var labelWidth = ctx.measureText
+                        ? ctx.measureText(label).width
+                        : label.length * Theme.fontSizeExtraSmall * 0.6
+                    var radius = Math.max(Theme.fontSizeExtraSmall * 0.8,
+                                          labelWidth / 2 + 4 * scale)
                     ctx.beginPath()
-                    ctx.arc(sp[0], sp[1], 9, 0, 2 * Math.PI)
+                    ctx.arc(pix[s][0], pix[s][1], radius, 0, 2 * Math.PI)
                     ctx.fillStyle = Theme.highlightColor
                     ctx.fill()
+                    // Paper-coloured rim so a marker sitting on the route
+                    // line still reads as a separate thing
+                    ctx.strokeStyle = "rgba(250,245,232,0.9)"
+                    ctx.lineWidth = 1.5 * scale
+                    ctx.stroke()
                     ctx.fillStyle = "white"
-                    ctx.fillText(String(s + 1), sp[0], sp[1] + 1)
+                    ctx.fillText(label, pix[s][0], pix[s][1] + scale)
                 }
             } else {
-                for (var k = 0; k < root.points.length; k += root.points.length - 1) {
-                    var pt = root.toXY(root.points[k].longitude, root.points[k].latitude, viewport, width, height)
+                var ends = pix.length >= 2 ? [0, pix.length - 1] : [0]
+                for (var k = 0; k < ends.length; k++) {
                     ctx.beginPath()
-                    ctx.arc(pt[0], pt[1], 6, 0, 2 * Math.PI)
+                    ctx.arc(pix[ends[k]][0], pix[ends[k]][1], 6 * scale, 0, 2 * Math.PI)
                     ctx.fillStyle = k === 0 ? "#4CAF50" : "#F44336"
                     ctx.fill()
                 }
             }
 
-            // Scale bar: km per pixel measured along the horizontal axis at
-            // the viewport's vertical center (the projection isn't a true
-            // equirectangular one, so this is an approximation, not a ruler)
-            var centerLat = (viewport.minLat + viewport.maxLat) / 2
-            var kmPerDegLon = GeoUtils.haversineKm(centerLat, viewport.minLon, centerLat, viewport.minLon + 1)
-            var kmPerPixel = (viewport.lonSpan * kmPerDegLon) / width
+            // Scale bar. Both axes are drawn at the same number of pixels
+            // per kilometre (see computeViewport), so this is a real ruler
+            // in every direction, not just horizontally.
+            var kmPerPixel = viewport.kmPerDegLat / viewport.pxPerDeg
             if (kmPerPixel > 0) {
                 var niceSteps = [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000]
                 var targetKm = width * 0.26 * kmPerPixel
@@ -199,56 +197,180 @@ Item {
                     if (niceSteps[ns] <= targetKm) barKm = niceSteps[ns]
                 }
                 var barPixels = barKm / kmPerPixel
-                var barX = 10
-                var barY = height - 10
+                var barX = Theme.paddingMedium
+                var barY = height - Theme.paddingMedium
+                var tick = 4 * scale
 
                 ctx.strokeStyle = "rgba(40,40,40,0.85)"
-                ctx.lineWidth = 2
+                ctx.lineWidth = 2 * scale
                 ctx.beginPath()
                 ctx.moveTo(barX, barY)
                 ctx.lineTo(barX + barPixels, barY)
-                ctx.moveTo(barX, barY - 4)
-                ctx.lineTo(barX, barY + 4)
-                ctx.moveTo(barX + barPixels, barY - 4)
-                ctx.lineTo(barX + barPixels, barY + 4)
+                ctx.moveTo(barX, barY - tick)
+                ctx.lineTo(barX, barY + tick)
+                ctx.moveTo(barX + barPixels, barY - tick)
+                ctx.lineTo(barX + barPixels, barY + tick)
                 ctx.stroke()
 
                 ctx.fillStyle = "rgba(40,40,40,0.9)"
                 ctx.font = Math.round(Theme.fontSizeTiny) + "px sans-serif"
                 ctx.textAlign = "left"
                 ctx.textBaseline = "bottom"
-                ctx.fillText(barKm + " km", barX, barY - 6)
+                ctx.fillText(barKm + " km", barX, barY - tick - 2 * scale)
             }
         }
     }
 
-    // Shared bounding box (with padding) for both canvases
-    function computeViewport() {
-        var minLat = points[0].latitude, maxLat = minLat
-        var minLon = points[0].longitude, maxLon = minLon
-        for (var i = 1; i < points.length; i++) {
-            minLat = Math.min(minLat, points[i].latitude)
-            maxLat = Math.max(maxLat, points[i].latitude)
-            minLon = Math.min(minLon, points[i].longitude)
-            maxLon = Math.max(maxLon, points[i].longitude)
+    // Shared viewport for both canvases.
+    //
+    // Equirectangular projection centred on the trip, using the trip's own
+    // latitude as the standard parallel: a degree of longitude covers
+    // cos(latitude) as much ground as a degree of latitude, and ignoring
+    // that stretches every shape east-west (by half in northern Europe).
+    // Both axes then get the same pixels-per-degree, so the route and the
+    // coastline keep their real proportions instead of being squashed to
+    // whatever aspect ratio the widget happens to have.
+    function computeViewport(w, h) {
+        var line = routeLine
+        var minLat = line[0].latitude, maxLat = minLat
+        var minLon = line[0].longitude, maxLon = minLon
+        for (var i = 1; i < line.length; i++) {
+            minLat = Math.min(minLat, line[i].latitude)
+            maxLat = Math.max(maxLat, line[i].latitude)
+            minLon = Math.min(minLon, line[i].longitude)
+            maxLon = Math.max(maxLon, line[i].longitude)
         }
-        var latSpanRaw = Math.max(maxLat - minLat, 0.0005)
-        var lonSpanRaw = Math.max(maxLon - minLon, 0.0005)
-        var padLat = latSpanRaw * 0.15
-        var padLon = lonSpanRaw * 0.15
-        minLat -= padLat; maxLat += padLat
-        minLon -= padLon; maxLon += padLon
+
+        var centerLat = (minLat + maxLat) / 2
+        var centerLon = (minLon + maxLon) / 2
+        var lonScale = Math.max(0.05, Math.cos(centerLat * Math.PI / 180))
+
+        var kmPerDegLat = GeoUtils.haversineKm(centerLat, centerLon, centerLat + 1, centerLon)
+        var minSpanDeg = minSpanKm / kmPerDegLat
+
+        var latSpan = Math.max(maxLat - minLat, minSpanDeg)
+        var lonSpan = Math.max((maxLon - minLon) * lonScale, minSpanDeg)
+
+        // The tighter axis sets the scale, with ~20% breathing room so the
+        // route never touches the frame
+        var pxPerDeg = Math.min(w / (lonSpan * 1.2), h / (latSpan * 1.2))
+
         return {
-            minLat: minLat, maxLat: maxLat, minLon: minLon, maxLon: maxLon,
-            latSpan: maxLat - minLat, lonSpan: maxLon - minLon
+            centerLat: centerLat,
+            centerLon: centerLon,
+            lonScale: lonScale,
+            pxPerDeg: pxPerDeg,
+            kmPerDegLat: kmPerDegLat,
+            // Actually visible bounds, for the coastline's bbox rejection
+            minLat: centerLat - (h / 2) / pxPerDeg,
+            maxLat: centerLat + (h / 2) / pxPerDeg,
+            minLon: centerLon - (w / 2) / pxPerDeg / lonScale,
+            maxLon: centerLon + (w / 2) / pxPerDeg / lonScale
         }
     }
 
+    // Sample the gently curved route into a plain polyline: a quadratic
+    // Bezier per interior stop, anchored on the midpoints to its neighbours
+    // so the curve stays close to the real path instead of swinging wide.
+    // Sampling it (rather than using quadraticCurveTo) is what lets the
+    // dashes and the reveal below be measured in real path length.
+    function routePolyline(pix) {
+        if (pix.length < 2) {
+            return []
+        }
+        if (pix.length === 2) {
+            return [pix[0], pix[1]]
+        }
+
+        var mids = []
+        for (var m = 0; m < pix.length - 1; m++) {
+            mids.push([(pix[m][0] + pix[m + 1][0]) / 2, (pix[m][1] + pix[m + 1][1]) / 2])
+        }
+
+        var path = [pix[0], mids[0]]
+        var steps = 12
+        for (var u = 1; u <= pix.length - 2; u++) {
+            var from = mids[u - 1], ctrl = pix[u], to = mids[u]
+            for (var t = 1; t <= steps; t++) {
+                var f = t / steps, g = 1 - f
+                path.push([g * g * from[0] + 2 * g * f * ctrl[0] + f * f * to[0],
+                           g * g * from[1] + 2 * g * f * ctrl[1] + f * f * to[1]])
+            }
+        }
+        path.push(pix[pix.length - 1])
+        return path
+    }
+
+    // Qt Quick's Canvas context has no setLineDash: calling it throws, and
+    // the exception aborts the whole paint handler, which is why the map
+    // used to render as an empty sheet of paper. So walk the path and lay
+    // the dashes down by hand, stopping at the revealed fraction of the
+    // total length (which also makes the reveal continuous instead of
+    // jumping from stop to stop).
+    function strokeDashed(ctx, path, dashOn, dashOff, fraction) {
+        if (path.length < 2 || dashOn <= 0 || dashOff <= 0) {
+            return
+        }
+
+        var lengths = []
+        var total = 0
+        for (var i = 1; i < path.length; i++) {
+            var dx = path[i][0] - path[i - 1][0]
+            var dy = path[i][1] - path[i - 1][1]
+            var d = Math.sqrt(dx * dx + dy * dy)
+            lengths.push(d)
+            total += d
+        }
+
+        var limit = total * Math.max(0, Math.min(1, fraction))
+        if (limit <= 0) {
+            return
+        }
+
+        var travelled = 0
+        var penDown = true
+        var remaining = dashOn
+
+        ctx.beginPath()
+        ctx.moveTo(path[0][0], path[0][1])
+        for (var s = 0; s < lengths.length; s++) {
+            var len = lengths[s]
+            if (len <= 0) {
+                continue
+            }
+            var ax = path[s][0], ay = path[s][1]
+            var ux = (path[s + 1][0] - ax) / len, uy = (path[s + 1][1] - ay) / len
+            var pos = 0
+            // Bounded: every iteration consumes at least one of the three
+            // budgets, but a stray zero-length step must not hang the UI
+            var guard = 0
+            while (pos < len && guard++ < 4096) {
+                if (travelled >= limit) {
+                    ctx.stroke()
+                    return
+                }
+                var step = Math.min(remaining, len - pos, limit - travelled)
+                pos += step
+                travelled += step
+                remaining -= step
+                if (penDown) {
+                    ctx.lineTo(ax + ux * pos, ay + uy * pos)
+                } else {
+                    ctx.moveTo(ax + ux * pos, ay + uy * pos)
+                }
+                if (remaining <= 0.0001) {
+                    penDown = !penDown
+                    remaining = penDown ? dashOn : dashOff
+                }
+            }
+        }
+        ctx.stroke()
+    }
+
     function toXY(lon, lat, viewport, w, h) {
-        var x = (lon - viewport.minLon) / viewport.lonSpan * w
-        // Screen Y grows downward, latitude grows northward
-        var y = h - (lat - viewport.minLat) / viewport.latSpan * h
-        return [x, y]
+        return [w / 2 + (lon - viewport.centerLon) * viewport.lonScale * viewport.pxPerDeg,
+                // Screen Y grows downward, latitude grows northward
+                h / 2 - (lat - viewport.centerLat) * viewport.pxPerDeg]
     }
 
     NumberAnimation {
@@ -261,19 +383,20 @@ Item {
         easing.type: Easing.OutCubic
     }
 
-    onPointsChanged: {
+    function repaintAll() {
         backdropCanvas.requestPaint()
+        routeCanvas.requestPaint()
+    }
+
+    onPointsChanged: {
+        repaintAll()
         revealProgress = 0
         revealAnimation.restart()
     }
-    onStopsChanged: routeCanvas.requestPaint()
+    // Stops define the drawn line and therefore the viewport, so the
+    // backdrop has to follow them too
+    onStopsChanged: repaintAll()
     onRevealProgressChanged: routeCanvas.requestPaint()
-    onWidthChanged: {
-        backdropCanvas.requestPaint()
-        routeCanvas.requestPaint()
-    }
-    onHeightChanged: {
-        backdropCanvas.requestPaint()
-        routeCanvas.requestPaint()
-    }
+    onWidthChanged: repaintAll()
+    onHeightChanged: repaintAll()
 }
