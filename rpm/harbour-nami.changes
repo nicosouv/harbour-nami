@@ -1,5 +1,6 @@
 * Tue Aug 18 2026 Nicolas Souveton <souvetonnicolas@gmail.com> 0.8.4-1
-- Fix a crash when identifying a face from an address book contact
+- Fix a crash when identifying a face, whether by typing a new name or by
+  picking a contact from the address book
 - Fix the trip route map drawing as an empty sheet of paper
 - Trip map now fills in land and sea instead of sketching a bare coastline
 - Trip map keeps true proportions, with a scale bar valid in every direction
