@@ -186,6 +186,10 @@
         <source>View full photo</source>
         <translation>Voir la photo entière</translation>
     </message>
+    <message>
+        <source>Select photos</source>
+        <translation>Sélectionner des photos</translation>
+    </message>
 </context>
 <context>
     <name>MemoryDetailPage</name>
@@ -204,6 +208,10 @@
     <message>
         <source>Share photos</source>
         <translation>Partager les photos</translation>
+    </message>
+    <message>
+        <source>Select photos</source>
+        <translation>Sélectionner des photos</translation>
     </message>
 </context>
 <context>
@@ -855,6 +863,37 @@
             <numerusform>%n correspondance à confirmer</numerusform>
             <numerusform>%n correspondances à confirmer</numerusform>
         </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n selected</source>
+        <translation>
+            <numerusform>%n sélectionnée</numerusform>
+            <numerusform>%n sélectionnées</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>All</source>
+        <translation>Toutes</translation>
+    </message>
+    <message>
+        <source>Confirm this match</source>
+        <translation>Confirmer cette correspondance</translation>
+    </message>
+    <message>
+        <source>Select photos</source>
+        <translation>Sélectionner des photos</translation>
+    </message>
+    <message>
+        <source>Tap photos to select</source>
+        <translation>Touchez les photos à sélectionner</translation>
+    </message>
+    <message>
+        <source>That many photos will not go through in one share</source>
+        <translation>Autant de photos ne passeront pas en un seul partage</translation>
+    </message>
+    <message>
+        <source>To confirm (%1)</source>
+        <translation>À confirmer (%1)</translation>
     </message>
 </context>
 <context>
@@ -1554,6 +1593,14 @@
         <source>~%1 km traveled</source>
         <translation>~%1 km parcourus</translation>
     </message>
+    <message>
+        <source>Select photos</source>
+        <translation>Sélectionner des photos</translation>
+    </message>
+    <message>
+        <source>Share</source>
+        <translation>Partager</translation>
+    </message>
 </context>
 <context>
     <name>PassphraseDialog</name>
@@ -1767,6 +1814,24 @@
     <message>
         <source>Your yearly recap appears once you have a few events</source>
         <translation>Votre rétrospective annuelle apparaît dès que vous avez quelques événements</translation>
+    </message>
+</context>
+<context>
+    <name>PhotoSelectionBar</name>
+    <message numerus="yes">
+        <source>%n selected</source>
+        <translation>
+            <numerusform>%n sélectionnée</numerusform>
+            <numerusform>%n sélectionnées</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Tap photos to select</source>
+        <translation>Touchez les photos à sélectionner</translation>
+    </message>
+    <message>
+        <source>That many photos will not go through in one share</source>
+        <translation>Autant de photos ne passeront pas en un seul partage</translation>
     </message>
 </context>
 </TS>

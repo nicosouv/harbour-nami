@@ -790,6 +790,37 @@
         <source>Unlink contact</source>
         <translation>Fjern kontaktkobling</translation>
     </message>
+    <message numerus="yes">
+        <source>%n selected</source>
+        <translation>
+            <numerusform>%n valgt</numerusform>
+            <numerusform>%n valgt</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>All</source>
+        <translation>Alle</translation>
+    </message>
+    <message>
+        <source>Confirm this match</source>
+        <translation>Bekreft dette treffet</translation>
+    </message>
+    <message>
+        <source>Select photos</source>
+        <translation>Velg bilder</translation>
+    </message>
+    <message>
+        <source>Tap photos to select</source>
+        <translation>Trykk på bildene for å velge</translation>
+    </message>
+    <message>
+        <source>That many photos will not go through in one share</source>
+        <translation>Så mange bilder går ikke gjennom i én deling</translation>
+    </message>
+    <message>
+        <source>To confirm (%1)</source>
+        <translation>Å bekrefte (%1)</translation>
+    </message>
 </context>
 <context>
     <name>PersonPage</name>
@@ -1413,6 +1444,10 @@
         <source>photos</source>
         <translation>bilder</translation>
     </message>
+    <message>
+        <source>Select photos</source>
+        <translation>Velg bilder</translation>
+    </message>
 </context>
 <context>
     <name>MemoryDetailPage</name>
@@ -1431,6 +1466,10 @@
     <message>
         <source>photos</source>
         <translation>bilder</translation>
+    </message>
+    <message>
+        <source>Select photos</source>
+        <translation>Velg bilder</translation>
     </message>
 </context>
 <context>
@@ -1619,6 +1658,14 @@
         <source>~%1 km traveled</source>
         <translation>~%1 km tilbakelagt</translation>
     </message>
+    <message>
+        <source>Select photos</source>
+        <translation>Velg bilder</translation>
+    </message>
+    <message>
+        <source>Share</source>
+        <translation>Del</translation>
+    </message>
 </context>
 <context>
     <name>TripNameDialog</name>
@@ -1747,6 +1794,24 @@
     <message>
         <source>Your yearly recap appears once you have a few events</source>
         <translation>Den årlige oppsummeringen vises når du har noen hendelser</translation>
+    </message>
+</context>
+<context>
+    <name>PhotoSelectionBar</name>
+    <message numerus="yes">
+        <source>%n selected</source>
+        <translation>
+            <numerusform>%n valgt</numerusform>
+            <numerusform>%n valgt</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Tap photos to select</source>
+        <translation>Trykk på bildene for å velge</translation>
+    </message>
+    <message>
+        <source>That many photos will not go through in one share</source>
+        <translation>Så mange bilder går ikke gjennom i én deling</translation>
     </message>
 </context>
 </TS>

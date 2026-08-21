@@ -1,7 +1,6 @@
 import QtQuick 2.6
 import Sailfish.Silica 1.0
 import "../components"
-import "../js/share.js" as Share
 
 // A memory's photos scattered like polaroids thrown on a table
 Page {
@@ -18,6 +17,7 @@ Page {
     }
 
     PhotoShareAction { id: shareAction }
+    PhotoSelection { id: selection }
 
     // Deterministic pseudo-random in [0,1) so the scatter looks organic but
     // stays stable across relayouts
@@ -76,9 +76,9 @@ Page {
 
         PullDownMenu {
             MenuItem {
-                text: qsTr("Share photos")
-                enabled: photosModel.count > 0
-                onClicked: shareAction.sharePhotos(Share.pathsFromModel(photosModel))
+                text: qsTr("Select photos")
+                enabled: photosModel.count > 0 && !selection.active
+                onClicked: selection.begin("")
             }
         }
 
@@ -198,12 +198,39 @@ Page {
                         }
                     }
 
+                    Rectangle {
+                        anchors.fill: parent
+                        visible: selection.active
+                        color: selection.isSelected(model.file_path)
+                               ? Theme.rgba(Theme.highlightBackgroundColor, 0.5)
+                               : Theme.rgba("black", 0.4)
+                        z: 90
+
+                        Icon {
+                            anchors.centerIn: parent
+                            source: "image://theme/icon-m-acknowledge"
+                            opacity: selection.isSelected(model.file_path) ? 1 : 0.25
+                        }
+                    }
+
                     MouseArea {
                         anchors.fill: parent
+                        z: 95
                         onClicked: {
+                            if (selection.active) {
+                                selection.toggle(model.file_path)
+                                return
+                            }
                             pageStack.push(Qt.resolvedUrl("PhotoViewerPage.qml"), {
                                 photoPath: model.file_path
                             })
+                        }
+                        onPressAndHold: {
+                            if (!selection.active) {
+                                selection.begin(model.file_path)
+                            } else {
+                                selection.toggle(model.file_path)
+                            }
                         }
                     }
                 }
@@ -216,5 +243,19 @@ Page {
         }
 
         VerticalScrollDecorator {}
+    }
+
+    PhotoSelectionBar {
+        id: selectionBar
+        photoSelection: selection
+        anchors {
+            left: parent.left
+            right: parent.right
+            bottom: parent.bottom
+        }
+        z: 200
+        onShareRequested: {
+            if (shareAction.sharePhotos(selection.paths)) selection.end()
+        }
     }
 }

@@ -3,7 +3,6 @@ import Sailfish.Silica 1.0
 import "../components"
 import "../js/geoutils.js" as GeoUtils
 import "../js/eventsettings.js" as EventSettings
-import "../js/share.js" as Share
 
 // All photos of a trip (several days grouped together), with a choice of
 // browsing them by day or by geographic stop, plus a schematic route map.
@@ -26,6 +25,7 @@ Page {
     property string coverPath: ""
 
     PhotoShareAction { id: shareAction }
+    PhotoSelection { id: selection }
 
     function loadTrip() {
         if (!faceManager || !faceManager.initialized || tripId < 0) return
@@ -279,9 +279,9 @@ Page {
 
         PullDownMenu {
             MenuItem {
-                text: qsTr("Share photos")
-                enabled: totalPhotoCount > 0
-                onClicked: shareAction.sharePhotos(Share.pathsFromGroups(groups))
+                text: qsTr("Select photos")
+                enabled: totalPhotoCount > 0 && !selection.active
+                onClicked: selection.begin("")
             }
             MenuItem {
                 text: sortMode === "day" ? qsTr("Sort by location") : qsTr("Sort by day")
@@ -392,6 +392,22 @@ Page {
                                             size: BusyIndicatorSize.Small
                                         }
 
+                                        // Selection state
+                                        Rectangle {
+                                            anchors.fill: parent
+                                            visible: selection.active
+                                            color: selection.isSelected(modelData.file_path)
+                                                   ? Theme.rgba(Theme.highlightBackgroundColor, 0.45)
+                                                   : Theme.rgba("black", 0.35)
+                                            z: 90
+
+                                            Icon {
+                                                anchors.centerIn: parent
+                                                source: "image://theme/icon-m-acknowledge"
+                                                opacity: selection.isSelected(modelData.file_path) ? 1 : 0.25
+                                            }
+                                        }
+
                                         // Marks the photo currently used as the trip's cover
                                         Rectangle {
                                             visible: modelData.file_path === coverPath
@@ -419,12 +435,25 @@ Page {
                                 ]
 
                                 onClicked: {
+                                    if (selection.active) {
+                                        selection.toggle(modelData.file_path)
+                                        return
+                                    }
                                     pageStack.push(Qt.resolvedUrl("PhotoViewerPage.qml"), {
                                         photoPath: modelData.file_path
                                     })
                                 }
 
-                                menu: ContextMenu {
+                                onPressAndHold: {
+                                    if (selection.active) selection.toggle(modelData.file_path)
+                                }
+
+                                menu: selection.active ? null : tripPhotoMenu
+
+                                Component {
+                                    id: tripPhotoMenu
+
+                                    ContextMenu {
                                     MenuItem {
                                         text: qsTr("Set as trip cover")
                                         onClicked: {
@@ -439,6 +468,12 @@ Page {
                                                 photoPath: modelData.file_path
                                             })
                                         }
+                                    }
+
+                                    MenuItem {
+                                        text: qsTr("Share")
+                                        onClicked: shareAction.sharePhoto(modelData.file_path)
+                                    }
                                     }
                                 }
                             }
@@ -459,5 +494,26 @@ Page {
         }
 
         VerticalScrollDecorator {}
+    }
+
+    PhotoSelectionBar {
+        id: selectionBar
+        photoSelection: selection
+        anchors {
+            left: parent.left
+            right: parent.right
+            bottom: parent.bottom
+        }
+        z: 200
+        onShareRequested: {
+            if (shareAction.sharePhotos(selection.paths)) selection.end()
+        }
+        extraActionIcon: "image://theme/icon-m-favorite"
+        extraActionEnabled: selection.count === 1
+        onExtraActionTriggered: {
+            faceManager.setEventCover("trip:" + tripId, selection.paths[0])
+            coverPath = selection.paths[0]
+            selection.end()
+        }
     }
 }

@@ -2,6 +2,15 @@ import QtQuick 2.6
 import Sailfish.Silica 1.0
 import "../components"
 
+/*
+ * The photo is the subject, so it takes the top of the page and can be
+ * zoomed in place. What the app knows about it sits right underneath,
+ * always visible: no pulley menu, no panel to open first.
+ *
+ * The page scrolls as one, except while the photo is zoomed in - the photo
+ * then takes the drag so it can be panned, and a double tap gives the page
+ * back.
+ */
 Page {
     id: page
 
@@ -14,16 +23,16 @@ Page {
     property int rotationTurns: 0
     readonly property bool quarterTurned: (rotationTurns % 2) !== 0
 
-    // Zoom is a plain multiplier over the fit-to-screen size. Panning is left
-    // entirely to the Flickable, which is why the image is sized rather than
+    // Zoom is a plain multiplier over the fit-to-viewport size. Panning is
+    // left to the Flickable, which is why the image is sized rather than
     // scaled: contentWidth/contentHeight then match what is actually drawn,
     // and the view can no longer be panned into empty space.
     property real zoom: 1.0
     readonly property real minZoom: 1.0
     readonly property real maxZoom: 6.0
     readonly property real doubleTapZoom: 2.5
+    readonly property bool zoomed: zoom > minZoom + 0.01
 
-    property bool chromeVisible: true
     property var details: ({})
 
     // Focal point of the zoom in progress: a normalised position inside the
@@ -36,6 +45,11 @@ Page {
     property real anchorVy: 0
 
     allowedOrientations: Orientation.All
+
+    // The photo keeps the larger share of the screen; the rest of the page
+    // scrolls up over it when the user wants the details.
+    readonly property real stageHeight: isPortrait ? page.height * 0.62
+                                                   : page.height * 0.78
 
     // Natural size of the photo. Image.implicitWidth already accounts for the
     // EXIF orientation applied by autoTransform; the database values are the
@@ -52,7 +66,7 @@ Page {
     readonly property real turnedHeight: quarterTurned ? naturalWidth : naturalHeight
 
     readonly property real fitScale: (turnedWidth > 0 && turnedHeight > 0)
-        ? Math.min(flick.width / turnedWidth, flick.height / turnedHeight)
+        ? Math.min(stage.width / turnedWidth, stage.height / turnedHeight)
         : 1
     readonly property real baseWidth: turnedWidth * fitScale
     readonly property real baseHeight: turnedHeight * fitScale
@@ -62,21 +76,21 @@ Page {
         return Math.max(lo, Math.min(value, hi))
     }
 
-    // Remember what the user is aiming at, in viewport coordinates
+    // Remember what the user is aiming at, in stage coordinates
     function beginZoom(focusX, focusY) {
         anchorVx = focusX
         anchorVy = focusY
         anchorNx = frame.width > 0
-            ? (flick.contentX + focusX - frame.x) / frame.width : 0.5
+            ? (stage.contentX + focusX - frame.x) / frame.width : 0.5
         anchorNy = frame.height > 0
-            ? (flick.contentY + focusY - frame.y) / frame.height : 0.5
+            ? (stage.contentY + focusY - frame.y) / frame.height : 0.5
     }
 
     function applyAnchor() {
-        flick.contentX = clamp(anchorNx * frame.width + frame.x - anchorVx,
-                               0, flick.contentWidth - flick.width)
-        flick.contentY = clamp(anchorNy * frame.height + frame.y - anchorVy,
-                               0, flick.contentHeight - flick.height)
+        stage.contentX = clamp(anchorNx * frame.width + frame.x - anchorVx,
+                               0, stage.contentWidth - stage.width)
+        stage.contentY = clamp(anchorNy * frame.height + frame.y - anchorVy,
+                               0, stage.contentHeight - stage.height)
     }
 
     function zoomTo(newZoom, focusX, focusY) {
@@ -84,15 +98,15 @@ Page {
         zoom = clamp(newZoom, minZoom, maxZoom)
     }
 
-    // Zoom buttons work on the middle of the screen, which is what the user
-    // is looking at - anchoring them at the origin is what used to send the
-    // view off to the top-left corner.
+    // Zoom buttons work on the middle of the stage, which is what the user is
+    // looking at; anchoring them at the origin is what used to send the view
+    // off to the top-left corner.
     function zoomBy(factor) {
-        zoomTo(zoom * factor, flick.width / 2, flick.height / 2)
+        zoomTo(zoom * factor, stage.width / 2, stage.height / 2)
     }
 
     function resetZoom() {
-        zoomTo(minZoom, flick.width / 2, flick.height / 2)
+        zoomTo(minZoom, stage.width / 2, stage.height / 2)
     }
 
     function rotatePhoto() {
@@ -133,134 +147,302 @@ Page {
 
     PhotoShareAction { id: shareAction }
 
-    // Hosts the pull-down menu. Its own content never scrolls; the zoomable
-    // Flickable below only takes over the drag once there is something to pan.
     SilicaFlickable {
         id: pageFlick
         anchors.fill: parent
-        contentHeight: height
+        contentHeight: content.height
+        // While the photo is zoomed it takes the drag for panning
+        interactive: !page.zoomed
 
-        PullDownMenu {
-            MenuItem {
-                text: qsTr("Share")
-                onClicked: shareAction.sharePhoto(photoPath)
-            }
-            MenuItem {
-                text: detailsPanel.open ? qsTr("Hide details") : qsTr("Photo details")
-                // Driven directly rather than through a page property: a
-                // two-way binding on DockedPanel.open breaks as soon as the
-                // panel is dismissed by its own swipe.
-                onClicked: detailsPanel.open = !detailsPanel.open
-            }
-            MenuItem {
-                text: qsTr("Copy file path")
-                onClicked: page.copyPath()
-            }
-            MenuItem {
-                text: qsTr("Rotate")
-                onClicked: rotatePhoto()
-            }
-        }
+        Column {
+            id: content
+            width: parent.width
 
-        PinchArea {
-            id: pinchArea
-            anchors.fill: parent
+            // ---- the photo ------------------------------------------------
+            Item {
+                id: stageArea
+                width: parent.width
+                height: page.stageHeight
 
-            property real startZoom: 1.0
+                Rectangle {
+                    anchors.fill: parent
+                    color: Theme.rgba(Theme.highlightDimmerColor, 0.25)
+                }
 
-            onPinchStarted: {
-                startZoom = page.zoom
-                page.beginZoom(pinch.startCenter.x, pinch.startCenter.y)
-            }
-            onPinchUpdated: {
-                page.anchorVx = pinch.center.x
-                page.anchorVy = pinch.center.y
-                page.zoom = page.clamp(startZoom * pinch.scale,
-                                       page.minZoom, page.maxZoom)
-            }
+                PinchArea {
+                    anchors.fill: parent
 
-            Flickable {
-                id: flick
-                anchors.fill: parent
-                clip: true
+                    property real startZoom: 1.0
 
-                // Exactly the drawn size, so panning stops at the photo edges
-                contentWidth: Math.max(width, frame.width)
-                contentHeight: Math.max(height, frame.height)
+                    onPinchStarted: {
+                        startZoom = page.zoom
+                        page.beginZoom(pinch.startCenter.x, pinch.startCenter.y)
+                    }
+                    onPinchUpdated: {
+                        page.anchorVx = pinch.center.x
+                        page.anchorVy = pinch.center.y
+                        page.zoom = page.clamp(startZoom * pinch.scale,
+                                               page.minZoom, page.maxZoom)
+                    }
 
-                // Nothing to pan at fit size: leave the drag to the pull-down
-                interactive: page.zoom > page.minZoom
+                    Flickable {
+                        id: stage
+                        anchors.fill: parent
+                        clip: true
 
-                Item {
-                    id: frame
-                    width: page.baseWidth * page.zoom
-                    height: page.baseHeight * page.zoom
-                    // Centred while smaller than the viewport (letterboxing)
-                    x: Math.max(0, (flick.contentWidth - width) / 2)
-                    y: Math.max(0, (flick.contentHeight - height) / 2)
+                        // Exactly the drawn size, so panning stops at the edges
+                        contentWidth: Math.max(width, frame.width)
+                        contentHeight: Math.max(height, frame.height)
+                        interactive: page.zoomed
 
-                    Image {
-                        id: photoImage
-                        anchors.centerIn: parent
-                        // Swapped on a quarter turn so the rotated image
-                        // still lands inside the frame
-                        width: page.quarterTurned ? frame.height : frame.width
-                        height: page.quarterTurned ? frame.width : frame.height
-                        rotation: page.rotationTurns * 90
-                        source: photoPath ? "file://" + photoPath : ""
-                        fillMode: Image.PreserveAspectFit
-                        autoTransform: true  // honor EXIF orientation
-                        asynchronous: true
+                        Item {
+                            id: frame
+                            width: page.baseWidth * page.zoom
+                            height: page.baseHeight * page.zoom
+                            // Centred while smaller than the viewport
+                            x: Math.max(0, (stage.contentWidth - width) / 2)
+                            y: Math.max(0, (stage.contentHeight - height) / 2)
 
-                        Behavior on rotation {
-                            NumberAnimation { duration: 200; easing.type: Easing.OutQuad }
+                            Image {
+                                id: photoImage
+                                anchors.centerIn: parent
+                                // Swapped on a quarter turn so the rotated
+                                // image still lands inside the frame
+                                width: page.quarterTurned ? frame.height : frame.width
+                                height: page.quarterTurned ? frame.width : frame.height
+                                rotation: page.rotationTurns * 90
+                                source: photoPath ? "file://" + photoPath : ""
+                                fillMode: Image.PreserveAspectFit
+                                autoTransform: true  // honor EXIF orientation
+                                asynchronous: true
+
+                                Behavior on rotation {
+                                    NumberAnimation { duration: 200; easing.type: Easing.OutQuad }
+                                }
+                            }
+                        }
+
+                        // Double tap zooms in at the tapped point, or back out
+                        MouseArea {
+                            width: stage.contentWidth
+                            height: stage.contentHeight
+                            onDoubleClicked: {
+                                // Mouse coordinates are in content space
+                                var vx = mouse.x - stage.contentX
+                                var vy = mouse.y - stage.contentY
+                                page.zoomTo(page.zoomed ? page.minZoom
+                                                        : page.doubleTapZoom, vx, vy)
+                            }
                         }
                     }
                 }
 
-                // Taps: single toggles the controls, double zooms in or back
-                // out at the point that was tapped. Lives inside the
-                // Flickable so drags are still stolen by the view.
+                BusyIndicator {
+                    anchors.centerIn: parent
+                    running: photoImage.status === Image.Loading
+                    size: BusyIndicatorSize.Large
+                }
+
+                Label {
+                    anchors.centerIn: parent
+                    visible: photoImage.status === Image.Error
+                    text: qsTr("Failed to load image")
+                    color: Theme.secondaryColor
+                }
+
+                // Zoom level, only while it is not at fit size
+                Label {
+                    anchors {
+                        left: parent.left
+                        leftMargin: Theme.horizontalPageMargin
+                        bottom: parent.bottom
+                        bottomMargin: Theme.paddingMedium
+                    }
+                    text: Math.round(page.zoom * 100) + "%"
+                    font.pixelSize: Theme.fontSizeSmall
+                    color: Theme.highlightColor
+                    opacity: page.zoomed ? 0.9 : 0
+                    Behavior on opacity { FadeAnimation { duration: 200 } }
+                }
+
+                // Photo controls, kept on the image itself
+                Row {
+                    anchors {
+                        right: parent.right
+                        rightMargin: Theme.horizontalPageMargin
+                        bottom: parent.bottom
+                        bottomMargin: Theme.paddingMedium
+                    }
+                    spacing: Theme.paddingMedium
+
+                    IconButton {
+                        icon.source: "image://theme/icon-m-remove"
+                        enabled: page.zoomed
+                        onClicked: page.zoomBy(1 / 1.5)
+                    }
+                    IconButton {
+                        icon.source: "image://theme/icon-m-add"
+                        enabled: page.zoom < page.maxZoom
+                        onClicked: page.zoomBy(1.5)
+                    }
+                    IconButton {
+                        icon.source: "image://theme/icon-m-refresh"
+                        onClicked: page.rotatePhoto()
+                    }
+                }
+            }
+
+            // ---- what we know about it ------------------------------------
+            Item { width: 1; height: Theme.paddingLarge }
+
+            // File name on the left, share on the right
+            Item {
+                width: parent.width
+                height: Math.max(nameLabel.height, shareButton.height)
+
+                Label {
+                    id: nameLabel
+                    anchors {
+                        left: parent.left
+                        leftMargin: Theme.horizontalPageMargin
+                        right: shareButton.left
+                        rightMargin: Theme.paddingMedium
+                        verticalCenter: parent.verticalCenter
+                    }
+                    text: details.file_name || ""
+                    font.pixelSize: Theme.fontSizeMedium
+                    color: Theme.highlightColor
+                    truncationMode: TruncationMode.Fade
+                }
+
+                IconButton {
+                    id: shareButton
+                    anchors {
+                        right: parent.right
+                        rightMargin: Theme.horizontalPageMargin - Theme.paddingMedium
+                        verticalCenter: parent.verticalCenter
+                    }
+                    icon.source: "image://theme/icon-m-share"
+                    onClicked: shareAction.sharePhoto(page.photoPath)
+                }
+            }
+
+            Item { width: 1; height: Theme.paddingMedium }
+
+            DetailItem {
+                width: parent.width
+                label: qsTr("Taken")
+                visible: (details.timestamp || 0) > 0
+                value: (details.timestamp || 0) > 0
+                       ? Qt.formatDateTime(new Date(details.timestamp * 1000),
+                                           Qt.DefaultLocaleShortDate)
+                       : ""
+            }
+
+            DetailItem {
+                width: parent.width
+                label: qsTr("Size")
+                visible: (details.width || 0) > 0 || (details.file_size || 0) > 0
+                value: {
+                    var parts = []
+                    if ((details.width || 0) > 0 && (details.height || 0) > 0) {
+                        parts.push(details.width + " × " + details.height)
+                    }
+                    var bytes = formatSize(details.file_size || 0)
+                    if (bytes.length > 0) {
+                        parts.push(bytes)
+                    }
+                    return parts.join("  ·  ")
+                }
+            }
+
+            DetailItem {
+                width: parent.width
+                label: qsTr("Location")
+                visible: details.has_location === true
+                value: details.has_location === true
+                       ? formatCoordinate(details.latitude, qsTr("N"), qsTr("S"))
+                         + ", " + formatCoordinate(details.longitude, qsTr("E"), qsTr("W"))
+                       : ""
+            }
+
+            Item { width: 1; height: Theme.paddingMedium; visible: details.has_location === true }
+
+            // Where the photo was taken, on the same offline sketch map the
+            // trips use. Zoomed far out by default so the coastline says which
+            // part of the world this is; tap to zoom in.
+            TripRouteMap {
+                id: locationMap
+                x: Theme.horizontalPageMargin
+                width: parent.width - 2 * Theme.horizontalPageMargin
+                minPoints: 1
+                minSpanKm: wideView ? 1500 : 20
+
+                property bool wideView: true
+
+                points: details.has_location === true
+                        ? [{ latitude: details.latitude,
+                             longitude: details.longitude }]
+                        : []
+
                 MouseArea {
-                    width: flick.contentWidth
-                    height: flick.contentHeight
-
-                    onClicked: singleTapTimer.restart()
-                    onDoubleClicked: {
-                        singleTapTimer.stop()
-                        // Mouse coordinates are in content space
-                        var vx = mouse.x - flick.contentX
-                        var vy = mouse.y - flick.contentY
-                        if (page.zoom > page.minZoom + 0.01) {
-                            page.zoomTo(page.minZoom, vx, vy)
-                        } else {
-                            page.zoomTo(page.doubleTapZoom, vx, vy)
-                        }
-                    }
+                    anchors.fill: parent
+                    onClicked: locationMap.wideView = !locationMap.wideView
                 }
             }
+
+            // ---- the file -------------------------------------------------
+            SectionHeader {
+                width: parent.width
+                text: qsTr("File")
+            }
+
+            // Path on the left, copy on the right
+            Item {
+                width: parent.width
+                height: Math.max(pathLabel.height, copyButton.height) + Theme.paddingSmall
+
+                Label {
+                    id: pathLabel
+                    anchors {
+                        left: parent.left
+                        leftMargin: Theme.horizontalPageMargin
+                        right: copyButton.left
+                        rightMargin: Theme.paddingMedium
+                        verticalCenter: parent.verticalCenter
+                    }
+                    text: details.file_path || page.photoPath
+                    font.pixelSize: Theme.fontSizeExtraSmall
+                    color: Theme.secondaryHighlightColor
+                    wrapMode: Text.WrapAnywhere
+                }
+
+                IconButton {
+                    id: copyButton
+                    anchors {
+                        right: parent.right
+                        rightMargin: Theme.horizontalPageMargin - Theme.paddingMedium
+                        verticalCenter: parent.verticalCenter
+                    }
+                    icon.source: "image://theme/icon-m-clipboard"
+                    onClicked: page.copyPath()
+                }
+            }
+
+            Label {
+                x: Theme.horizontalPageMargin
+                width: parent.width - 2 * Theme.horizontalPageMargin
+                visible: details.in_library === false
+                text: qsTr("Not in the Nami library")
+                font.pixelSize: Theme.fontSizeExtraSmall
+                color: Theme.secondaryColor
+                wrapMode: Text.Wrap
+            }
+
+            Item { width: 1; height: Theme.paddingLarge }
         }
 
-        BusyIndicator {
-            anchors.centerIn: parent
-            running: photoImage.status === Image.Loading
-            size: BusyIndicatorSize.Large
-        }
-
-        Label {
-            anchors.centerIn: parent
-            visible: photoImage.status === Image.Error
-            text: qsTr("Failed to load image")
-            color: Theme.secondaryColor
-        }
-    }
-
-    // Delays the "toggle controls" tap long enough to tell it apart from the
-    // first half of a double tap, so zooming does not flash the chrome.
-    Timer {
-        id: singleTapTimer
-        interval: 250
-        onTriggered: page.chromeVisible = !page.chromeVisible
+        VerticalScrollDecorator {}
     }
 
     InfoBanner {
@@ -268,193 +450,5 @@ Page {
         anchors.top: parent.top
         anchors.topMargin: Theme.paddingLarge
         z: 100
-    }
-
-    // Zoom / rotate controls, fading out on tap so they stay out of the way
-    Column {
-        id: controls
-        anchors {
-            right: parent.right
-            rightMargin: Theme.horizontalPageMargin
-            bottom: parent.bottom
-            bottomMargin: detailsPanel.visibleSize + Theme.paddingLarge * 2
-        }
-        spacing: Theme.paddingMedium
-
-        opacity: chromeVisible ? 0.8 : 0
-        visible: opacity > 0
-        Behavior on opacity {
-            FadeAnimation { duration: 200 }
-        }
-
-        IconButton {
-            icon.source: "image://theme/icon-m-add"
-            enabled: page.zoom < page.maxZoom
-            onClicked: page.zoomBy(1.5)
-        }
-
-        IconButton {
-            icon.source: "image://theme/icon-m-remove"
-            enabled: page.zoom > page.minZoom
-            onClicked: page.zoomBy(1 / 1.5)
-        }
-
-        IconButton {
-            icon.source: "image://theme/icon-m-refresh"
-            onClicked: page.rotatePhoto()
-        }
-    }
-
-    // Current zoom level, only while it is not at fit size
-    Label {
-        anchors {
-            left: parent.left
-            leftMargin: Theme.horizontalPageMargin
-            bottom: parent.bottom
-            bottomMargin: detailsPanel.visibleSize + Theme.paddingLarge * 2
-        }
-        text: Math.round(page.zoom * 100) + "%"
-        font.pixelSize: Theme.fontSizeSmall
-        color: Theme.highlightColor
-        opacity: (chromeVisible && page.zoom > page.minZoom + 0.01) ? 0.8 : 0
-        Behavior on opacity {
-            FadeAnimation { duration: 200 }
-        }
-    }
-
-    DockedPanel {
-        id: detailsPanel
-        dock: Dock.Bottom
-        width: parent.width
-        height: Math.min(page.height * 0.7,
-                         detailsColumn.height + Theme.paddingLarge * 2)
-
-        SilicaFlickable {
-            anchors.fill: parent
-            contentHeight: detailsColumn.height + Theme.paddingLarge * 2
-
-            Column {
-                id: detailsColumn
-                y: Theme.paddingLarge
-                width: parent.width
-                spacing: Theme.paddingSmall
-
-                Label {
-                    x: Theme.horizontalPageMargin
-                    width: parent.width - 2 * Theme.horizontalPageMargin
-                    text: details.file_name || ""
-                    font.pixelSize: Theme.fontSizeMedium
-                    color: Theme.highlightColor
-                    truncationMode: TruncationMode.Fade
-                }
-
-                DetailItem {
-                    width: parent.width
-                    label: qsTr("Taken")
-                    visible: (details.timestamp || 0) > 0
-                    value: (details.timestamp || 0) > 0
-                           ? Qt.formatDateTime(new Date(details.timestamp * 1000),
-                                               Qt.DefaultLocaleShortDate)
-                           : ""
-                }
-
-                DetailItem {
-                    width: parent.width
-                    label: qsTr("Size")
-                    visible: (details.width || 0) > 0 || (details.file_size || 0) > 0
-                    value: {
-                        var parts = []
-                        if ((details.width || 0) > 0 && (details.height || 0) > 0) {
-                            parts.push(details.width + " × " + details.height)
-                        }
-                        var bytes = formatSize(details.file_size || 0)
-                        if (bytes.length > 0) {
-                            parts.push(bytes)
-                        }
-                        return parts.join("  ·  ")
-                    }
-                }
-
-                DetailItem {
-                    width: parent.width
-                    label: qsTr("Location")
-                    visible: details.has_location === true
-                    value: details.has_location === true
-                           ? formatCoordinate(details.latitude, qsTr("N"), qsTr("S"))
-                             + ", " + formatCoordinate(details.longitude, qsTr("E"), qsTr("W"))
-                           : ""
-                }
-
-                // Where the photo was taken, on the same offline sketch map
-                // the trips use. Zoomed far out by default so the coastline
-                // says which part of the world this is; tap to zoom in.
-                Item {
-                    width: parent.width
-                    height: locationMap.height + Theme.paddingMedium
-                    visible: details.has_location === true
-
-                    TripRouteMap {
-                        id: locationMap
-                        x: Theme.horizontalPageMargin
-                        width: parent.width - 2 * Theme.horizontalPageMargin
-                        minPoints: 1
-                        minSpanKm: wideView ? 1500 : 20
-
-                        property bool wideView: true
-
-                        points: details.has_location === true
-                                ? [{ latitude: details.latitude,
-                                     longitude: details.longitude }]
-                                : []
-
-                        MouseArea {
-                            anchors.fill: parent
-                            onClicked: locationMap.wideView = !locationMap.wideView
-                        }
-                    }
-                }
-
-                SectionHeader {
-                    width: parent.width
-                    text: qsTr("File")
-                }
-
-                Label {
-                    x: Theme.horizontalPageMargin
-                    width: parent.width - 2 * Theme.horizontalPageMargin
-                    text: details.file_path || page.photoPath
-                    font.pixelSize: Theme.fontSizeExtraSmall
-                    color: Theme.secondaryHighlightColor
-                    wrapMode: Text.WrapAnywhere
-                }
-
-                Label {
-                    x: Theme.horizontalPageMargin
-                    width: parent.width - 2 * Theme.horizontalPageMargin
-                    visible: details.in_library === false
-                    text: qsTr("Not in the Nami library")
-                    font.pixelSize: Theme.fontSizeExtraSmall
-                    color: Theme.secondaryColor
-                    wrapMode: Text.Wrap
-                }
-
-                Row {
-                    x: Theme.horizontalPageMargin
-                    spacing: Theme.paddingLarge
-
-                    Button {
-                        text: qsTr("Copy path")
-                        onClicked: page.copyPath()
-                    }
-
-                    Button {
-                        text: qsTr("Share")
-                        onClicked: shareAction.sharePhoto(page.photoPath)
-                    }
-                }
-            }
-
-            VerticalScrollDecorator {}
-        }
     }
 }

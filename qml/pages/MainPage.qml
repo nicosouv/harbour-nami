@@ -215,6 +215,35 @@ Page {
         refreshPeople()
     }
 
+    // Same actions the list layout offers in its context menu, for the grid
+    // layout where an inline menu would be drawn over the neighbouring cells
+    function openPersonActions(personId, name, contactId) {
+        var linked = contactId && contactId.length > 0
+        var sheet = pageStack.push(Qt.resolvedUrl("ActionSheetPage.qml"), {
+            heading: name || qsTr("Unknown"),
+            actions: [
+                { id: "rename", text: qsTr("Rename") },
+                { id: "link", text: linked ? qsTr("Change linked contact")
+                                           : qsTr("Link to contact"),
+                  enabled: facePipeline.contactsEnabled },
+                { id: "unlink", text: qsTr("Unlink contact"),
+                  enabled: facePipeline.contactsEnabled && linked },
+                { id: "merge", text: qsTr("Merge into..."),
+                  enabled: peopleModel.count > 1 },
+                { id: "delete", text: qsTr("Delete") }
+            ]
+        })
+        sheet.chosen.connect(function (actionId) {
+            switch (actionId) {
+            case "rename": renamePerson(personId, name); break
+            case "link":   linkContact(personId, name); break
+            case "unlink": unlinkContact(personId); break
+            case "merge":  mergePerson(personId, name); break
+            case "delete": deletePerson(personId, name); break
+            }
+        })
+    }
+
     // === Navigation (shared by both layouts) ===
 
     function openAbout() { pageStack.push(Qt.resolvedUrl("AboutPage.qml")) }
@@ -623,34 +652,13 @@ Page {
                 width: grid.cellWidth
                 contentHeight: grid.cellHeight
 
-                // Same context menu as the list layout (long press)
-                menu: ContextMenu {
-                    MenuItem {
-                        text: qsTr("Rename")
-                        onClicked: renamePerson(model.person_id, model.name)
-                    }
-                    MenuItem {
-                        text: (model.contact_id && model.contact_id.length > 0)
-                              ? qsTr("Change linked contact")
-                              : qsTr("Link to contact")
-                        visible: facePipeline.contactsEnabled
-                        onClicked: linkContact(model.person_id, model.name)
-                    }
-                    MenuItem {
-                        text: qsTr("Unlink contact")
-                        visible: facePipeline.contactsEnabled && model.contact_id && model.contact_id.length > 0
-                        onClicked: unlinkContact(model.person_id)
-                    }
-                    MenuItem {
-                        text: qsTr("Merge into...")
-                        visible: peopleModel.count > 1
-                        onClicked: mergePerson(model.person_id, model.name)
-                    }
-                    MenuItem {
-                        text: qsTr("Delete")
-                        onClicked: deletePerson(model.person_id, model.name)
-                    }
-                }
+                // No inline ContextMenu here: a SilicaGridView lays its cells
+                // out on a fixed cellHeight and cannot push the next row down,
+                // so an opened menu is drawn over the neighbouring people. The
+                // list layout above keeps its ContextMenu, which works because
+                // a ListView does reflow.
+                onPressAndHold: openPersonActions(model.person_id, model.name,
+                                                 model.contact_id)
 
                 Column {
                     anchors.fill: parent
