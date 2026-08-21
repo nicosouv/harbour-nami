@@ -624,6 +624,18 @@
         <source>photos</source>
         <translation>foto</translation>
     </message>
+    <message>
+        <source>Name</source>
+        <translation>Nome</translation>
+    </message>
+    <message>
+        <source>Photos</source>
+        <translation>Foto</translation>
+    </message>
+    <message>
+        <source>Recent</source>
+        <translation>Recenti</translation>
+    </message>
 </context>
 <context>
     <name>MemoriesPage</name>

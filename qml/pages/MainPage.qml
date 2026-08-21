@@ -1,5 +1,6 @@
 import QtQuick 2.0
 import Sailfish.Silica 1.0
+import "../components"
 import "../js/faceutils.js" as FaceUtils
 
 Page {
@@ -20,8 +21,10 @@ Page {
     // Search query
     property string searchQuery: ""
 
-    // Sort mode: "name" or "photos"
+    // "photos" | "name" | "recent"; persisted, so the choice survives a restart
     property string sortMode: "photos"
+    // Guards the initial load against writing the setting straight back
+    property bool sortReady: false
 
     // Layout: 0 = list, otherwise number of grid columns (2 or 4)
     property int gridColumns: 0
@@ -30,6 +33,20 @@ Page {
     property int totalPeople: 0
     property int totalPhotos: 0
     property string topPerson: ""
+
+    function reloadSortMode() {
+        if (facePipeline && facePipeline.initialized) {
+            var stored = facePipeline.getSetting("people_sort_mode", "photos")
+            sortMode = (stored === "name" || stored === "recent") ? stored : "photos"
+        }
+        sortReady = true
+    }
+
+    onSortModeChanged: {
+        if (!sortReady || !facePipeline || !facePipeline.initialized) return
+        facePipeline.setSetting("people_sort_mode", sortMode)
+        filterAndSort()
+    }
 
     function reloadViewMode() {
         if (facePipeline && facePipeline.initialized) {
@@ -91,7 +108,8 @@ Page {
                     person_id: person.person_id,
                     name: person.name,
                     photo_count: person.photo_count,
-                    contact_id: person.contact_id || ""
+                    contact_id: person.contact_id || "",
+                    last_photo: person.last_photo || 0
                 })
             }
         }
@@ -99,6 +117,13 @@ Page {
         // Sort items
         if (sortMode === "name") {
             items.sort(function(a, b) {
+                return a.name.toLowerCase().localeCompare(b.name.toLowerCase())
+            })
+        } else if (sortMode === "recent") {
+            // Most recently photographed first; people whose photos carry no
+            // usable date sink to the bottom rather than posing as 1970
+            items.sort(function(a, b) {
+                if (a.last_photo !== b.last_photo) return b.last_photo - a.last_photo
                 return a.name.toLowerCase().localeCompare(b.name.toLowerCase())
             })
         } else { // sortMode === "photos"
@@ -252,13 +277,10 @@ Page {
     function openEvents() { pageStack.push(Qt.resolvedUrl("EventsPage.qml")) }
     function openIdentify() { pageStack.push(Qt.resolvedUrl("IdentifyFacesPage.qml")) }
     function openScan() { pageStack.push(Qt.resolvedUrl("ScanningPage.qml")) }
-    function toggleSort() {
-        sortMode = (sortMode === "photos") ? "name" : "photos"
-        filterAndSort()
-    }
 
     Component.onCompleted: {
         reloadViewMode()
+        reloadSortMode()
         if (facePipeline && facePipeline.initialized) {
             refreshPeople()
         }
@@ -270,6 +292,7 @@ Page {
     onStatusChanged: {
         if (status === PageStatus.Active) {
             reloadViewMode()
+        reloadSortMode()
             refreshPeople()
         }
     }
@@ -431,6 +454,30 @@ Page {
                 text: qsTr("People (%1)").arg(filteredPeopleModel.count)
                 visible: totalPeople > 0
             }
+
+            // Sort criteria on the page rather than in the pulley menu: which
+            // one is active has to be readable without opening anything
+            Row {
+                x: Theme.horizontalPageMargin
+                spacing: Theme.paddingMedium
+                visible: totalPeople > 0
+
+                FilterChip {
+                    text: qsTr("Photos")
+                    selected: sortMode === "photos"
+                    onClicked: sortMode = "photos"
+                }
+                FilterChip {
+                    text: qsTr("Name")
+                    selected: sortMode === "name"
+                    onClicked: sortMode = "name"
+                }
+                FilterChip {
+                    text: qsTr("Recent")
+                    selected: sortMode === "recent"
+                    onClicked: sortMode = "recent"
+                }
+            }
         }
     }
 
@@ -468,13 +515,6 @@ Page {
                     text: qsTr("Scan Gallery")
                     enabled: facePipeline && facePipeline.initialized && !facePipeline.processing
                     onClicked: openScan()
-                }
-            }
-
-            PushUpMenu {
-                MenuItem {
-                    text: sortMode === "photos" ? qsTr("Sort by Name") : qsTr("Sort by Photos")
-                    onClicked: toggleSort()
                 }
             }
 
@@ -638,13 +678,6 @@ Page {
                     text: qsTr("Scan Gallery")
                     enabled: facePipeline && facePipeline.initialized && !facePipeline.processing
                     onClicked: openScan()
-                }
-            }
-
-            PushUpMenu {
-                MenuItem {
-                    text: sortMode === "photos" ? qsTr("Sort by Name") : qsTr("Sort by Photos")
-                    onClicked: toggleSort()
                 }
             }
 

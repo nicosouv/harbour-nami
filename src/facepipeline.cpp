@@ -684,6 +684,10 @@ QVariantList FacePipeline::getAllPeople()
         personMap["photo_count"] = person.photoCount;
         personMap["created_at"] = person.createdAt;
         personMap["contact_id"] = person.contactId;
+        // Unix epoch seconds, 0 when none of their photos has a usable date;
+        // lets the people list sort by "most recently photographed"
+        personMap["last_photo"] = person.lastPhoto.isValid()
+            ? person.lastPhoto.toMSecsSinceEpoch() / 1000 : 0;
         result.append(personMap);
     }
 
