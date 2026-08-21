@@ -38,6 +38,13 @@
 <context>
     <name>PersonDetailPage</name>
     <message numerus="yes">
+        <source>%n to confirm</source>
+        <translation>
+            <numerusform>%n to confirm</numerusform>
+            <numerusform>%n to confirm</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
         <source>%n match(es) to confirm</source>
         <translation>
             <numerusform>%n match to confirm</numerusform>

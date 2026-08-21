@@ -837,6 +837,13 @@
         <source>Undo confirmation</source>
         <translation>Angre bekreftelsen</translation>
     </message>
+    <message numerus="yes">
+        <source>%n to confirm</source>
+        <translation>
+            <numerusform>%n å bekrefte</numerusform>
+            <numerusform>%n å bekrefte</numerusform>
+        </translation>
+    </message>
 </context>
 <context>
     <name>PersonPage</name>

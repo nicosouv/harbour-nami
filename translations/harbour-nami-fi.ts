@@ -911,6 +911,13 @@
         <source>Undo confirmation</source>
         <translation>Kumoa vahvistus</translation>
     </message>
+    <message numerus="yes">
+        <source>%n to confirm</source>
+        <translation>
+            <numerusform>%n vahvistettavana</numerusform>
+            <numerusform>%n vahvistettavana</numerusform>
+        </translation>
+    </message>
 </context>
 <context>
     <name>PersonPage</name>
