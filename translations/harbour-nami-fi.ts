@@ -624,6 +624,18 @@
         <source>photos</source>
         <translation>kuvaa</translation>
     </message>
+    <message>
+        <source>Name</source>
+        <translation>Nimi</translation>
+    </message>
+    <message>
+        <source>Photos</source>
+        <translation>Kuvat</translation>
+    </message>
+    <message>
+        <source>Recent</source>
+        <translation>Viimeisin</translation>
+    </message>
 </context>
 <context>
     <name>MemoriesPage</name>

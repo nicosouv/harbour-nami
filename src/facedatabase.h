@@ -50,6 +50,8 @@ struct Person {
     QDateTime createdAt;
     int photoCount;
     QString contactId;  // linked device contact id, empty when unlinked
+    QDateTime lastPhoto;  // capture date of their most recent photo; invalid
+                          // when none of their photos carries a usable date
 };
 
 /**

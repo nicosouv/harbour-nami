@@ -778,10 +778,14 @@ QVector<Person> FaceDatabase::getAllPeople()
     QVector<Person> people;
     QSqlQuery query(m_db);
 
+    // date_taken is stored as an ISO-8601 string, whose lexicographic order
+    // matches chronological order, so MAX() gives the latest capture date.
     if (query.exec(R"(
-        SELECT p.*, COUNT(DISTINCT f.photo_id) as photo_count
+        SELECT p.*, COUNT(DISTINCT f.photo_id) as photo_count,
+               MAX(ph.date_taken) as last_photo
         FROM people p
         LEFT JOIN faces f ON f.person_id = p.id
+        LEFT JOIN photos ph ON ph.id = f.photo_id
         GROUP BY p.id
         ORDER BY p.name ASC
     )")) {
@@ -792,6 +796,7 @@ QVector<Person> FaceDatabase::getAllPeople()
             person.createdAt = QDateTime::fromString(query.value("created_at").toString(), Qt::ISODate);
             person.photoCount = query.value("photo_count").toInt();
             person.contactId = query.value("contact_id").toString();
+            person.lastPhoto = QDateTime::fromString(query.value("last_photo").toString(), Qt::ISODate);
             people.append(person);
         }
     }

@@ -550,6 +550,18 @@
         <source>Unlink contact</source>
         <translation>Fjern kontaktkobling</translation>
     </message>
+    <message>
+        <source>Name</source>
+        <translation>Navn</translation>
+    </message>
+    <message>
+        <source>Photos</source>
+        <translation>Bilder</translation>
+    </message>
+    <message>
+        <source>Recent</source>
+        <translation>Nyeste</translation>
+    </message>
 </context>
 <context>
     <name>MemoriesPage</name>
