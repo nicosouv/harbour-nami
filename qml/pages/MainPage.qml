@@ -292,7 +292,7 @@ Page {
     onStatusChanged: {
         if (status === PageStatus.Active) {
             reloadViewMode()
-        reloadSortMode()
+            reloadSortMode()
             refreshPeople()
         }
     }
