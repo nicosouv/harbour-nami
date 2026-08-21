@@ -296,6 +296,27 @@ int FaceDatabase::addPhoto(const QString &filePath, const QDateTime &dateTaken,
     return newId;
 }
 
+// Shared row -> Photo mapping for the lookups below. Assumes the query is
+// positioned on a valid row.
+static Photo photoFromRow(const QSqlQuery &query)
+{
+    Photo photo;
+    photo.id = query.value("id").toInt();
+    photo.filePath = query.value("file_path").toString();
+    photo.dateTaken = QDateTime::fromString(query.value("date_taken").toString(), Qt::ISODate);
+    photo.width = query.value("width").toInt();
+    photo.height = query.value("height").toInt();
+    photo.processedAt = QDateTime::fromString(query.value("processed_at").toString(), Qt::ISODate);
+    photo.rotation = query.value("rotation").toInt();
+    QVariant lat = query.value("latitude");
+    QVariant lon = query.value("longitude");
+    photo.hasLocation = !lat.isNull() && !lon.isNull();
+    photo.latitude = photo.hasLocation ? lat.toDouble() : 0.0;
+    photo.longitude = photo.hasLocation ? lon.toDouble() : 0.0;
+    photo.fileHash = query.value("file_hash").toString();
+    return photo;
+}
+
 Photo FaceDatabase::getPhoto(int photoId)
 {
     QSqlQuery query(m_db);
@@ -303,21 +324,20 @@ Photo FaceDatabase::getPhoto(int photoId)
     query.bindValue(":id", photoId);
 
     if (query.exec() && query.next()) {
-        Photo photo;
-        photo.id = query.value("id").toInt();
-        photo.filePath = query.value("file_path").toString();
-        photo.dateTaken = QDateTime::fromString(query.value("date_taken").toString(), Qt::ISODate);
-        photo.width = query.value("width").toInt();
-        photo.height = query.value("height").toInt();
-        photo.processedAt = QDateTime::fromString(query.value("processed_at").toString(), Qt::ISODate);
-        photo.rotation = query.value("rotation").toInt();
-        QVariant lat = query.value("latitude");
-        QVariant lon = query.value("longitude");
-        photo.hasLocation = !lat.isNull() && !lon.isNull();
-        photo.latitude = photo.hasLocation ? lat.toDouble() : 0.0;
-        photo.longitude = photo.hasLocation ? lon.toDouble() : 0.0;
-        photo.fileHash = query.value("file_hash").toString();
-        return photo;
+        return photoFromRow(query);
+    }
+
+    return Photo{-1, "", QDateTime(), 0, 0, QDateTime(), 0, false, 0.0, 0.0, ""};
+}
+
+Photo FaceDatabase::getPhotoByPath(const QString &filePath)
+{
+    QSqlQuery query(m_db);
+    query.prepare("SELECT * FROM photos WHERE file_path = :path");
+    query.bindValue(":path", filePath);
+
+    if (query.exec() && query.next()) {
+        return photoFromRow(query);
     }
 
     return Photo{-1, "", QDateTime(), 0, 0, QDateTime(), 0, false, 0.0, 0.0, ""};

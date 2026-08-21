@@ -158,6 +158,14 @@
         <source>No photos</source>
         <translation>Keine Fotos</translation>
     </message>
+    <message>
+        <source>Share photos</source>
+        <translation>Fotos teilen</translation>
+    </message>
+    <message>
+        <source>Share</source>
+        <translation>Teilen</translation>
+    </message>
 </context>
 <context>
     <name>MemoryDetailPage</name>
@@ -172,6 +180,10 @@
     <message>
         <source>No photos</source>
         <translation>Keine Fotos</translation>
+    </message>
+    <message>
+        <source>Share photos</source>
+        <translation>Fotos teilen</translation>
     </message>
 </context>
 <context>
@@ -643,6 +655,49 @@
         <source>with this person</source>
         <translation>mit dieser Person</translation>
     </message>
+    <message>
+        <source>Share photos</source>
+        <translation>Fotos teilen</translation>
+    </message>
+    <message>
+        <source>Share</source>
+        <translation>Teilen</translation>
+    </message>
+    <message>
+        <source>Newest first</source>
+        <translation>Neueste zuerst</translation>
+    </message>
+    <message>
+        <source>Oldest first</source>
+        <translation>Älteste zuerst</translation>
+    </message>
+    <message>
+        <source>Show unconfirmed only</source>
+        <translation>Nur unbestätigte anzeigen</translation>
+    </message>
+    <message>
+        <source>Show all photos</source>
+        <translation>Alle Fotos anzeigen</translation>
+    </message>
+    <message>
+        <source>Unconfirmed photos</source>
+        <translation>Unbestätigte Fotos</translation>
+    </message>
+    <message>
+        <source>Nothing left to confirm</source>
+        <translation>Nichts mehr zu bestätigen</translation>
+    </message>
+    <message>
+        <source>Every match for this person has been confirmed</source>
+        <translation>Alle Übereinstimmungen dieser Person wurden bestätigt</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n match(es) to confirm</source>
+        <translation>
+            <numerusform>%n Übereinstimmung zu bestätigen</numerusform>
+            <numerusform>%n Übereinstimmungen zu bestätigen</numerusform>
+        </translation>
+    </message>
 </context>
 <context>
     <name>PersonPage</name>
@@ -674,6 +729,10 @@
         <source>photos</source>
         <translation>Fotos</translation>
     </message>
+    <message>
+        <source>Share all photos</source>
+        <translation>Alle Fotos teilen</translation>
+    </message>
 </context>
 <context>
     <name>PhotoViewerPage</name>
@@ -684,6 +743,82 @@
     <message>
         <source>Failed to load image</source>
         <translation>Bild konnte nicht geladen werden</translation>
+    </message>
+    <message>
+        <source>Share</source>
+        <translation>Teilen</translation>
+    </message>
+    <message>
+        <source>Photo details</source>
+        <translation>Fotodetails</translation>
+    </message>
+    <message>
+        <source>Hide details</source>
+        <translation>Details ausblenden</translation>
+    </message>
+    <message>
+        <source>Copy file path</source>
+        <translation>Dateipfad kopieren</translation>
+    </message>
+    <message>
+        <source>Copy path</source>
+        <translation>Pfad kopieren</translation>
+    </message>
+    <message>
+        <source>File path copied</source>
+        <translation>Dateipfad kopiert</translation>
+    </message>
+    <message>
+        <source>Rotate</source>
+        <translation>Drehen</translation>
+    </message>
+    <message>
+        <source>Taken</source>
+        <translation>Aufgenommen</translation>
+    </message>
+    <message>
+        <source>Size</source>
+        <translation>Größe</translation>
+    </message>
+    <message>
+        <source>Location</source>
+        <translation>Ort</translation>
+    </message>
+    <message>
+        <source>File</source>
+        <translation>Datei</translation>
+    </message>
+    <message>
+        <source>Not in the Nami library</source>
+        <translation>Nicht in der Nami-Bibliothek</translation>
+    </message>
+    <message>
+        <source>%1 B</source>
+        <translation>%1 B</translation>
+    </message>
+    <message>
+        <source>%1 kB</source>
+        <translation>%1 kB</translation>
+    </message>
+    <message>
+        <source>%1 MB</source>
+        <translation>%1 MB</translation>
+    </message>
+    <message>
+        <source>N</source>
+        <translation>N</translation>
+    </message>
+    <message>
+        <source>S</source>
+        <translation>S</translation>
+    </message>
+    <message>
+        <source>E</source>
+        <translation>O</translation>
+    </message>
+    <message>
+        <source>W</source>
+        <translation>W</translation>
     </message>
 </context>
 <context>
@@ -1098,6 +1233,13 @@
     <message>
         <source>Unknown Faces</source>
         <translation>Unbekannte Gesichter</translation>
+    </message>
+</context>
+<context>
+    <name>TripDetailPage</name>
+    <message>
+        <source>Share photos</source>
+        <translation>Fotos teilen</translation>
     </message>
 </context>
 </TS>

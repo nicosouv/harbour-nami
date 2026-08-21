@@ -145,6 +145,12 @@ public:
     Photo getPhoto(int photoId);
 
     /**
+     * @brief Look a photo up by its file path
+     * @return Photo with id == -1 when the path is not in the database
+     */
+    Photo getPhotoByPath(const QString &filePath);
+
+    /**
      * @brief Get all photos
      */
     QVector<Photo> getAllPhotos();
