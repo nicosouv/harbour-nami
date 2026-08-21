@@ -243,6 +243,14 @@ public:
     Q_INVOKABLE QVariantMap photoDetails(const QString &photoPath);
 
     /**
+     * @brief Size on disk of one photo, in bytes (0 when unreadable)
+     *
+     * Used to keep a running total while selecting photos to share: what
+     * makes a share fail is the payload size, not the number of files.
+     */
+    Q_INVOKABLE qint64 fileSize(const QString &photoPath);
+
+    /**
      * @brief Merge one person into another
      *
      * All faces of fromPersonId are reassigned to intoPersonId and

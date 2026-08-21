@@ -1832,5 +1832,24 @@
         <source>That many photos will not go through in one share</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Too heavy for one share, deselect a few</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>PhotoSelection</name>
+    <message>
+        <source>%1 B</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 MB</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 kB</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 </TS>
