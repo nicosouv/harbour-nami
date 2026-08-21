@@ -910,6 +910,13 @@
         <source>Undo confirmation</source>
         <translation type="unfinished"></translation>
     </message>
+    <message numerus="yes">
+        <source>%n to confirm</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
 </context>
 <context>
     <name>PersonPage</name>

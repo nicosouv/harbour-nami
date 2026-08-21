@@ -911,6 +911,13 @@
         <source>Undo confirmation</source>
         <translation>Annuler la confirmation</translation>
     </message>
+    <message numerus="yes">
+        <source>%n to confirm</source>
+        <translation>
+            <numerusform>%n à confirmer</numerusform>
+            <numerusform>%n à confirmer</numerusform>
+        </translation>
+    </message>
 </context>
 <context>
     <name>PersonPage</name>

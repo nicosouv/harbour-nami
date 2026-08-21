@@ -32,7 +32,6 @@ Page {
     // Statistics
     property int totalPeople: 0
     property int totalPhotos: 0
-    property string topPerson: ""
 
     function reloadSortMode() {
         if (facePipeline && facePipeline.initialized) {
@@ -67,8 +66,6 @@ Page {
         // Calculate statistics
         totalPeople = people.length
         totalPhotos = 0
-        var maxPhotos = 0
-        topPerson = ""
 
         // Updated in place: this model is handed to SelectPersonDialog when
         // merging, and refreshPeople() runs from that dialog's accepted
@@ -81,11 +78,6 @@ Page {
                 peopleModel.append(people[i])
             }
             totalPhotos += people[i].photo_count
-
-            if (people[i].photo_count > maxPhotos) {
-                maxPhotos = people[i].photo_count
-                topPerson = people[i].name
-            }
         }
         while (peopleModel.count > people.length) {
             peopleModel.remove(peopleModel.count - 1)
@@ -312,124 +304,43 @@ Page {
 
             PageHeader {
                 title: qsTr("Nami")
+                // The counts as a quiet line under the title. A boxed panel
+                // is ornament: hierarchy comes from position and scale.
+                description: totalPeople > 0
+                    ? (totalPeople + " "
+                       + (totalPeople === 1 ? qsTr("person") : qsTr("people"))
+                       + "  \u00b7  " + totalPhotos + " "
+                       + (totalPhotos === 1 ? qsTr("photo") : qsTr("photos")))
+                    : ""
             }
 
-            Item {
+            // What the app is, said once, where it is actually needed: on the
+            // empty library. Kept permanently above the content it describes,
+            // it was store copy occupying the first third of every launch.
+            Column {
                 width: parent.width
-                height: Theme.paddingLarge
-            }
+                spacing: Theme.paddingMedium
+                visible: totalPeople === 0
 
-            Label {
-                x: Theme.horizontalPageMargin
-                width: parent.width - 2 * Theme.horizontalPageMargin
-                text: qsTr("Face Recognition Gallery")
-                color: Theme.highlightColor
-                font.pixelSize: Theme.fontSizeLarge
-                wrapMode: Text.WordWrap
-            }
+                Item { width: 1; height: Theme.paddingLarge }
 
-            Label {
-                x: Theme.horizontalPageMargin
-                width: parent.width - 2 * Theme.horizontalPageMargin
-                text: qsTr("Automatically organize your photos by faces. All processing happens on your device for complete privacy.")
-                color: Theme.secondaryHighlightColor
-                font.pixelSize: Theme.fontSizeSmall
-                wrapMode: Text.WordWrap
-            }
-
-            Item {
-                width: parent.width
-                height: Theme.paddingLarge
-            }
-
-            // Statistics card
-            Item {
-                width: parent.width
-                height: statsCard.height
-                visible: totalPeople > 0
-
-                Rectangle {
-                    id: statsCard
-                    width: parent.width - 2 * Theme.horizontalPageMargin
-                    height: statsColumn.height + 2 * Theme.paddingMedium
+                Label {
                     x: Theme.horizontalPageMargin
-                    radius: Theme.paddingSmall
-                    color: Theme.rgba(Theme.highlightBackgroundColor, 0.1)
-
-                    Column {
-                        id: statsColumn
-                        width: parent.width - 2 * Theme.paddingMedium
-                        anchors.centerIn: parent
-                        spacing: Theme.paddingSmall
-
-                        Row {
-                            width: parent.width
-                            spacing: Theme.paddingLarge
-
-                            Column {
-                                width: (parent.width - Theme.paddingLarge * 2) / 3
-                                spacing: Theme.paddingSmall / 2
-
-                                Label {
-                                    text: totalPeople
-                                    font.pixelSize: Theme.fontSizeHuge
-                                    font.bold: true
-                                    color: Theme.highlightColor
-                                }
-
-                                Label {
-                                    text: totalPeople === 1 ? qsTr("person") : qsTr("people")
-                                    font.pixelSize: Theme.fontSizeExtraSmall
-                                    color: Theme.secondaryColor
-                                }
-                            }
-
-                            Column {
-                                width: (parent.width - Theme.paddingLarge * 2) / 3
-                                spacing: Theme.paddingSmall / 2
-
-                                Label {
-                                    text: totalPhotos
-                                    font.pixelSize: Theme.fontSizeHuge
-                                    font.bold: true
-                                    color: Theme.highlightColor
-                                }
-
-                                Label {
-                                    text: totalPhotos === 1 ? qsTr("photo") : qsTr("photos")
-                                    font.pixelSize: Theme.fontSizeExtraSmall
-                                    color: Theme.secondaryColor
-                                }
-                            }
-
-                            Column {
-                                width: (parent.width - Theme.paddingLarge * 2) / 3
-                                spacing: Theme.paddingSmall / 2
-
-                                Label {
-                                    text: topPerson || "-"
-                                    font.pixelSize: Theme.fontSizeMedium
-                                    font.bold: true
-                                    color: Theme.highlightColor
-                                    truncationMode: TruncationMode.Fade
-                                    width: parent.width
-                                }
-
-                                Label {
-                                    text: qsTr("most photos")
-                                    font.pixelSize: Theme.fontSizeExtraSmall
-                                    color: Theme.secondaryColor
-                                }
-                            }
-                        }
-                    }
+                    width: parent.width - 2 * Theme.horizontalPageMargin
+                    text: qsTr("Face Recognition Gallery")
+                    color: Theme.highlightColor
+                    font.pixelSize: Theme.fontSizeLarge
+                    wrapMode: Text.WordWrap
                 }
-            }
 
-            Item {
-                width: parent.width
-                height: Theme.paddingLarge
-                visible: totalPeople > 0
+                Label {
+                    x: Theme.horizontalPageMargin
+                    width: parent.width - 2 * Theme.horizontalPageMargin
+                    text: qsTr("Automatically organize your photos by faces. All processing happens on your device for complete privacy.")
+                    color: Theme.secondaryHighlightColor
+                    font.pixelSize: Theme.fontSizeSmall
+                    wrapMode: Text.WordWrap
+                }
             }
 
             // Search field
@@ -448,11 +359,6 @@ Page {
 
                 EnterKey.iconSource: "image://theme/icon-m-enter-close"
                 EnterKey.onClicked: focus = false
-            }
-
-            SectionHeader {
-                text: qsTr("People (%1)").arg(filteredPeopleModel.count)
-                visible: totalPeople > 0
             }
 
             // Sort criteria on the page rather than in the pulley menu: which

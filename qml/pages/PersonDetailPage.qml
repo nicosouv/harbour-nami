@@ -2,6 +2,7 @@ import QtQuick 2.6
 import Sailfish.Silica 1.0
 import Nemo.DBus 2.0
 import "../components"
+import "../js/faceutils.js" as FaceUtils
 
 Page {
     id: page
@@ -271,51 +272,15 @@ Page {
 
             PageHeader {
                 title: personName
-            }
-
-            // Statistics card
-            Item {
-                width: parent.width
-                height: statsCard.height
-
-                Rectangle {
-                    id: statsCard
-                    width: parent.width - 2 * Theme.horizontalPageMargin
-                    height: statsColumn.height + 2 * Theme.paddingMedium
-                    x: Theme.horizontalPageMargin
-                    radius: Theme.paddingSmall
-                    color: Theme.rgba(Theme.highlightBackgroundColor, 0.1)
-
-                    Column {
-                        id: statsColumn
-                        width: parent.width - 2 * Theme.paddingMedium
-                        anchors.centerIn: parent
-                        spacing: Theme.paddingSmall
-
-                        Label {
-                            // Always the real total, never the filtered count
-                            text: totalPhotos + " " + (totalPhotos === 1 ? qsTr("photo") : qsTr("photos"))
-                            font.pixelSize: Theme.fontSizeHuge
-                            font.bold: true
-                            color: Theme.highlightColor
-                            anchors.horizontalCenter: parent.horizontalCenter
-                        }
-
-                        Label {
-                            text: qsTr("with this person")
-                            font.pixelSize: Theme.fontSizeSmall
-                            color: Theme.secondaryColor
-                            anchors.horizontalCenter: parent.horizontalCenter
-                        }
-
-                        Label {
-                            visible: unconfirmedTotal > 0
-                            text: qsTr("%n match(es) to confirm", "", unconfirmedTotal)
-                            font.pixelSize: Theme.fontSizeSmall
-                            color: Theme.highlightColor
-                            anchors.horizontalCenter: parent.horizontalCenter
-                        }
+                // Counts as a quiet line under the title rather than a boxed
+                // panel: a frame is ornament, hierarchy comes from position.
+                description: {
+                    var parts = [totalPhotos + " "
+                                 + (totalPhotos === 1 ? qsTr("photo") : qsTr("photos"))]
+                    if (unconfirmedTotal > 0) {
+                        parts.push(qsTr("%n to confirm", "", unconfirmedTotal))
                     }
+                    return parts.join("  \u00b7  ")
                 }
             }
 
@@ -348,11 +313,6 @@ Page {
                         color: Theme.highlightColor
                     }
                 }
-            }
-
-            SectionHeader {
-                text: qsTr("Photos")
-                visible: photosModel.count > 0 && !selection.active
             }
 
             // Filter and sort, on the page rather than in the pulley menu:
@@ -425,7 +385,18 @@ Page {
                             Image {
                                 id: photoImage
                                 anchors.fill: parent
-                                source: model.file_path ? "file://" + model.file_path : ""
+                                source: {
+                                    if (!model.file_path) return ""
+                                    // Reviewing a suggestion means looking at
+                                    // the face, not at the scene around it
+                                    if (unconfirmedOnly) {
+                                        return FaceUtils.cropUrl(model.file_path,
+                                                                 model.bbox_x, model.bbox_y,
+                                                                 model.bbox_width,
+                                                                 model.bbox_height, false)
+                                    }
+                                    return "file://" + model.file_path
+                                }
                                 fillMode: Image.PreserveAspectCrop
                                 autoTransform: true
                                 rotation: model.rotation || 0
@@ -440,14 +411,6 @@ Page {
                                     anchors.centerIn: parent
                                     running: parent.status === Image.Loading
                                     size: BusyIndicatorSize.Small
-                                }
-
-                                // Border with different color for verified vs auto-matched
-                                Rectangle {
-                                    anchors.fill: parent
-                                    color: "transparent"
-                                    border.color: model.verified ? Theme.rgba(Theme.secondaryHighlightColor, 0.8) : Theme.rgba(Theme.highlightColor, 0.3)
-                                    border.width: model.verified ? 2 : 1
                                 }
 
                                 // Selection state
@@ -466,55 +429,40 @@ Page {
                                     }
                                 }
 
-                                // Verified badge (manual identification - checkmark)
+                                // Only the photos still waiting on the user
+                                // carry a badge. Marking the confirmed ones
+                                // decorates the resting state, and leaves the
+                                // one state that wants an action competing
+                                // with a screen full of ticks.
                                 Rectangle {
-                                    visible: model.verified === true
+                                    visible: model.verified === false
                                     anchors.top: parent.top
                                     anchors.right: parent.right
                                     anchors.margins: Theme.paddingSmall
                                     width: Theme.iconSizeSmall
                                     height: Theme.iconSizeSmall
                                     radius: width / 2
-                                    color: Theme.rgba("#4CAF50", 0.95)
-                                    border.color: "white"
-                                    border.width: 2
+                                    color: Theme.rgba(Theme.highlightBackgroundColor, 0.95)
                                     z: 100
 
                                     Label {
                                         anchors.centerIn: parent
-                                        text: "✓"
+                                        // A question, because that is what the
+                                        // badge means: is this them?
+                                        text: "?"
                                         font.pixelSize: Theme.fontSizeSmall
                                         font.bold: true
-                                        color: "white"
+                                        color: Theme.primaryColor
                                     }
                                 }
 
-                                // Auto-matched badge (AI icon)
+                                // 6. The score is the model's own confidence.
+                                // It changes no decision, so it only shows
+                                // while reviewing, where ordering attention
+                                // is the point.
                                 Rectangle {
-                                    visible: model.verified === false && model.similarity_score > 0
-                                    anchors.top: parent.top
-                                    anchors.right: parent.right
-                                    anchors.margins: Theme.paddingSmall
-                                    width: Theme.iconSizeSmall
-                                    height: Theme.iconSizeSmall
-                                    radius: width / 2
-                                    color: Theme.rgba("#2196F3", 0.9)
-                                    border.color: "white"
-                                    border.width: 2
-                                    z: 100
-
-                                    Label {
-                                        anchors.centerIn: parent
-                                        text: "✦"
-                                        font.pixelSize: Theme.fontSizeSmall
-                                        font.bold: true
-                                        color: "white"
-                                    }
-                                }
-
-                                // Similarity score badge (for auto-matched)
-                                Rectangle {
-                                    visible: model.verified === false && model.similarity_score > 0
+                                    visible: unconfirmedOnly && model.verified === false
+                                             && model.similarity_score > 0
                                     anchors.bottom: parent.bottom
                                     anchors.right: parent.right
                                     anchors.margins: Theme.paddingSmall
