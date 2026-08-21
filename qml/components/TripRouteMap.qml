@@ -74,10 +74,16 @@ Item {
     // Never zoom in tighter than this. A trip spent inside one town would
     // otherwise fill the map with a few hundred metres of empty paper, with
     // no coastline in sight and nothing to tell you where you are.
-    readonly property real minSpanKm: 5
+    // Settable: a single photo's location is shown much further out, so the
+    // coastline actually says which country you are looking at.
+    property real minSpanKm: 5
+
+    // A route needs two points to be a route; a single-location map (one
+    // geotagged photo) sets this to 1.
+    property int minPoints: 2
 
     height: visible ? Theme.itemSizeExtraLarge * 1.8 : 0
-    visible: points.length >= 2
+    visible: points.length >= minPoints
 
     Rectangle {
         anchors.fill: parent
@@ -225,8 +231,19 @@ Item {
                     ctx.fillStyle = "white"
                     ctx.fillText(label, at[0], at[1] + scale)
                 }
+            } else if (pix.length === 1) {
+                // Single location: there is no route, so the green/red
+                // start/end coding would be meaningless. Draw one neutral
+                // marker with a rim so it reads over land and over sea.
+                ctx.beginPath()
+                ctx.arc(pix[0][0], pix[0][1], 7 * scale, 0, 2 * Math.PI)
+                ctx.fillStyle = Theme.highlightColor
+                ctx.fill()
+                ctx.strokeStyle = "rgba(255,255,255,0.92)"
+                ctx.lineWidth = 2 * scale
+                ctx.stroke()
             } else {
-                var ends = pix.length >= 2 ? [0, pix.length - 1] : [0]
+                var ends = [0, pix.length - 1]
                 for (var k = 0; k < ends.length; k++) {
                     ctx.beginPath()
                     ctx.arc(pix[ends[k]][0], pix[ends[k]][1], 6 * scale, 0, 2 * Math.PI)
@@ -449,4 +466,6 @@ Item {
     onRevealProgressChanged: routeCanvas.requestPaint()
     onWidthChanged: repaintAll()
     onHeightChanged: repaintAll()
+    // Drives the zoom floor, so both layers have to be redrawn
+    onMinSpanKmChanged: repaintAll()
 }

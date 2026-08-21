@@ -158,6 +158,14 @@
         <source>No photos</source>
         <translation>Ei kuvia</translation>
     </message>
+    <message>
+        <source>Share photos</source>
+        <translation>Jaa kuvat</translation>
+    </message>
+    <message>
+        <source>Share</source>
+        <translation>Jaa</translation>
+    </message>
 </context>
 <context>
     <name>MemoryDetailPage</name>
@@ -172,6 +180,10 @@
     <message>
         <source>No photos</source>
         <translation>Ei kuvia</translation>
+    </message>
+    <message>
+        <source>Share photos</source>
+        <translation>Jaa kuvat</translation>
     </message>
 </context>
 <context>
@@ -643,6 +655,49 @@
         <source>with this person</source>
         <translation>tämän henkilön kanssa</translation>
     </message>
+    <message>
+        <source>Share photos</source>
+        <translation>Jaa kuvat</translation>
+    </message>
+    <message>
+        <source>Share</source>
+        <translation>Jaa</translation>
+    </message>
+    <message>
+        <source>Newest first</source>
+        <translation>Uusimmat ensin</translation>
+    </message>
+    <message>
+        <source>Oldest first</source>
+        <translation>Vanhimmat ensin</translation>
+    </message>
+    <message>
+        <source>Show unconfirmed only</source>
+        <translation>Näytä vain vahvistamattomat</translation>
+    </message>
+    <message>
+        <source>Show all photos</source>
+        <translation>Näytä kaikki kuvat</translation>
+    </message>
+    <message>
+        <source>Unconfirmed photos</source>
+        <translation>Vahvistamattomat kuvat</translation>
+    </message>
+    <message>
+        <source>Nothing left to confirm</source>
+        <translation>Ei enää vahvistettavaa</translation>
+    </message>
+    <message>
+        <source>Every match for this person has been confirmed</source>
+        <translation>Kaikki tämän henkilön osumat on vahvistettu</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n match(es) to confirm</source>
+        <translation>
+            <numerusform>%n osuma vahvistettavana</numerusform>
+            <numerusform>%n osumaa vahvistettavana</numerusform>
+        </translation>
+    </message>
 </context>
 <context>
     <name>PersonPage</name>
@@ -674,6 +729,10 @@
         <source>photos</source>
         <translation>kuvaa</translation>
     </message>
+    <message>
+        <source>Share all photos</source>
+        <translation>Jaa kaikki kuvat</translation>
+    </message>
 </context>
 <context>
     <name>PhotoViewerPage</name>
@@ -684,6 +743,82 @@
     <message>
         <source>Failed to load image</source>
         <translation>Kuvan lataus epäonnistui</translation>
+    </message>
+    <message>
+        <source>Share</source>
+        <translation>Jaa</translation>
+    </message>
+    <message>
+        <source>Photo details</source>
+        <translation>Kuvan tiedot</translation>
+    </message>
+    <message>
+        <source>Hide details</source>
+        <translation>Piilota tiedot</translation>
+    </message>
+    <message>
+        <source>Copy file path</source>
+        <translation>Kopioi tiedostopolku</translation>
+    </message>
+    <message>
+        <source>Copy path</source>
+        <translation>Kopioi polku</translation>
+    </message>
+    <message>
+        <source>File path copied</source>
+        <translation>Tiedostopolku kopioitu</translation>
+    </message>
+    <message>
+        <source>Rotate</source>
+        <translation>Käännä</translation>
+    </message>
+    <message>
+        <source>Taken</source>
+        <translation>Otettu</translation>
+    </message>
+    <message>
+        <source>Size</source>
+        <translation>Koko</translation>
+    </message>
+    <message>
+        <source>Location</source>
+        <translation>Sijainti</translation>
+    </message>
+    <message>
+        <source>File</source>
+        <translation>Tiedosto</translation>
+    </message>
+    <message>
+        <source>Not in the Nami library</source>
+        <translation>Ei Namin kirjastossa</translation>
+    </message>
+    <message>
+        <source>%1 B</source>
+        <translation>%1 t</translation>
+    </message>
+    <message>
+        <source>%1 kB</source>
+        <translation>%1 kt</translation>
+    </message>
+    <message>
+        <source>%1 MB</source>
+        <translation>%1 Mt</translation>
+    </message>
+    <message>
+        <source>N</source>
+        <translation>P</translation>
+    </message>
+    <message>
+        <source>S</source>
+        <translation>E</translation>
+    </message>
+    <message>
+        <source>E</source>
+        <translation>I</translation>
+    </message>
+    <message>
+        <source>W</source>
+        <translation>L</translation>
     </message>
 </context>
 <context>
@@ -1098,6 +1233,13 @@
     <message>
         <source>Unknown Faces</source>
         <translation>Tuntemattomat kasvot</translation>
+    </message>
+</context>
+<context>
+    <name>TripDetailPage</name>
+    <message>
+        <source>Share photos</source>
+        <translation>Jaa kuvat</translation>
     </message>
 </context>
 </TS>

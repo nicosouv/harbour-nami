@@ -158,6 +158,14 @@
         <source>No photos</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Share photos</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Share</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>MemoryDetailPage</name>
@@ -171,6 +179,10 @@
     </message>
     <message>
         <source>No photos</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Share photos</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -642,6 +654,49 @@
         <source>with this person</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Share photos</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Share</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Newest first</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Oldest first</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show unconfirmed only</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show all photos</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unconfirmed photos</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing left to confirm</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Every match for this person has been confirmed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n match(es) to confirm</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
 </context>
 <context>
     <name>PersonPage</name>
@@ -673,6 +728,10 @@
         <source>photos</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Share all photos</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>PhotoViewerPage</name>
@@ -682,6 +741,82 @@
     </message>
     <message>
         <source>Failed to load image</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Share</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Photo details</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hide details</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy file path</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy path</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>File path copied</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rotate</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Taken</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Size</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Location</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>File</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not in the Nami library</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 B</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 kB</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 MB</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>N</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>S</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>E</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>W</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -1096,6 +1231,13 @@
     </message>
     <message>
         <source>Unknown Faces</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>TripDetailPage</name>
+    <message>
+        <source>Share photos</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

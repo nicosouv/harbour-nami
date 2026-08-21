@@ -29,6 +29,7 @@ private slots:
     void negativeMatchesComeBackInOneQuery();
     void peopleAroundDateHonoursTheWindow();
     void exemplarsPreferVerifiedFaces();
+    void photoLookupByPathMatchesLookupById();
 
 private:
     // A photo file has to exist on disk for the import to accept it
@@ -251,6 +252,32 @@ void TstFaceDatabase::exemplarsPreferVerifiedFaces()
     exemplars = m_db->getPersonExemplars(alice);
     QCOMPARE(exemplars.size(), 1);
     QCOMPARE(exemplars.first().at(0), 0.75f);
+}
+
+// The photo viewer's details panel only knows a file path, so it looks photos
+// up by path rather than by id. Both lookups have to describe the same row.
+void TstFaceDatabase::photoLookupByPathMatchesLookupById()
+{
+    const QString path = makePhotoFile("geotagged.jpg");
+    const QDateTime taken = QDateTime::fromString("2024-06-01T10:30:00", Qt::ISODate);
+    const int photoId = m_db->addPhoto(path, taken, 4000, 3000,
+                                       /*hasLocation*/ true, 48.8566, 2.3522);
+    QVERIFY(photoId > 0);
+
+    const Photo byId = m_db->getPhoto(photoId);
+    const Photo byPath = m_db->getPhotoByPath(path);
+
+    QCOMPARE(byPath.id, byId.id);
+    QCOMPARE(byPath.filePath, path);
+    QCOMPARE(byPath.width, 4000);
+    QCOMPARE(byPath.height, 3000);
+    QCOMPARE(byPath.dateTaken, taken);
+    QVERIFY(byPath.hasLocation);
+    QCOMPARE(byPath.latitude, 48.8566);
+    QCOMPARE(byPath.longitude, 2.3522);
+
+    // An unknown path is reported as "not found", not as a blank photo id 0
+    QCOMPARE(m_db->getPhotoByPath(m_dir->filePath("nope.jpg")).id, -1);
 }
 
 QTEST_MAIN(TstFaceDatabase)
