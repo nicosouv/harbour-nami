@@ -1,3 +1,18 @@
+* Fri Aug 21 2026 Nicolas Souveton <souvetonnicolas@gmail.com> 0.8.6-1
+- A person's photos are laid out as a mosaic: each photo keeps its own shape
+  instead of being squeezed into a square, so a group shot is readable again
+- The photos are grouped into month sections, so the page reads as a
+  chronology rather than a wall of tiles
+- The person's face is back at the top of their own page, next to the name
+- Confirming suggested matches has its own screen: one face at a time, large
+  enough to actually recognise, with Yes / Not them / Skip
+- The people list and a person's page lost their boxed panels: the counts are
+  now a line under the title
+- Only the photos still waiting on you are marked; the confirmed ones no
+  longer carry a badge
+- What the app does is explained on the empty library rather than above the
+  content on every launch
+
 * Fri Aug 21 2026 Nicolas Souveton <souvetonnicolas@gmail.com> 0.8.5-1
 - Share photos from the photo viewer, a person, a day, a trip or a memory
 - Sharing now goes through the standard Sailfish share sheet, so it actually
