@@ -22,6 +22,11 @@
 - Filter and sort a person's photos from the page itself instead of the
   pulley menu
 - Fix the long-press menu being drawn over the neighbouring photos
+- Fix the last column of a photo grid being cut off by the edge of the
+  screen, and give the grid room to breathe
+- Take back a confirmation on a single photo, which also makes "Confirm all
+  matches" undoable
+- Fix English counts reading "1 people" and "1 photos"
 - Translations completed for French, Italian, Spanish, Finnish, German and
   Norwegian
 
