@@ -3,6 +3,7 @@ import Sailfish.Silica 1.0
 import Nemo.DBus 2.0
 import "../components"
 import "../js/faceutils.js" as FaceUtils
+import "../js/mosaic.js" as Mosaic
 
 Page {
     id: page
@@ -13,8 +14,13 @@ Page {
     property var faceManager: facePipeline
 
     // Full photo list as returned by the pipeline (already newest first).
-    // photosModel holds the filtered/sorted view of it.
+    // visiblePhotos is the filtered/sorted view, photoRows its mosaic layout.
+    // Plain arrays rather than a ListModel: the layout needs a computed width
+    // and height per photo, which are not model roles, and this keeps
+    // ListModel.get() out of the delegates entirely.
     property var allPhotos: []
+    property var visiblePhotos: []
+    property var photoRows: []
     property bool newestFirst: true
     property bool unconfirmedOnly: false
     // Kept as plain properties (not functions) so bindings actually re-evaluate
@@ -45,11 +51,6 @@ Page {
         }
     }
 
-    // Photos with this person
-    ListModel {
-        id: photosModel
-    }
-
     function loadPhotos() {
         if (!faceManager || !faceManager.initialized || personId < 0) return
 
@@ -66,11 +67,9 @@ Page {
         unconfirmedTotal = unconfirmed
     }
 
-    // Rebuild the visible grid from allPhotos. getPersonPhotos() already sorts
+    // Rebuild the visible list from allPhotos. getPersonPhotos() already sorts
     // newest first, so "oldest first" is just a reversal.
     function rebuildPhotoModel() {
-        photosModel.clear()
-
         var visible = []
         for (var i = 0; i < allPhotos.length; i++) {
             if (unconfirmedOnly && allPhotos[i].verified === true) continue
@@ -82,23 +81,33 @@ Page {
             visible.reverse()
         }
 
-        for (var j = 0; j < visible.length; j++) {
-            photosModel.append(visible[j])
-        }
+        visiblePhotos = visible
+        rebuildRows()
     }
 
-    // Drop one row without rebuilding the whole grid, so the other photos do
-    // not blink out and back in.
+    function rebuildRows() {
+        if (photoArea.width <= 0) {
+            photoRows = []
+            return
+        }
+        var targetHeight = photoArea.width / 3
+        // Reviewing shows square face crops, which have to be laid out square
+        // whatever shape the photo they came from was
+        photoRows = Mosaic.layout(visiblePhotos, photoArea.width,
+                                  targetHeight, Theme.paddingSmall,
+                                  1.5, unconfirmedOnly)
+    }
+
     function dropRow(photoId) {
-        for (var i = 0; i < photosModel.count; i++) {
-            // Called from a signal handler, never from a binding: get() inside
-            // a binding is what crashed the identify page.
-            if (photosModel.get(i).photo_id === photoId) {
-                photosModel.remove(i)
-                break
+        var remaining = []
+        for (var i = 0; i < visiblePhotos.length; i++) {
+            if (visiblePhotos[i].photo_id !== photoId) {
+                remaining.push(visiblePhotos[i])
             }
         }
+        visiblePhotos = remaining
         recountTotals()
+        rebuildRows()
     }
 
     // The remorse lives on the page, not on the photo's delegate: the action
@@ -168,7 +177,7 @@ Page {
             // apply to the person as a whole stay here.
             MenuItem {
                 text: qsTr("Select photos")
-                enabled: photosModel.count > 0 && !selection.active
+                enabled: visiblePhotos.length > 0 && !selection.active
                 onClicked: selection.begin("")
             }
             MenuItem {
@@ -271,7 +280,28 @@ Page {
             spacing: Theme.paddingLarge
 
             PageHeader {
+                id: header
                 title: personName
+
+                // The face, next to the name: on the previous page every
+                // person has a portrait, and tapping through to their own
+                // page used to be the one place they disappeared from.
+                Image {
+                    anchors {
+                        left: parent.left
+                        leftMargin: Theme.horizontalPageMargin
+                        verticalCenter: parent.verticalCenter
+                    }
+                    width: Theme.itemSizeSmall
+                    height: width
+                    source: FaceUtils.personAvatarUrl(facePipeline, personId)
+                    sourceSize.width: width
+                    sourceSize.height: height
+                    fillMode: Image.PreserveAspectCrop
+                    asynchronous: true
+                    visible: status === Image.Ready
+                }
+
                 // Counts as a quiet line under the title rather than a boxed
                 // panel: a frame is ornament, hierarchy comes from position.
                 description: {
@@ -320,7 +350,7 @@ Page {
             Item {
                 width: parent.width
                 height: chipRow.height
-                visible: photosModel.count > 0 && !selection.active
+                visible: visiblePhotos.length > 0 && !selection.active
 
                 Row {
                     id: chipRow
@@ -355,187 +385,219 @@ Page {
 
             // The selection bar itself is anchored to the page, below
 
-            // Photo grid
-            Grid {
-                id: photoGrid
+            // Photo mosaic: rows of equal height, each photo at its own
+            // aspect ratio, every row justified to the margin. Squeezing a
+            // landscape group shot into a square is what made these
+            // unreadable, and a uniform waffle is what made the page read as
+            // a contact sheet rather than a page.
+            Column {
+                id: photoArea
                 x: Theme.horizontalPageMargin
                 width: parent.width - 2 * Theme.horizontalPageMargin
-                columns: 3
                 spacing: Theme.paddingSmall
 
-                // 3 cells plus 2 gaps have to fit the width. Sizing cells at
-                // width/3 overflows by two gaps, which pushed the last column
-                // off the right edge of the screen.
-                property real cellSize: (width - (columns - 1) * spacing) / columns
+                onWidthChanged: page.rebuildRows()
 
                 Repeater {
-                    model: photosModel
+                    model: photoRows
 
-                    delegate: ListItem {
-                        id: photoItem
-                        width: photoGrid.cellSize
-                        // No explicit height: ListItem grows when its context
-                        // menu opens, and this plain Grid reflows the row to
-                        // match. Pinning the height is what made the menu draw
-                        // on top of the neighbouring photos.
-                        contentHeight: width
+                    delegate: Row {
+                        spacing: Theme.paddingSmall
+                        // Held under its own name: the inner delegate's
+                        // modelData shadows this one
+                        property var cells: modelData
 
-                        // Wrap content in Item to fix ContextMenu positioning
-                        contentItem.children: [
-                            Image {
-                                id: photoImage
-                                anchors.fill: parent
-                                source: {
-                                    if (!model.file_path) return ""
-                                    // Reviewing a suggestion means looking at
-                                    // the face, not at the scene around it
-                                    if (unconfirmedOnly) {
-                                        return FaceUtils.cropUrl(model.file_path,
-                                                                 model.bbox_x, model.bbox_y,
-                                                                 model.bbox_width,
-                                                                 model.bbox_height, false)
+                        Repeater {
+                            model: parent.cells
+
+                            delegate: ListItem {
+                                id: photoItem
+
+                                // Unwrapped once so the rest reads plainly
+                                property var photo: modelData.photo
+
+                                width: modelData.width
+                                // No explicit height: the ListItem grows when
+                                // its context menu opens, the Row grows with
+                                // it and the Column pushes the following rows
+                                // down, instead of the menu landing on the
+                                // neighbouring photos.
+                                contentHeight: modelData.height
+
+                                // Wrapped in contentItem so the ContextMenu
+                                // positions itself correctly
+                                contentItem.children: [
+                                    Image {
+                                        anchors.fill: parent
+                                        source: {
+                                            if (!photoItem.photo.file_path) return ""
+                                            // Reviewing a suggestion means
+                                            // looking at the face, not at the
+                                            // scene around it
+                                            if (unconfirmedOnly) {
+                                                return FaceUtils.cropUrl(
+                                                    photoItem.photo.file_path,
+                                                    photoItem.photo.bbox_x,
+                                                    photoItem.photo.bbox_y,
+                                                    photoItem.photo.bbox_width,
+                                                    photoItem.photo.bbox_height, false)
+                                            }
+                                            return "file://" + photoItem.photo.file_path
+                                        }
+                                        // The tile already carries the photo's
+                                        // own proportions, so this crops
+                                        // almost nothing
+                                        fillMode: Image.PreserveAspectCrop
+                                        autoTransform: true
+                                        rotation: photoItem.photo.rotation || 0
+                                        asynchronous: true
+                                        clip: true
+                                        sourceSize.width: 500
+                                        sourceSize.height: 500
+
+                                        // A flat tone while loading: a spinner
+                                        // in every tile is what made the page
+                                        // look like a building site
+                                        Rectangle {
+                                            anchors.fill: parent
+                                            visible: parent.status !== Image.Ready
+                                            color: Theme.rgba(Theme.highlightBackgroundColor, 0.12)
+                                        }
+
+                                        // Selection state
+                                        Rectangle {
+                                            anchors.fill: parent
+                                            visible: selection.active
+                                            color: selection.isSelected(photoItem.photo.file_path)
+                                                   ? Theme.rgba(Theme.highlightBackgroundColor, 0.45)
+                                                   : Theme.rgba("black", 0.35)
+                                            z: 90
+
+                                            Icon {
+                                                anchors.centerIn: parent
+                                                source: "image://theme/icon-m-acknowledge"
+                                                opacity: selection.isSelected(photoItem.photo.file_path)
+                                                         ? 1 : 0.25
+                                            }
+                                        }
+
+                                        // Only what still waits on the user is
+                                        // marked. A tick on every confirmed
+                                        // photo decorates the resting state
+                                        // and leaves the one state that wants
+                                        // an action competing with it.
+                                        Rectangle {
+                                            visible: photoItem.photo.verified === false
+                                            anchors.top: parent.top
+                                            anchors.right: parent.right
+                                            anchors.margins: Theme.paddingSmall
+                                            width: Theme.iconSizeSmall
+                                            height: Theme.iconSizeSmall
+                                            radius: width / 2
+                                            color: Theme.rgba(Theme.highlightBackgroundColor, 0.95)
+                                            z: 100
+
+                                            Label {
+                                                anchors.centerIn: parent
+                                                // A question, because that is
+                                                // what it asks: is this them?
+                                                text: "?"
+                                                font.pixelSize: Theme.fontSizeSmall
+                                                font.bold: true
+                                                color: Theme.primaryColor
+                                            }
+                                        }
+
+                                        // The score is the model's own
+                                        // confidence. It changes no decision,
+                                        // so it shows only while reviewing,
+                                        // where ordering attention is the point.
+                                        Rectangle {
+                                            visible: unconfirmedOnly
+                                                     && photoItem.photo.verified === false
+                                                     && photoItem.photo.similarity_score > 0
+                                            anchors.bottom: parent.bottom
+                                            anchors.right: parent.right
+                                            anchors.margins: Theme.paddingSmall
+                                            width: scoreLabel.width + Theme.paddingSmall
+                                            height: scoreLabel.height + Theme.paddingSmall / 2
+                                            radius: Theme.paddingSmall / 2
+                                            color: Theme.rgba(Theme.highlightBackgroundColor, 0.8)
+                                            z: 100
+
+                                            Label {
+                                                id: scoreLabel
+                                                anchors.centerIn: parent
+                                                text: Math.round(
+                                                    photoItem.photo.similarity_score * 100) + "%"
+                                                font.pixelSize: Theme.fontSizeTiny
+                                                color: Theme.primaryColor
+                                            }
+                                        }
                                     }
-                                    return "file://" + model.file_path
-                                }
-                                fillMode: Image.PreserveAspectCrop
-                                autoTransform: true
-                                rotation: model.rotation || 0
-                                asynchronous: true
-                                clip: true
+                                ]
 
-                                // Limit source size to save memory
-                                sourceSize.width: 400
-                                sourceSize.height: 400
-
-                                BusyIndicator {
-                                    anchors.centerIn: parent
-                                    running: parent.status === Image.Loading
-                                    size: BusyIndicatorSize.Small
-                                }
-
-                                // Selection state
-                                Rectangle {
-                                    anchors.fill: parent
-                                    visible: selection.active
-                                    color: selection.isSelected(model.file_path)
-                                           ? Theme.rgba(Theme.highlightBackgroundColor, 0.45)
-                                           : Theme.rgba("black", 0.35)
-                                    z: 90
-
-                                    Icon {
-                                        anchors.centerIn: parent
-                                        source: "image://theme/icon-m-acknowledge"
-                                        opacity: selection.isSelected(model.file_path) ? 1 : 0.25
+                                onClicked: {
+                                    if (selection.active) {
+                                        selection.toggle(photoItem.photo.file_path)
+                                        return
                                     }
+                                    pageStack.push(Qt.resolvedUrl("PhotoViewerPage.qml"), {
+                                        photoPath: photoItem.photo.file_path
+                                    })
                                 }
 
-                                // Only the photos still waiting on the user
-                                // carry a badge. Marking the confirmed ones
-                                // decorates the resting state, and leaves the
-                                // one state that wants an action competing
-                                // with a screen full of ticks.
-                                Rectangle {
-                                    visible: model.verified === false
-                                    anchors.top: parent.top
-                                    anchors.right: parent.right
-                                    anchors.margins: Theme.paddingSmall
-                                    width: Theme.iconSizeSmall
-                                    height: Theme.iconSizeSmall
-                                    radius: width / 2
-                                    color: Theme.rgba(Theme.highlightBackgroundColor, 0.95)
-                                    z: 100
+                                // Built on first long press only, so a page of
+                                // a few hundred photos does not carry a menu
+                                // per tile
+                                menu: selection.active ? null : photoMenu
 
-                                    Label {
-                                        anchors.centerIn: parent
-                                        // A question, because that is what the
-                                        // badge means: is this them?
-                                        text: "?"
-                                        font.pixelSize: Theme.fontSizeSmall
-                                        font.bold: true
-                                        color: Theme.primaryColor
+                                Component {
+                                    id: photoMenu
+
+                                    ContextMenu {
+                                        MenuItem {
+                                            // Accept this one suggestion
+                                            // without confirming every match
+                                            text: qsTr("Confirm this match")
+                                            visible: photoItem.photo.verified === false
+                                            onClicked: page.setPhotoConfirmed(
+                                                photoItem.photo.face_id,
+                                                photoItem.photo.photo_id, true)
+                                        }
+
+                                        MenuItem {
+                                            // Undo for a mistaken confirmation,
+                                            // and the way back out of
+                                            // "Confirm all matches"
+                                            text: qsTr("Undo confirmation")
+                                            visible: photoItem.photo.verified === true
+                                            onClicked: page.setPhotoConfirmed(
+                                                photoItem.photo.face_id,
+                                                photoItem.photo.photo_id, false)
+                                        }
+
+                                        MenuItem {
+                                            text: qsTr("Remove from person")
+                                            onClicked: page.removePhotoFromPerson(
+                                                photoItem.photo.photo_id)
+                                        }
+
+                                        MenuItem {
+                                            text: qsTr("View full photo")
+                                            onClicked: {
+                                                pageStack.push(Qt.resolvedUrl("PhotoViewerPage.qml"), {
+                                                    photoPath: photoItem.photo.file_path
+                                                })
+                                            }
+                                        }
+
+                                        MenuItem {
+                                            text: qsTr("Share")
+                                            onClicked: shareAction.sharePhoto(
+                                                photoItem.photo.file_path)
+                                        }
                                     }
-                                }
-
-                                // 6. The score is the model's own confidence.
-                                // It changes no decision, so it only shows
-                                // while reviewing, where ordering attention
-                                // is the point.
-                                Rectangle {
-                                    visible: unconfirmedOnly && model.verified === false
-                                             && model.similarity_score > 0
-                                    anchors.bottom: parent.bottom
-                                    anchors.right: parent.right
-                                    anchors.margins: Theme.paddingSmall
-                                    width: scoreLabel.width + Theme.paddingSmall
-                                    height: scoreLabel.height + Theme.paddingSmall / 2
-                                    radius: Theme.paddingSmall / 2
-                                    color: Theme.rgba(Theme.highlightBackgroundColor, 0.8)
-                                    z: 100
-
-                                    Label {
-                                        id: scoreLabel
-                                        anchors.centerIn: parent
-                                        text: Math.round(model.similarity_score * 100) + "%"
-                                        font.pixelSize: Theme.fontSizeTiny
-                                        color: Theme.primaryColor
-                                    }
-                                }
-                            }
-                        ]
-
-                        onClicked: {
-                            if (selection.active) {
-                                selection.toggle(model.file_path)
-                                return
-                            }
-                            pageStack.push(Qt.resolvedUrl("PhotoViewerPage.qml"), {
-                                photoPath: model.file_path
-                            })
-                        }
-
-                        // Built only on first long press, so a grid of a few
-                        // hundred photos does not carry a menu per cell
-                        menu: selection.active ? null : photoMenu
-
-                        Component {
-                            id: photoMenu
-
-                            ContextMenu {
-                                MenuItem {
-                                    // Accept this one suggestion without
-                                    // confirming every match at once
-                                    text: qsTr("Confirm this match")
-                                    visible: model.verified === false
-                                    onClicked: page.setPhotoConfirmed(model.face_id,
-                                                                      model.photo_id, true)
-                                }
-
-                                MenuItem {
-                                    // Undo for a mistaken confirmation, and
-                                    // the only way back out of "Confirm all"
-                                    text: qsTr("Undo confirmation")
-                                    visible: model.verified === true
-                                    onClicked: page.setPhotoConfirmed(model.face_id,
-                                                                      model.photo_id, false)
-                                }
-
-                                MenuItem {
-                                    text: qsTr("Remove from person")
-                                    onClicked: page.removePhotoFromPerson(model.photo_id)
-                                }
-
-                                MenuItem {
-                                    text: qsTr("View full photo")
-                                    onClicked: {
-                                        pageStack.push(Qt.resolvedUrl("PhotoViewerPage.qml"), {
-                                            photoPath: model.file_path
-                                        })
-                                    }
-                                }
-
-                                MenuItem {
-                                    text: qsTr("Share")
-                                    onClicked: shareAction.sharePhoto(model.file_path)
                                 }
                             }
                         }
@@ -544,7 +606,7 @@ Page {
             }
 
             ViewPlaceholder {
-                enabled: photosModel.count === 0
+                enabled: visiblePhotos.length === 0
                 text: unconfirmedOnly ? qsTr("Nothing left to confirm")
                                       : qsTr("No photos")
                 hintText: unconfirmedOnly

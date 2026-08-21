@@ -729,6 +729,11 @@ QVariantList FacePipeline::getPersonPhotos(int personId)
             photoMap["similarity_score"] = face.similarityScore;
             photoMap["verified"] = face.verified;
             photoMap["rotation"] = photo.rotation;
+            // Already EXIF-corrected (the scanner reads them off an
+            // auto-transformed image), so an aspect-ratio layout can use them
+            // directly. 0 when the row predates them being recorded.
+            photoMap["width"] = photo.width;
+            photoMap["height"] = photo.height;
             photoMap["has_location"] = photo.hasLocation;
             photoMap["latitude"] = photo.latitude;
             photoMap["longitude"] = photo.longitude;
