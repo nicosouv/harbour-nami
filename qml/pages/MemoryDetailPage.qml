@@ -1,5 +1,7 @@
 import QtQuick 2.6
 import Sailfish.Silica 1.0
+import "../components"
+import "../js/share.js" as Share
 
 // A memory's photos scattered like polaroids thrown on a table
 Page {
@@ -14,6 +16,8 @@ Page {
     ListModel {
         id: photosModel
     }
+
+    PhotoShareAction { id: shareAction }
 
     // Deterministic pseudo-random in [0,1) so the scatter looks organic but
     // stays stable across relayouts
@@ -69,6 +73,14 @@ Page {
         id: flickable
         anchors.fill: parent
         contentHeight: header.height + table.height + Theme.paddingLarge * 2
+
+        PullDownMenu {
+            MenuItem {
+                text: qsTr("Share photos")
+                enabled: photosModel.count > 0
+                onClicked: shareAction.sharePhotos(Share.pathsFromModel(photosModel))
+            }
+        }
 
         PageHeader {
             id: header

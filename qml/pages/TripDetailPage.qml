@@ -3,6 +3,7 @@ import Sailfish.Silica 1.0
 import "../components"
 import "../js/geoutils.js" as GeoUtils
 import "../js/eventsettings.js" as EventSettings
+import "../js/share.js" as Share
 
 // All photos of a trip (several days grouped together), with a choice of
 // browsing them by day or by geographic stop, plus a schematic route map.
@@ -23,6 +24,8 @@ Page {
     property bool hasLocationData: false
     property real distanceKm: 0
     property string coverPath: ""
+
+    PhotoShareAction { id: shareAction }
 
     function loadTrip() {
         if (!faceManager || !faceManager.initialized || tripId < 0) return
@@ -275,6 +278,11 @@ Page {
         contentHeight: column.height
 
         PullDownMenu {
+            MenuItem {
+                text: qsTr("Share photos")
+                enabled: totalPhotoCount > 0
+                onClicked: shareAction.sharePhotos(Share.pathsFromGroups(groups))
+            }
             MenuItem {
                 text: sortMode === "day" ? qsTr("Sort by location") : qsTr("Sort by day")
                 enabled: hasLocationData

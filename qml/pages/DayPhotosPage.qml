@@ -1,6 +1,8 @@
 import QtQuick 2.6
 import Sailfish.Silica 1.0
+import "../components"
 import "../js/eventsettings.js" as EventSettings
+import "../js/share.js" as Share
 
 // All photos taken on a given day (opened from the Events page)
 Page {
@@ -15,6 +17,8 @@ Page {
     ListModel {
         id: photosModel
     }
+
+    PhotoShareAction { id: shareAction }
 
     function loadPhotos() {
         if (!facePipeline || !facePipeline.initialized || dateKey.length === 0) return
@@ -77,6 +81,14 @@ Page {
         cellHeight: cellWidth
 
         model: photosModel
+
+        PullDownMenu {
+            MenuItem {
+                text: qsTr("Share photos")
+                enabled: photosModel.count > 0
+                onClicked: shareAction.sharePhotos(Share.pathsFromModel(photosModel))
+            }
+        }
 
         header: PageHeader {
             title: page.title
@@ -141,6 +153,10 @@ Page {
             }
 
             menu: ContextMenu {
+                MenuItem {
+                    text: qsTr("Share")
+                    onClicked: shareAction.sharePhoto(model.file_path)
+                }
                 MenuItem {
                     text: qsTr("Set as day cover")
                     onClicked: {

@@ -1,5 +1,7 @@
 import QtQuick 2.6
 import Sailfish.Silica 1.0
+import "../components"
+import "../js/share.js" as Share
 
 Page {
     id: page
@@ -15,6 +17,8 @@ Page {
     ListModel {
         id: photosModel
     }
+
+    PhotoShareAction { id: shareAction }
 
     // Statistics
     property int totalPhotos: 0
@@ -78,27 +82,9 @@ Page {
 
         PullDownMenu {
             MenuItem {
-                text: qsTr("Share All Photos")
-                enabled: totalPhotos > 0
-                onClicked: {
-                    // Collect all photo paths
-                    var photoPaths = []
-                    for (var i = 0; i < photosModel.count; i++) {
-                        var photo = photosModel.get(i)
-                        if (photo.file_path) {
-                            photoPaths.push(photo.file_path)
-                        }
-                    }
-
-                    // Open Sailfish OS share dialog
-                    if (photoPaths.length > 0) {
-                        pageStack.push("Sailfish.TransferEngine.SharePage", {
-                            content: photoPaths,
-                            mimeType: "image/jpeg",
-                            serviceFilter: ["sharing", "e-mail"]
-                        })
-                    }
-                }
+                text: qsTr("Share all photos")
+                enabled: photosModel.count > 0
+                onClicked: shareAction.sharePhotos(Share.pathsFromModel(photosModel))
             }
         }
 

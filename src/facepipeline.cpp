@@ -736,6 +736,21 @@ QVariantList FacePipeline::getPersonPhotos(int personId)
         }
     }
 
+    // QMap iterates by photo id, i.e. scan order, which looks random to the
+    // user. Sort newest first; photos without EXIF date (timestamp 0) sink to
+    // the bottom rather than pretending to be from 1970.
+    std::sort(result.begin(), result.end(),
+              [](const QVariant &a, const QVariant &b) {
+                  const qint64 ta = a.toMap().value("timestamp").toLongLong();
+                  const qint64 tb = b.toMap().value("timestamp").toLongLong();
+                  if (ta != tb) {
+                      return ta > tb;
+                  }
+                  // Stable tie-break so the order never shuffles between calls
+                  return a.toMap().value("photo_id").toInt()
+                       > b.toMap().value("photo_id").toInt();
+              });
+
     return result;
 }
 
@@ -845,6 +860,85 @@ bool FacePipeline::setPhotoRotation(const QString &photoPath, int rotation)
     }
 
     return m_database->setPhotoRotation(photoPath, rotation);
+}
+
+QVariantMap FacePipeline::photoDetails(const QString &photoPath)
+{
+    QVariantMap details;
+
+    const QFileInfo info(photoPath);
+    details["file_path"] = photoPath;
+    details["file_name"] = info.fileName();
+    details["folder"] = info.absolutePath();
+    details["exists"] = info.exists();
+    details["file_size"] = info.exists() ? info.size() : 0;
+
+    // Defaults so QML never has to null-check
+    details["in_library"] = false;
+    details["width"] = 0;
+    details["height"] = 0;
+    details["date_taken"] = QDateTime();
+    details["timestamp"] = 0;
+    details["has_location"] = false;
+    details["latitude"] = 0.0;
+    details["longitude"] = 0.0;
+    details["rotation"] = 0;
+
+    if (m_initialized && m_database) {
+        const Photo photo = m_database->getPhotoByPath(photoPath);
+        if (photo.id >= 0) {
+            details["in_library"] = true;
+            details["width"] = photo.width;
+            details["height"] = photo.height;
+            details["date_taken"] = photo.dateTaken;
+            details["timestamp"] = photo.dateTaken.isValid()
+                ? photo.dateTaken.toMSecsSinceEpoch() / 1000 : 0;
+            details["has_location"] = photo.hasLocation;
+            details["latitude"] = photo.latitude;
+            details["longitude"] = photo.longitude;
+            details["rotation"] = photo.rotation;
+        }
+    }
+
+    // Dimensions are missing for photos that were never scanned, and for older
+    // rows written before width/height were recorded. Read the header directly
+    // in that case - QImageReader does not decode the pixels.
+    if (details["width"].toInt() <= 0 || details["height"].toInt() <= 0) {
+        if (info.exists()) {
+            QImageReader reader(photoPath);
+            reader.setAutoTransform(true);
+            const QSize size = reader.size();
+            if (size.isValid()) {
+                details["width"] = size.width();
+                details["height"] = size.height();
+            }
+        }
+    }
+
+    // Same for the capture date and GPS: read EXIF directly, then fall back to
+    // the file's own timestamp, so the panel is not blank for unscanned photos.
+    const bool needsDate = !details["date_taken"].toDateTime().isValid();
+    const bool needsLocation = !details["has_location"].toBool();
+    if ((needsDate || needsLocation) && info.exists()) {
+        const ExifReader::Metadata meta = ExifReader::readMetadata(photoPath);
+
+        if (needsDate) {
+            const QDateTime fallback = meta.dateTaken.isValid()
+                ? meta.dateTaken : info.lastModified();
+            if (fallback.isValid()) {
+                details["date_taken"] = fallback;
+                details["timestamp"] = fallback.toMSecsSinceEpoch() / 1000;
+            }
+        }
+
+        if (needsLocation && meta.hasLocation) {
+            details["has_location"] = true;
+            details["latitude"] = meta.latitude;
+            details["longitude"] = meta.longitude;
+        }
+    }
+
+    return details;
 }
 
 void FacePipeline::setContactsEnabled(bool enabled)
