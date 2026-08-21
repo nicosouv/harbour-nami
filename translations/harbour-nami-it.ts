@@ -918,6 +918,10 @@
             <numerusform>%n da confermare</numerusform>
         </translation>
     </message>
+    <message>
+        <source>Review</source>
+        <translation>Rivedi</translation>
+    </message>
 </context>
 <context>
     <name>PersonPage</name>
@@ -1874,6 +1878,45 @@
     <message>
         <source>%1 kB</source>
         <translation>%1 kB</translation>
+    </message>
+</context>
+<context>
+    <name>ReviewMatchesPage</name>
+    <message>
+        <source>%1 of %2</source>
+        <translation>%1 di %2</translation>
+    </message>
+    <message>
+        <source>All done</source>
+        <translation>Fatto</translation>
+    </message>
+    <message>
+        <source>Every match for this person has been confirmed</source>
+        <translation>Tutte le corrispondenze di questa persona sono state confermate</translation>
+    </message>
+    <message>
+        <source>Is this %1?</source>
+        <translation>È %1?</translation>
+    </message>
+    <message>
+        <source>Not them</source>
+        <translation>Non è lui</translation>
+    </message>
+    <message>
+        <source>Nothing left to confirm</source>
+        <translation>Non c'è più nulla da confermare</translation>
+    </message>
+    <message>
+        <source>See the whole photo</source>
+        <translation>Vedi la foto intera</translation>
+    </message>
+    <message>
+        <source>Skip</source>
+        <translation>Salta</translation>
+    </message>
+    <message>
+        <source>Yes</source>
+        <translation>Sì</translation>
     </message>
 </context>
 </TS>

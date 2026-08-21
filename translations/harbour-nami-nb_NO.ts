@@ -844,6 +844,10 @@
             <numerusform>%n å bekrefte</numerusform>
         </translation>
     </message>
+    <message>
+        <source>Review</source>
+        <translation>Gjennomgå</translation>
+    </message>
 </context>
 <context>
     <name>PersonPage</name>
@@ -1854,6 +1858,45 @@
     <message>
         <source>%1 kB</source>
         <translation>%1 kB</translation>
+    </message>
+</context>
+<context>
+    <name>ReviewMatchesPage</name>
+    <message>
+        <source>%1 of %2</source>
+        <translation>%1 av %2</translation>
+    </message>
+    <message>
+        <source>All done</source>
+        <translation>Ferdig</translation>
+    </message>
+    <message>
+        <source>Every match for this person has been confirmed</source>
+        <translation>Alle treff for denne personen er bekreftet</translation>
+    </message>
+    <message>
+        <source>Is this %1?</source>
+        <translation>Er dette %1?</translation>
+    </message>
+    <message>
+        <source>Not them</source>
+        <translation>Ikke denne</translation>
+    </message>
+    <message>
+        <source>Nothing left to confirm</source>
+        <translation>Ingenting igjen å bekrefte</translation>
+    </message>
+    <message>
+        <source>See the whole photo</source>
+        <translation>Se hele bildet</translation>
+    </message>
+    <message>
+        <source>Skip</source>
+        <translation>Hopp over</translation>
+    </message>
+    <message>
+        <source>Yes</source>
+        <translation>Ja</translation>
     </message>
 </context>
 </TS>
