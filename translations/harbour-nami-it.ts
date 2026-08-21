@@ -895,6 +895,10 @@
         <source>To confirm (%1)</source>
         <translation>Da confermare (%1)</translation>
     </message>
+    <message>
+        <source>Undo confirmation</source>
+        <translation>Annulla la conferma</translation>
+    </message>
 </context>
 <context>
     <name>PersonPage</name>

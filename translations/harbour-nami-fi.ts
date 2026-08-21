@@ -895,6 +895,10 @@
         <source>To confirm (%1)</source>
         <translation>Vahvistettavia (%1)</translation>
     </message>
+    <message>
+        <source>Undo confirmation</source>
+        <translation>Kumoa vahvistus</translation>
+    </message>
 </context>
 <context>
     <name>PersonPage</name>

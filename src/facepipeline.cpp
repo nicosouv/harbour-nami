@@ -1195,6 +1195,28 @@ bool FacePipeline::confirmFace(int faceId)
     return true;
 }
 
+bool FacePipeline::unconfirmFace(int faceId)
+{
+    if (!m_initialized || !m_database) {
+        return false;
+    }
+
+    const Face face = m_database->getFace(faceId);
+    if (face.id < 0 || !face.verified) {
+        return false;
+    }
+
+    // The face stays attached to the person: this only takes back the user's
+    // confirmation, which is the way out of a mistaken "Confirm all matches".
+    // Removing the person from the photo is a different action.
+    if (!m_database->updateFaceMetadata(face.id, face.similarityScore, false)) {
+        return false;
+    }
+
+    invalidatePersonPrototypes();
+    return true;
+}
+
 int FacePipeline::confirmAllFaces(int personId)
 {
     if (!m_initialized || !m_database) {
