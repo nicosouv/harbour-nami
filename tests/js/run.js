@@ -144,6 +144,79 @@ check('coastlines: the big landmasses are there', () => {
     assert(covers(133, -25), 'no ring covers Australia');
 });
 
+/* ---------------- mosaic layout ---------------- */
+
+const mosaic = loadQmlJs('qml/js/mosaic.js');
+
+check('mosaic: aspect honours a quarter turn', () => {
+    assert(mosaic.aspectOf({ width: 400, height: 300 }) === 4 / 3, 'landscape');
+    assert(mosaic.aspectOf({ width: 400, height: 300, rotation: 90 }) === 3 / 4,
+           'rotated landscape should read as portrait');
+    assert(mosaic.aspectOf({ width: 400, height: 300, rotation: 180 }) === 4 / 3,
+           'a half turn keeps the aspect');
+    assert(mosaic.aspectOf({ width: 0, height: 0 }) === 1,
+           'unknown dimensions fall back to square');
+});
+
+check('mosaic: every full row ends exactly on the margin', () => {
+    const photos = [];
+    for (let i = 0; i < 40; i++) {
+        // alternate landscape, portrait and square
+        const shapes = [{ width: 4000, height: 3000 },
+                        { width: 3000, height: 4000 },
+                        { width: 2000, height: 2000 }];
+        photos.push(shapes[i % 3]);
+    }
+    const avail = 900, gap = 8;
+    const rows = mosaic.layout(photos, avail, 300, gap);
+    assert(rows.length > 1, 'expected several rows');
+
+    rows.slice(0, -1).forEach((row, index) => {
+        const total = row.reduce((sum, cell) => sum + cell.width, 0)
+                      + (row.length - 1) * gap;
+        assert(total === avail, `row ${index} spans ${total}, expected ${avail}`);
+    });
+});
+
+check('mosaic: photos in a row share one height', () => {
+    const photos = [{ width: 4000, height: 3000 }, { width: 3000, height: 4000 },
+                    { width: 2000, height: 2000 }, { width: 4000, height: 3000 },
+                    { width: 3000, height: 4000 }, { width: 2000, height: 2000 }];
+    const rows = mosaic.layout(photos, 900, 300, 8);
+    for (const row of rows) {
+        const heights = new Set(row.map(cell => cell.height));
+        assert(heights.size === 1, 'a row mixed several heights');
+    }
+});
+
+check('mosaic: a lone trailing photo is not blown up to full width', () => {
+    // One landscape photo alone on the last row
+    const rows = mosaic.layout([{ width: 4000, height: 3000 }], 900, 300, 8);
+    assert(rows.length === 1, 'expected a single row');
+    const only = rows[0][0];
+    assert(only.width < 900, `lone photo stretched to ${only.width}`);
+    assert(only.height <= 300 * 1.5 + 1, `lone photo grew to ${only.height}`);
+});
+
+check('mosaic: squareAll ignores the photo dimensions', () => {
+    const photos = [{ width: 4000, height: 3000 }, { width: 3000, height: 4000 },
+                    { width: 4000, height: 3000 }];
+    const rows = mosaic.layout(photos, 900, 300, 8, 1.5, true);
+    for (const row of rows) {
+        for (const cell of row) {
+            assert(Math.abs(cell.width - cell.height) <= 1,
+                   `square crop laid out as ${cell.width}x${cell.height}`);
+        }
+    }
+});
+
+check('mosaic: empty and degenerate inputs give no rows', () => {
+    assert(mosaic.layout([], 900, 300, 8).length === 0, 'empty list');
+    assert(mosaic.layout(null, 900, 300, 8).length === 0, 'null list');
+    assert(mosaic.layout([{ width: 100, height: 100 }], 0, 300, 8).length === 0,
+           'zero width');
+});
+
 /* ---------------- report ---------------- */
 
 for (const failure of failures) {
