@@ -377,6 +377,16 @@ public:
      */
     Q_INVOKABLE int confirmAllFaces(int personId);
 
+    /**
+     * @brief Mark one auto-matched face as user-verified
+     *
+     * Lets the user accept a single suggestion from the person's photo grid
+     * instead of confirming every match at once.
+     *
+     * @return true when the face existed and was not already verified
+     */
+    Q_INVOKABLE bool confirmFace(int faceId);
+
     // === Trips (user-named groups of day-events, e.g. a holiday) ===
 
     /**

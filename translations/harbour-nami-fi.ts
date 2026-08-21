@@ -186,6 +186,10 @@
         <source>View full photo</source>
         <translation>Näytä koko kuva</translation>
     </message>
+    <message>
+        <source>Select photos</source>
+        <translation>Valitse kuvia</translation>
+    </message>
 </context>
 <context>
     <name>MemoryDetailPage</name>
@@ -204,6 +208,10 @@
     <message>
         <source>Share photos</source>
         <translation>Jaa kuvat</translation>
+    </message>
+    <message>
+        <source>Select photos</source>
+        <translation>Valitse kuvia</translation>
     </message>
 </context>
 <context>
@@ -855,6 +863,37 @@
             <numerusform>%n osuma vahvistettavana</numerusform>
             <numerusform>%n osumaa vahvistettavana</numerusform>
         </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n selected</source>
+        <translation>
+            <numerusform>%n valittu</numerusform>
+            <numerusform>%n valittu</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>All</source>
+        <translation>Kaikki</translation>
+    </message>
+    <message>
+        <source>Confirm this match</source>
+        <translation>Vahvista tämä osuma</translation>
+    </message>
+    <message>
+        <source>Select photos</source>
+        <translation>Valitse kuvia</translation>
+    </message>
+    <message>
+        <source>Tap photos to select</source>
+        <translation>Valitse kuvat napauttamalla</translation>
+    </message>
+    <message>
+        <source>That many photos will not go through in one share</source>
+        <translation>Näin monta kuvaa ei mene läpi yhdellä jakamisella</translation>
+    </message>
+    <message>
+        <source>To confirm (%1)</source>
+        <translation>Vahvistettavia (%1)</translation>
     </message>
 </context>
 <context>
@@ -1554,6 +1593,14 @@
         <source>~%1 km traveled</source>
         <translation>~%1 km matkattu</translation>
     </message>
+    <message>
+        <source>Select photos</source>
+        <translation>Valitse kuvia</translation>
+    </message>
+    <message>
+        <source>Share</source>
+        <translation>Jaa</translation>
+    </message>
 </context>
 <context>
     <name>PassphraseDialog</name>
@@ -1767,6 +1814,24 @@
     <message>
         <source>Your yearly recap appears once you have a few events</source>
         <translation>Vuosikatsaus ilmestyy, kun sinulla on muutama tapahtuma</translation>
+    </message>
+</context>
+<context>
+    <name>PhotoSelectionBar</name>
+    <message numerus="yes">
+        <source>%n selected</source>
+        <translation>
+            <numerusform>%n valittu</numerusform>
+            <numerusform>%n valittu</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Tap photos to select</source>
+        <translation>Valitse kuvat napauttamalla</translation>
+    </message>
+    <message>
+        <source>That many photos will not go through in one share</source>
+        <translation>Näin monta kuvaa ei mene läpi yhdellä jakamisella</translation>
     </message>
 </context>
 </TS>

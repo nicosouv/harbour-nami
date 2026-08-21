@@ -186,6 +186,10 @@
         <source>View full photo</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Select photos</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>MemoryDetailPage</name>
@@ -203,6 +207,10 @@
     </message>
     <message>
         <source>Share photos</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select photos</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -854,6 +862,37 @@
             <numerusform></numerusform>
             <numerusform></numerusform>
         </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n selected</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>All</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Confirm this match</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select photos</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tap photos to select</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>That many photos will not go through in one share</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>To confirm (%1)</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -1553,6 +1592,14 @@
         <source>~%1 km traveled</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Select photos</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Share</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>PassphraseDialog</name>
@@ -1765,6 +1812,24 @@
     </message>
     <message>
         <source>Your yearly recap appears once you have a few events</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>PhotoSelectionBar</name>
+    <message numerus="yes">
+        <source>%n selected</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Tap photos to select</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>That many photos will not go through in one share</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

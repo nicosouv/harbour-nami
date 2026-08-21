@@ -102,28 +102,39 @@ Page {
     }
 
     PhotoShareAction { id: shareAction }
+    PhotoSelection { id: selection }
+
+    function visiblePaths() {
+        return Share.pathsFromModel(photosModel)
+    }
+
+    function confirmPhoto(faceId, photoId) {
+        if (!facePipeline.confirmFace(faceId)) return
+        // Update the backing list in place so the grid does not jump
+        for (var i = 0; i < allPhotos.length; i++) {
+            if (allPhotos[i].photo_id === photoId) {
+                allPhotos[i].verified = true
+                break
+            }
+        }
+        rebuildPhotoModel()
+    }
 
     SilicaFlickable {
         anchors.fill: parent
         contentHeight: column.height
 
         PullDownMenu {
+            // Selection and sorting live on the page itself; only actions that
+            // apply to the person as a whole stay here.
             MenuItem {
-                text: qsTr("Share photos")
-                enabled: photosModel.count > 0
-                onClicked: shareAction.sharePhotos(Share.pathsFromModel(photosModel))
-            }
-            MenuItem {
-                text: newestFirst ? qsTr("Oldest first") : qsTr("Newest first")
-                onClicked: newestFirst = !newestFirst
-            }
-            MenuItem {
-                text: unconfirmedOnly ? qsTr("Show all photos")
-                                      : qsTr("Show unconfirmed only")
-                onClicked: unconfirmedOnly = !unconfirmedOnly
+                text: qsTr("Select photos")
+                enabled: photosModel.count > 0 && !selection.active
+                onClicked: selection.begin("")
             }
             MenuItem {
                 text: qsTr("Confirm all matches")
+                enabled: unconfirmedTotal > 0
                 onClicked: {
                     var confirmed = facePipeline.confirmAllFaces(personId)
                     if (confirmed > 0) {
@@ -302,8 +313,105 @@ Page {
             }
 
             SectionHeader {
-                text: unconfirmedOnly ? qsTr("Unconfirmed photos") : qsTr("Photos")
-                visible: photosModel.count > 0
+                text: qsTr("Photos")
+                visible: photosModel.count > 0 && !selection.active
+            }
+
+            // Filter and sort, on the page rather than in the pulley menu:
+            // the current state has to be readable without opening anything.
+            Item {
+                width: parent.width
+                height: chipRow.height
+                visible: photosModel.count > 0 && !selection.active
+
+                Row {
+                    id: chipRow
+                    x: Theme.horizontalPageMargin
+                    spacing: Theme.paddingMedium
+
+                    FilterChip {
+                        text: qsTr("All")
+                        selected: !unconfirmedOnly
+                        onClicked: unconfirmedOnly = false
+                    }
+
+                    FilterChip {
+                        text: qsTr("To confirm (%1)").arg(unconfirmedTotal)
+                        visible: unconfirmedTotal > 0
+                        selected: unconfirmedOnly
+                        onClicked: unconfirmedOnly = true
+                    }
+                }
+
+                FilterChip {
+                    anchors {
+                        right: parent.right
+                        rightMargin: Theme.horizontalPageMargin - Theme.paddingMedium
+                        verticalCenter: chipRow.verticalCenter
+                    }
+                    text: newestFirst ? qsTr("Newest first") : qsTr("Oldest first")
+                    selected: true
+                    onClicked: newestFirst = !newestFirst
+                }
+            }
+
+            // Selection bar, shown in place of the filters while picking
+            Item {
+                width: parent.width
+                height: selectionRow.height + Theme.paddingMedium
+                visible: selection.active
+
+                Row {
+                    id: selectionRow
+                    anchors {
+                        left: parent.left
+                        leftMargin: Theme.horizontalPageMargin
+                        right: parent.right
+                        rightMargin: Theme.horizontalPageMargin
+                    }
+                    spacing: Theme.paddingMedium
+
+                    Label {
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: parent.width - shareSelected.width - cancelSelection.width
+                               - 2 * parent.spacing
+                        text: selection.count > 0
+                              ? qsTr("%n selected", "", selection.count)
+                              : qsTr("Tap photos to select")
+                        font.pixelSize: Theme.fontSizeSmall
+                        color: selection.tooMany ? Theme.errorColor : Theme.highlightColor
+                        truncationMode: TruncationMode.Fade
+                    }
+
+                    IconButton {
+                        id: shareSelected
+                        anchors.verticalCenter: parent.verticalCenter
+                        icon.source: "image://theme/icon-m-share"
+                        enabled: selection.count > 0
+                        onClicked: {
+                            if (shareAction.sharePhotos(selection.paths)) {
+                                selection.end()
+                            }
+                        }
+                    }
+
+                    IconButton {
+                        id: cancelSelection
+                        anchors.verticalCenter: parent.verticalCenter
+                        icon.source: "image://theme/icon-m-clear"
+                        onClicked: selection.end()
+                    }
+                }
+            }
+
+            Label {
+                x: Theme.horizontalPageMargin
+                width: parent.width - 2 * Theme.horizontalPageMargin
+                visible: selection.active && selection.tooMany
+                text: qsTr("That many photos will not go through in one share")
+                font.pixelSize: Theme.fontSizeExtraSmall
+                color: Theme.errorColor
+                wrapMode: Text.Wrap
             }
 
             // Photo grid
@@ -319,7 +427,10 @@ Page {
                     delegate: ListItem {
                         id: photoItem
                         width: photoGrid.width / 3
-                        height: width
+                        // No explicit height: ListItem grows when its context
+                        // menu opens, and this plain Grid reflows the row to
+                        // match. Pinning the height is what made the menu draw
+                        // on top of the neighbouring photos.
                         contentHeight: width
 
                         // Wrap content in Item to fix ContextMenu positioning
@@ -351,6 +462,22 @@ Page {
                                     color: "transparent"
                                     border.color: model.verified ? Theme.rgba(Theme.secondaryHighlightColor, 0.8) : Theme.rgba(Theme.highlightColor, 0.3)
                                     border.width: model.verified ? 2 : 1
+                                }
+
+                                // Selection state
+                                Rectangle {
+                                    anchors.fill: parent
+                                    visible: selection.active
+                                    color: selection.isSelected(model.file_path)
+                                           ? Theme.rgba(Theme.highlightBackgroundColor, 0.45)
+                                           : Theme.rgba("black", 0.35)
+                                    z: 90
+
+                                    Icon {
+                                        anchors.centerIn: parent
+                                        source: "image://theme/icon-m-acknowledge"
+                                        opacity: selection.isSelected(model.file_path) ? 1 : 0.25
+                                    }
                                 }
 
                                 // Verified badge (manual identification - checkmark)
@@ -423,39 +550,60 @@ Page {
                         ]
 
                         onClicked: {
+                            if (selection.active) {
+                                selection.toggle(model.file_path)
+                                return
+                            }
                             pageStack.push(Qt.resolvedUrl("PhotoViewerPage.qml"), {
                                 photoPath: model.file_path
                             })
                         }
 
-                        menu: ContextMenu {
-                            MenuItem {
-                                text: qsTr("Remove from person")
-                                onClicked: {
-                                    // Capture before the remorse timer fires:
-                                    // index shifts if the grid changes meanwhile
-                                    var photoId = model.photo_id
-                                    photoItem.remorseAction(qsTr("Removing"), function() {
-                                        if (facePipeline.removePersonFromPhoto(page.personId, photoId)) {
-                                            page.forgetPhoto(photoId)
-                                            page.rebuildPhotoModel()
-                                        }
-                                    })
-                                }
-                            }
+                        // Built only on first long press, so a grid of a few
+                        // hundred photos does not carry a menu per cell
+                        menu: selection.active ? null : photoMenu
 
-                            MenuItem {
-                                text: qsTr("View full photo")
-                                onClicked: {
-                                    pageStack.push(Qt.resolvedUrl("PhotoViewerPage.qml"), {
-                                        photoPath: model.file_path
-                                    })
-                                }
-                            }
+                        Component {
+                            id: photoMenu
 
-                            MenuItem {
-                                text: qsTr("Share")
-                                onClicked: shareAction.sharePhoto(model.file_path)
+                            ContextMenu {
+                                MenuItem {
+                                    // Accept this one suggestion without
+                                    // confirming every match at once
+                                    text: qsTr("Confirm this match")
+                                    visible: model.verified === false
+                                    onClicked: page.confirmPhoto(model.face_id,
+                                                                 model.photo_id)
+                                }
+
+                                MenuItem {
+                                    text: qsTr("Remove from person")
+                                    onClicked: {
+                                        // Capture before the remorse timer fires:
+                                        // index shifts if the grid changes meanwhile
+                                        var photoId = model.photo_id
+                                        photoItem.remorseAction(qsTr("Removing"), function() {
+                                            if (facePipeline.removePersonFromPhoto(page.personId, photoId)) {
+                                                page.forgetPhoto(photoId)
+                                                page.rebuildPhotoModel()
+                                            }
+                                        })
+                                    }
+                                }
+
+                                MenuItem {
+                                    text: qsTr("View full photo")
+                                    onClicked: {
+                                        pageStack.push(Qt.resolvedUrl("PhotoViewerPage.qml"), {
+                                            photoPath: model.file_path
+                                        })
+                                    }
+                                }
+
+                                MenuItem {
+                                    text: qsTr("Share")
+                                    onClicked: shareAction.sharePhoto(model.file_path)
+                                }
                             }
                         }
                     }

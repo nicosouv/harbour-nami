@@ -2,7 +2,6 @@ import QtQuick 2.6
 import Sailfish.Silica 1.0
 import "../components"
 import "../js/eventsettings.js" as EventSettings
-import "../js/share.js" as Share
 
 // All photos taken on a given day (opened from the Events page)
 Page {
@@ -19,6 +18,7 @@ Page {
     }
 
     PhotoShareAction { id: shareAction }
+    PhotoSelection { id: selection }
 
     function loadPhotos() {
         if (!facePipeline || !facePipeline.initialized || dateKey.length === 0) return
@@ -75,7 +75,13 @@ Page {
 
     SilicaGridView {
         id: gridView
-        anchors.fill: parent
+        anchors {
+            left: parent.left
+            right: parent.right
+            top: parent.top
+            bottom: selectionBar.top
+        }
+        clip: true
 
         cellWidth: width / 3
         cellHeight: cellWidth
@@ -84,9 +90,9 @@ Page {
 
         PullDownMenu {
             MenuItem {
-                text: qsTr("Share photos")
-                enabled: photosModel.count > 0
-                onClicked: shareAction.sharePhotos(Share.pathsFromModel(photosModel))
+                text: qsTr("Select photos")
+                enabled: photosModel.count > 0 && !selection.active
+                onClicked: selection.begin("")
             }
         }
 
@@ -98,7 +104,6 @@ Page {
         delegate: ListItem {
             id: photoItem
             width: gridView.cellWidth
-            height: gridView.cellHeight
             contentHeight: gridView.cellHeight
 
             // Wrap content in Item to fix ContextMenu positioning
@@ -118,6 +123,22 @@ Page {
                         anchors.centerIn: parent
                         running: parent.status === Image.Loading
                         size: BusyIndicatorSize.Small
+                    }
+
+                    // Selection state
+                    Rectangle {
+                        anchors.fill: parent
+                        visible: selection.active
+                        color: selection.isSelected(model.file_path)
+                               ? Theme.rgba(Theme.highlightBackgroundColor, 0.45)
+                               : Theme.rgba("black", 0.35)
+                        z: 90
+
+                        Icon {
+                            anchors.centerIn: parent
+                            source: "image://theme/icon-m-acknowledge"
+                            opacity: selection.isSelected(model.file_path) ? 1 : 0.25
+                        }
                     }
 
                     // Marks the photo currently used as this day's cover
@@ -147,30 +168,23 @@ Page {
             ]
 
             onClicked: {
+                if (selection.active) {
+                    selection.toggle(model.file_path)
+                    return
+                }
                 pageStack.push(Qt.resolvedUrl("PhotoViewerPage.qml"), {
                     photoPath: model.file_path
                 })
             }
 
-            menu: ContextMenu {
-                MenuItem {
-                    text: qsTr("Share")
-                    onClicked: shareAction.sharePhoto(model.file_path)
-                }
-                MenuItem {
-                    text: qsTr("Set as day cover")
-                    onClicked: {
-                        facePipeline.setEventCover("day:" + dateKey, model.file_path)
-                        coverPath = model.file_path
-                    }
-                }
-                MenuItem {
-                    text: qsTr("View full photo")
-                    onClicked: {
-                        pageStack.push(Qt.resolvedUrl("PhotoViewerPage.qml"), {
-                            photoPath: model.file_path
-                        })
-                    }
+            // A SilicaGridView cannot push its next row down for an inline
+            // ContextMenu, so long press enters selection mode instead. The
+            // per-photo actions live there (share) or on the photo itself.
+            onPressAndHold: {
+                if (!selection.active) {
+                    selection.begin(model.file_path)
+                } else {
+                    selection.toggle(model.file_path)
                 }
             }
         }
@@ -181,5 +195,27 @@ Page {
         }
 
         VerticalScrollDecorator {}
+    }
+
+    PhotoSelectionBar {
+        id: selectionBar
+        photoSelection: selection
+        anchors {
+            left: parent.left
+            right: parent.right
+            bottom: parent.bottom
+        }
+        onShareRequested: {
+            if (shareAction.sharePhotos(selection.paths)) selection.end()
+        }
+        // One page-specific action: promote the single selected photo to
+        // this day's cover
+        extraActionIcon: "image://theme/icon-m-favorite"
+        extraActionEnabled: selection.count === 1
+        onExtraActionTriggered: {
+            facePipeline.setEventCover("day:" + dateKey, selection.paths[0])
+            coverPath = selection.paths[0]
+            selection.end()
+        }
     }
 }

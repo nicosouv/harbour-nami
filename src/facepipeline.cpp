@@ -1167,6 +1167,26 @@ bool FacePipeline::setSetting(const QString &key, const QString &value)
     return m_database->setSetting(key, value);
 }
 
+bool FacePipeline::confirmFace(int faceId)
+{
+    if (!m_initialized || !m_database) {
+        return false;
+    }
+
+    const Face face = m_database->getFace(faceId);
+    if (face.id < 0 || face.verified) {
+        return false;
+    }
+
+    if (!m_database->updateFaceMetadata(face.id, face.similarityScore, true)) {
+        return false;
+    }
+
+    // Verified faces define the person prototype
+    invalidatePersonPrototypes();
+    return true;
+}
+
 int FacePipeline::confirmAllFaces(int personId)
 {
     if (!m_initialized || !m_database) {
