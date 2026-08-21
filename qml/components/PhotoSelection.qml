@@ -18,11 +18,29 @@ QtObject {
 
     readonly property int count: paths.length
 
-    // Guard against a share so large it will never complete. Bluetooth and
-    // e-mail both fall over well before this, and the share sheet gives no
-    // feedback when it does.
-    readonly property int recommendedMax: 50
-    readonly property bool tooMany: count > recommendedMax
+    // What makes a share fail is the payload size, not the number of files:
+    // 200 thumbnails go through where 12 raw camera shots do not. Kept as a
+    // running total, updated per tap, rather than restatting every file on
+    // each change.
+    property real totalBytes: 0
+
+    // Roughly where e-mail attachment limits sit, and past which Bluetooth
+    // becomes a long silent wait. The share sheet gives no feedback when a
+    // transfer is too big, so the warning has to come from here.
+    readonly property real maxShareBytes: 20 * 1024 * 1024
+    readonly property bool tooLarge: totalBytes > maxShareBytes
+
+    function sizeOf(path) {
+        if (!path || !facePipeline || !facePipeline.initialized) return 0
+        return facePipeline.fileSize(path)
+    }
+
+    function formatSize(bytes) {
+        if (!bytes || bytes <= 0) return ""
+        if (bytes < 1024) return qsTr("%1 B").arg(bytes)
+        if (bytes < 1024 * 1024) return qsTr("%1 kB").arg((bytes / 1024).toFixed(0))
+        return qsTr("%1 MB").arg((bytes / (1024 * 1024)).toFixed(1))
+    }
 
     function isSelected(path) {
         return paths.indexOf(path) >= 0
@@ -34,23 +52,33 @@ QtObject {
         var at = next.indexOf(path)
         if (at >= 0) {
             next.splice(at, 1)
+            totalBytes = Math.max(0, totalBytes - sizeOf(path))
         } else {
             next.push(path)
+            totalBytes += sizeOf(path)
         }
         paths = next
     }
 
     function selectAll(allPaths) {
-        paths = allPaths ? allPaths.slice() : []
+        var next = allPaths ? allPaths.slice() : []
+        var total = 0
+        for (var i = 0; i < next.length; i++) {
+            total += sizeOf(next[i])
+        }
+        paths = next
+        totalBytes = total
     }
 
     function begin(path) {
         paths = path ? [path] : []
+        totalBytes = path ? sizeOf(path) : 0
         active = true
     }
 
     function end() {
         active = false
         paths = []
+        totalBytes = 0
     }
 }

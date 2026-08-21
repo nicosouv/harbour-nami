@@ -1833,5 +1833,24 @@
         <source>That many photos will not go through in one share</source>
         <translation>Autant de photos ne passeront pas en un seul partage</translation>
     </message>
+    <message>
+        <source>Too heavy for one share, deselect a few</source>
+        <translation>Trop lourd pour un seul partage, désélectionnez-en quelques-unes</translation>
+    </message>
+</context>
+<context>
+    <name>PhotoSelection</name>
+    <message>
+        <source>%1 B</source>
+        <translation>%1 o</translation>
+    </message>
+    <message>
+        <source>%1 MB</source>
+        <translation>%1 Mo</translation>
+    </message>
+    <message>
+        <source>%1 kB</source>
+        <translation>%1 ko</translation>
+    </message>
 </context>
 </TS>

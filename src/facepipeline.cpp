@@ -862,6 +862,14 @@ bool FacePipeline::setPhotoRotation(const QString &photoPath, int rotation)
     return m_database->setPhotoRotation(photoPath, rotation);
 }
 
+qint64 FacePipeline::fileSize(const QString &photoPath)
+{
+    // Deliberately not going through photoDetails(): the selection bar calls
+    // this on every tap, and a stat() is all it needs.
+    const QFileInfo info(photoPath);
+    return info.exists() ? info.size() : 0;
+}
+
 QVariantMap FacePipeline::photoDetails(const QString &photoPath)
 {
     QVariantMap details;

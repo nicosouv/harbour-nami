@@ -2,7 +2,6 @@ import QtQuick 2.6
 import Sailfish.Silica 1.0
 import Nemo.DBus 2.0
 import "../components"
-import "../js/share.js" as Share
 
 Page {
     id: page
@@ -104,10 +103,6 @@ Page {
     PhotoShareAction { id: shareAction }
     PhotoSelection { id: selection }
 
-    function visiblePaths() {
-        return Share.pathsFromModel(photosModel)
-    }
-
     function confirmPhoto(faceId, photoId) {
         if (!facePipeline.confirmFace(faceId)) return
         // Update the backing list in place so the grid does not jump
@@ -121,7 +116,13 @@ Page {
     }
 
     SilicaFlickable {
-        anchors.fill: parent
+        anchors {
+            left: parent.left
+            right: parent.right
+            top: parent.top
+            bottom: selectionBar.top
+        }
+        clip: true
         contentHeight: column.height
 
         PullDownMenu {
@@ -355,64 +356,7 @@ Page {
                 }
             }
 
-            // Selection bar, shown in place of the filters while picking
-            Item {
-                width: parent.width
-                height: selectionRow.height + Theme.paddingMedium
-                visible: selection.active
-
-                Row {
-                    id: selectionRow
-                    anchors {
-                        left: parent.left
-                        leftMargin: Theme.horizontalPageMargin
-                        right: parent.right
-                        rightMargin: Theme.horizontalPageMargin
-                    }
-                    spacing: Theme.paddingMedium
-
-                    Label {
-                        anchors.verticalCenter: parent.verticalCenter
-                        width: parent.width - shareSelected.width - cancelSelection.width
-                               - 2 * parent.spacing
-                        text: selection.count > 0
-                              ? qsTr("%n selected", "", selection.count)
-                              : qsTr("Tap photos to select")
-                        font.pixelSize: Theme.fontSizeSmall
-                        color: selection.tooMany ? Theme.errorColor : Theme.highlightColor
-                        truncationMode: TruncationMode.Fade
-                    }
-
-                    IconButton {
-                        id: shareSelected
-                        anchors.verticalCenter: parent.verticalCenter
-                        icon.source: "image://theme/icon-m-share"
-                        enabled: selection.count > 0
-                        onClicked: {
-                            if (shareAction.sharePhotos(selection.paths)) {
-                                selection.end()
-                            }
-                        }
-                    }
-
-                    IconButton {
-                        id: cancelSelection
-                        anchors.verticalCenter: parent.verticalCenter
-                        icon.source: "image://theme/icon-m-clear"
-                        onClicked: selection.end()
-                    }
-                }
-            }
-
-            Label {
-                x: Theme.horizontalPageMargin
-                width: parent.width - 2 * Theme.horizontalPageMargin
-                visible: selection.active && selection.tooMany
-                text: qsTr("That many photos will not go through in one share")
-                font.pixelSize: Theme.fontSizeExtraSmall
-                color: Theme.errorColor
-                wrapMode: Text.Wrap
-            }
+            // The selection bar itself is anchored to the page, below
 
             // Photo grid
             Grid {
@@ -626,5 +570,19 @@ Page {
         }
 
         VerticalScrollDecorator {}
+    }
+
+    PhotoSelectionBar {
+        id: selectionBar
+        photoSelection: selection
+        anchors {
+            left: parent.left
+            right: parent.right
+            bottom: parent.bottom
+        }
+        z: 200
+        onShareRequested: {
+            if (shareAction.sharePhotos(selection.paths)) selection.end()
+        }
     }
 }

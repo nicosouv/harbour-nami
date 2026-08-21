@@ -51,19 +51,26 @@ Item {
 
                 Label {
                     width: parent.width
-                    text: (root.photoSelection && root.photoSelection.count > 0)
-                          ? qsTr("%n selected", "", root.photoSelection.count)
-                          : qsTr("Tap photos to select")
+                    // The running total matters more than the count here, so
+                    // it sits on the same line as it
+                    text: {
+                        if (!root.photoSelection || root.photoSelection.count === 0) {
+                            return qsTr("Tap photos to select")
+                        }
+                        var picked = qsTr("%n selected", "", root.photoSelection.count)
+                        var size = root.photoSelection.formatSize(root.photoSelection.totalBytes)
+                        return size.length > 0 ? picked + "  ·  " + size : picked
+                    }
                     font.pixelSize: Theme.fontSizeSmall
-                    color: (root.photoSelection && root.photoSelection.tooMany)
+                    color: (root.photoSelection && root.photoSelection.tooLarge)
                            ? Theme.errorColor : Theme.highlightColor
                     truncationMode: TruncationMode.Fade
                 }
 
                 Label {
                     width: parent.width
-                    visible: root.photoSelection && root.photoSelection.tooMany
-                    text: qsTr("That many photos will not go through in one share")
+                    visible: root.photoSelection && root.photoSelection.tooLarge
+                    text: qsTr("Too heavy for one share, deselect a few")
                     font.pixelSize: Theme.fontSizeExtraSmall
                     color: Theme.errorColor
                     wrapMode: Text.Wrap
