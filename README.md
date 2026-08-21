@@ -1,50 +1,74 @@
 # Harbour Nami
 
-Face recognition photo gallery for Sailfish OS.
+Face recognition photo gallery for Sailfish OS. Everything runs on the device:
+no cloud, no account, no network access at any point.
 
 ## Features
 
-- **Privacy First**: All face recognition processing happens locally on your device
-- **Smart Organization**: Automatically group photos by detected faces
-- **Face Tagging**: Name detected faces for easy identification
-- **Gallery Integration**: Seamlessly works with your existing photo gallery
-- **Performance Optimized**: Target 30+ FPS for smooth operation
+- **Privacy first**: face detection and recognition run locally, and the app
+  never needs an internet connection
+- **People**: photos grouped automatically by detected face, named once and
+  recognised from then on, with suggestions while you identify
+- **Contacts**: link a person to an entry in your address book, or keep them
+  in the app only
+- **Events**: photos grouped by day, several days combined into a named trip,
+  with a schematic offline route map
+- **Memories**: photos from around today's date in previous years, plus a
+  year-by-year recap
+- **Sharing**: send photos to any target the system offers, from a photo, a
+  person, a day, a trip or a memory
+- **Encrypted backup**: export everything you have identified, protected by a
+  passphrase you choose, and restore it on another device
+- **GDPR**: full data export and one-tap deletion of everything the app stores
+- **Multilingual**: English, French, German, Italian, Spanish, Finnish and
+  Norwegian, with an in-app language override
+
+## Installation
+
+Download the RPM for your architecture from
+[GitHub Releases](https://github.com/nicosouv/harbour-nami/releases), then:
+
+```bash
+pkcon install-local harbour-nami-*.rpm
+```
 
 ## Building
 
-### Requirements
-
-- Sailfish SDK (for CI/CD builds)
-- Docker (recommended)
-- ML Models (YuNet + SFace, from OpenCV Zoo)
-
 ### Architecture
 
-This app uses **C++ native implementation** with:
-- **OpenCV minimal** (core, imgproc, dnn, objdetect modules) - bundled
-- **CMake** build system
-- Target: Jolla C2 (aarch64)
+- **C++ native** implementation, **CMake** build system
+- **OpenCV minimal** (core, imgproc, dnn, objdetect) cross-compiled and
+  bundled into the RPM
+- **YuNet** face detection + **SFace** recognition, from OpenCV Zoo
+- Built for `aarch64` and `armv7hl`
 
-### CI/CD Build (Recommended)
+Packaging lives in `rpm/harbour-nami.yaml`, which is the source of truth;
+`rpm/harbour-nami.spec` is regenerated from it at build time.
 
-The app is designed for **CI/CD only builds** using GitHub Actions:
+### CI/CD build (recommended)
 
-1. Push a tag: `git tag v0.2.0 && git push origin v0.2.0`
-2. GitHub Actions will:
-   - Cross-compile OpenCV minimal (cached)
-   - Download ML models (checksum-verified)
-   - Build the RPM
-   - Create a GitHub release
+Releases are cut by pushing a tag:
 
-### Manual Build (Advanced)
+```bash
+git tag v0.8.5 && git push origin v0.8.5
+```
 
-If you need to build locally:
+GitHub Actions then cross-compiles OpenCV (cached between runs), downloads the
+checksum-verified ML models, builds an RPM per architecture and publishes a
+release. `.github/workflows/build.yml` can also be run manually from the
+Actions tab, which builds without publishing anything.
+
+Every push to `main` additionally runs `.github/workflows/tests.yml`: QML
+anti-pattern checks, JavaScript unit tests, and the Qt unit tests for the
+storage and crypto layers.
+
+### Manual build (advanced)
 
 ```bash
 # 1. Download ML models
 ./scripts/download_models_for_build.sh
 
-# 2. Build OpenCV minimal (inside Sailfish SDK container)
+# 2. Build OpenCV minimal (inside the Sailfish SDK container)
 docker run --rm \
   -v $(pwd):/home/mersdk/src:z \
   coderus/sailfishos-platform-sdk:5.0.0.43 \
@@ -57,33 +81,35 @@ docker run --rm \
   bash -c "cd /home/mersdk/src && mb2 -t SailfishOS-5.0.0.43-aarch64 build"
 ```
 
-## Installation
+### Running the checks locally
 
-Download the RPM from [GitHub Releases](https://github.com/nicosouv/harbour-nami/releases) or OpenRepos, then install:
+No Qt needed for the fast lane:
 
 ```bash
-pkcon install-local harbour-nami-*.rpm
+python3 scripts/check_qml.py   # QML anti-patterns that qmllint cannot see
+node tests/js/run.js           # JavaScript unit tests
 ```
 
-## Development Status
+The Qt tests need `qtbase5-dev`, `libqt5sql5-sqlite` and `libssl-dev`:
 
-This is an early development version. Core features are being implemented.
+```bash
+cmake -S tests -B build-tests && cmake --build build-tests
+ctest --test-dir build-tests --output-on-failure
+```
 
-### Roadmap
+## Documentation
 
-- [x] Basic UI with Silica components
-- [x] Settings page
-- [ ] Gallery access and permissions
-- [ ] Face detection engine
-- [ ] Face recognition ML model
-- [ ] Face grouping system
-- [ ] Face naming dialog
-- [ ] Contact integration
+- [ARCHITECTURE.md](ARCHITECTURE.md) - how the pieces fit together
+- [BUILDING.md](BUILDING.md) - build details
+- [INSTALL.md](INSTALL.md) - installation notes
+- [ROADMAP.md](ROADMAP.md) - what is done and what is planned
+- [rpm/harbour-nami.changes](rpm/harbour-nami.changes) - release notes
 
 ## License
 
-See LICENSE file for details.
+MIT for the code (see [LICENSE](LICENSE)). The bundled ML models come from
+OpenCV Zoo: YuNet under MIT, SFace under Apache-2.0.
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit issues and pull requests.
+Contributions are welcome. Issues and pull requests are both fine.
