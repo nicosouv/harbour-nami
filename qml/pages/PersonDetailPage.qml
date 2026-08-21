@@ -103,12 +103,15 @@ Page {
     PhotoShareAction { id: shareAction }
     PhotoSelection { id: selection }
 
-    function confirmPhoto(faceId, photoId) {
-        if (!facePipeline.confirmFace(faceId)) return
+    function setPhotoConfirmed(faceId, photoId, confirmed) {
+        var changed = confirmed ? facePipeline.confirmFace(faceId)
+                                : facePipeline.unconfirmFace(faceId)
+        if (!changed) return
+
         // Update the backing list in place so the grid does not jump
         for (var i = 0; i < allPhotos.length; i++) {
             if (allPhotos[i].photo_id === photoId) {
-                allPhotos[i].verified = true
+                allPhotos[i].verified = confirmed
                 break
             }
         }
@@ -361,16 +364,22 @@ Page {
             // Photo grid
             Grid {
                 id: photoGrid
-                width: parent.width
+                x: Theme.horizontalPageMargin
+                width: parent.width - 2 * Theme.horizontalPageMargin
                 columns: 3
                 spacing: Theme.paddingSmall
+
+                // 3 cells plus 2 gaps have to fit the width. Sizing cells at
+                // width/3 overflows by two gaps, which pushed the last column
+                // off the right edge of the screen.
+                property real cellSize: (width - (columns - 1) * spacing) / columns
 
                 Repeater {
                     model: photosModel
 
                     delegate: ListItem {
                         id: photoItem
-                        width: photoGrid.width / 3
+                        width: photoGrid.cellSize
                         // No explicit height: ListItem grows when its context
                         // menu opens, and this plain Grid reflows the row to
                         // match. Pinning the height is what made the menu draw
@@ -382,7 +391,6 @@ Page {
                             Image {
                                 id: photoImage
                                 anchors.fill: parent
-                                anchors.margins: Theme.paddingSmall / 2
                                 source: model.file_path ? "file://" + model.file_path : ""
                                 fillMode: Image.PreserveAspectCrop
                                 autoTransform: true
@@ -516,8 +524,17 @@ Page {
                                     // confirming every match at once
                                     text: qsTr("Confirm this match")
                                     visible: model.verified === false
-                                    onClicked: page.confirmPhoto(model.face_id,
-                                                                 model.photo_id)
+                                    onClicked: page.setPhotoConfirmed(model.face_id,
+                                                                      model.photo_id, true)
+                                }
+
+                                MenuItem {
+                                    // Undo for a mistaken confirmation, and
+                                    // the only way back out of "Confirm all"
+                                    text: qsTr("Undo confirmation")
+                                    visible: model.verified === true
+                                    onClicked: page.setPhotoConfirmed(model.face_id,
+                                                                      model.photo_id, false)
                                 }
 
                                 MenuItem {

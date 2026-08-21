@@ -821,6 +821,10 @@
         <source>To confirm (%1)</source>
         <translation>Å bekrefte (%1)</translation>
     </message>
+    <message>
+        <source>Undo confirmation</source>
+        <translation>Angre bekreftelsen</translation>
+    </message>
 </context>
 <context>
     <name>PersonPage</name>

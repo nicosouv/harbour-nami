@@ -364,20 +364,26 @@ Page {
                         columns: 3
                         spacing: Theme.paddingSmall
 
+                        // 3 cells plus 2 gaps have to fit the width; width/3
+                        // overflows by two gaps and clips the last column
+                        property real cellSize: (width - (columns - 1) * spacing) / columns
+
                         Repeater {
                             model: modelData.photos
 
                             delegate: ListItem {
                                 id: photoItem
-                                width: photoGrid.width / 3
-                                height: width
+                                width: photoGrid.cellSize
+                                // No explicit height: the ListItem grows for
+                                // its context menu and this plain Grid reflows
+                                // the row, instead of the menu landing on the
+                                // neighbouring photos
                                 contentHeight: width
 
                                 // Wrap content in Item to fix ContextMenu positioning
                                 contentItem.children: [
                                     Image {
                                         anchors.fill: parent
-                                        anchors.margins: Theme.paddingSmall / 2
                                         source: modelData.file_path ? "file://" + modelData.file_path : ""
                                         fillMode: Image.PreserveAspectCrop
                                         autoTransform: true

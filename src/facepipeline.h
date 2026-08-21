@@ -395,6 +395,18 @@ public:
      */
     Q_INVOKABLE bool confirmFace(int faceId);
 
+    /**
+     * @brief Take back the confirmation on one face
+     *
+     * The face keeps its person; it simply stops being user-verified, so it
+     * no longer defines the person's prototype. This is the undo for a
+     * mistaken confirmation - to say "this is not them", remove the person
+     * from the photo instead.
+     *
+     * @return true when the face existed and was verified
+     */
+    Q_INVOKABLE bool unconfirmFace(int faceId);
+
     // === Trips (user-named groups of day-events, e.g. a holiday) ===
 
     /**
