@@ -12,12 +12,16 @@
   to the top-left corner
 - Zooming and panning no longer drift into the empty space beside a photo,
   and a rotated photo is refitted to the screen
-- New photo details panel: file name and path, capture date, dimensions,
-  file size and location
-- Where a photo was taken is drawn on the same offline map the trips use;
-  tap the map to zoom in
-- Copy a photo's file path to the clipboard
-- Tap the photo to hide the on-screen controls
+- The photo viewer now shows the photo's details and its location map right
+  under the image, with no menu to open first
+- Copy a photo's file path from the details, and share it from there too
+- Pick which photos to share: a selection mode on people, days, trips and
+  memories, with a warning once the selection is too heavy to go through
+- Confirm a single suggested match from a person's photo grid, rather than
+  having to accept every match at once
+- Filter and sort a person's photos from the page itself instead of the
+  pulley menu
+- Fix the long-press menu being drawn over the neighbouring photos
 - Translations completed for French, Italian, Spanish, Finnish, German and
   Norwegian
 
