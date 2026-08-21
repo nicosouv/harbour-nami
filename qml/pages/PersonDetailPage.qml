@@ -1,6 +1,8 @@
 import QtQuick 2.6
 import Sailfish.Silica 1.0
 import Nemo.DBus 2.0
+import "../components"
+import "../js/share.js" as Share
 
 Page {
     id: page
@@ -9,6 +11,15 @@ Page {
     property string personName: ""
     property string contactId: ""
     property var faceManager: facePipeline
+
+    // Full photo list as returned by the pipeline (already newest first).
+    // photosModel holds the filtered/sorted view of it.
+    property var allPhotos: []
+    property bool newestFirst: true
+    property bool unconfirmedOnly: false
+    // Kept as plain properties (not functions) so bindings actually re-evaluate
+    property int totalPhotos: 0
+    property int unconfirmedTotal: 0
 
     allowedOrientations: Orientation.All
 
@@ -42,26 +53,75 @@ Page {
     function loadPhotos() {
         if (!faceManager || !faceManager.initialized || personId < 0) return
 
+        allPhotos = faceManager.getPersonPhotos(personId)
+        rebuildPhotoModel()
+    }
+
+    // Rebuild the visible grid from allPhotos. getPersonPhotos() already sorts
+    // newest first, so "oldest first" is just a reversal.
+    function rebuildPhotoModel() {
         photosModel.clear()
 
-        // Get all photos for this person
-        var photos = faceManager.getPersonPhotos(personId)
+        var visible = []
+        var unconfirmed = 0
+        for (var i = 0; i < allPhotos.length; i++) {
+            if (allPhotos[i].verified !== true) unconfirmed++
+            if (unconfirmedOnly && allPhotos[i].verified === true) continue
+            visible.push(allPhotos[i])
+        }
+        totalPhotos = allPhotos.length
+        unconfirmedTotal = unconfirmed
 
-        for (var i = 0; i < photos.length; i++) {
-            photosModel.append(photos[i])
+        if (!newestFirst) {
+            visible.reverse()
+        }
+
+        for (var j = 0; j < visible.length; j++) {
+            photosModel.append(visible[j])
         }
     }
+
+    // Drop a photo from the backing list too, otherwise it reappears on the
+    // next filter/sort toggle.
+    function forgetPhoto(photoId) {
+        var remaining = []
+        for (var i = 0; i < allPhotos.length; i++) {
+            if (allPhotos[i].photo_id !== photoId) {
+                remaining.push(allPhotos[i])
+            }
+        }
+        allPhotos = remaining
+    }
+
+    onNewestFirstChanged: rebuildPhotoModel()
+    onUnconfirmedOnlyChanged: rebuildPhotoModel()
 
     Component.onCompleted: {
         loadPhotos()
         loadContact()
     }
 
+    PhotoShareAction { id: shareAction }
+
     SilicaFlickable {
         anchors.fill: parent
         contentHeight: column.height
 
         PullDownMenu {
+            MenuItem {
+                text: qsTr("Share photos")
+                enabled: photosModel.count > 0
+                onClicked: shareAction.sharePhotos(Share.pathsFromModel(photosModel))
+            }
+            MenuItem {
+                text: newestFirst ? qsTr("Oldest first") : qsTr("Newest first")
+                onClicked: newestFirst = !newestFirst
+            }
+            MenuItem {
+                text: unconfirmedOnly ? qsTr("Show all photos")
+                                      : qsTr("Show unconfirmed only")
+                onClicked: unconfirmedOnly = !unconfirmedOnly
+            }
             MenuItem {
                 text: qsTr("Confirm all matches")
                 onClicked: {
@@ -184,7 +244,8 @@ Page {
                         spacing: Theme.paddingSmall
 
                         Label {
-                            text: photosModel.count + " " + (photosModel.count === 1 ? qsTr("photo") : qsTr("photos"))
+                            // Always the real total, never the filtered count
+                            text: totalPhotos + " " + (totalPhotos === 1 ? qsTr("photo") : qsTr("photos"))
                             font.pixelSize: Theme.fontSizeHuge
                             font.bold: true
                             color: Theme.highlightColor
@@ -195,6 +256,14 @@ Page {
                             text: qsTr("with this person")
                             font.pixelSize: Theme.fontSizeSmall
                             color: Theme.secondaryColor
+                            anchors.horizontalCenter: parent.horizontalCenter
+                        }
+
+                        Label {
+                            visible: unconfirmedTotal > 0
+                            text: qsTr("%n match(es) to confirm", "", unconfirmedTotal)
+                            font.pixelSize: Theme.fontSizeSmall
+                            color: Theme.highlightColor
                             anchors.horizontalCenter: parent.horizontalCenter
                         }
                     }
@@ -233,7 +302,7 @@ Page {
             }
 
             SectionHeader {
-                text: qsTr("Photos")
+                text: unconfirmedOnly ? qsTr("Unconfirmed photos") : qsTr("Photos")
                 visible: photosModel.count > 0
             }
 
@@ -363,9 +432,13 @@ Page {
                             MenuItem {
                                 text: qsTr("Remove from person")
                                 onClicked: {
+                                    // Capture before the remorse timer fires:
+                                    // index shifts if the grid changes meanwhile
+                                    var photoId = model.photo_id
                                     photoItem.remorseAction(qsTr("Removing"), function() {
-                                        if (facePipeline.removePersonFromPhoto(page.personId, model.photo_id)) {
-                                            photosModel.remove(index)
+                                        if (facePipeline.removePersonFromPhoto(page.personId, photoId)) {
+                                            page.forgetPhoto(photoId)
+                                            page.rebuildPhotoModel()
                                         }
                                     })
                                 }
@@ -379,6 +452,11 @@ Page {
                                     })
                                 }
                             }
+
+                            MenuItem {
+                                text: qsTr("Share")
+                                onClicked: shareAction.sharePhoto(model.file_path)
+                            }
                         }
                     }
                 }
@@ -386,8 +464,11 @@ Page {
 
             ViewPlaceholder {
                 enabled: photosModel.count === 0
-                text: qsTr("No photos")
-                hintText: qsTr("This person hasn't been detected in any photos yet")
+                text: unconfirmedOnly ? qsTr("Nothing left to confirm")
+                                      : qsTr("No photos")
+                hintText: unconfirmedOnly
+                          ? qsTr("Every match for this person has been confirmed")
+                          : qsTr("This person hasn't been detected in any photos yet")
             }
 
             Item {

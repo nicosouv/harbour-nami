@@ -230,6 +230,19 @@ public:
     Q_INVOKABLE bool setPhotoRotation(const QString &photoPath, int rotation);
 
     /**
+     * @brief File and EXIF details for the photo viewer's info panel
+     *
+     * Works for any readable file: values known only from the database
+     * (date taken, GPS) are filled in when the photo has been scanned, and
+     * the file-level ones (name, folder, size, dimensions) always are.
+     *
+     * @return Map with file_name, folder, file_path, exists, file_size,
+     *         width, height, date_taken, has_location, latitude, longitude,
+     *         in_library
+     */
+    Q_INVOKABLE QVariantMap photoDetails(const QString &photoPath);
+
+    /**
      * @brief Merge one person into another
      *
      * All faces of fromPersonId are reassigned to intoPersonId and
