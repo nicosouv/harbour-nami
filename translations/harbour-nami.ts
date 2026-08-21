@@ -107,6 +107,14 @@
         <source>Thanks to Frank Paul Silye for the Norwegian Bokmål translation</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Events grouped by day, with multi-day trips and an offline route map</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Memories from previous years, plus a year-by-year recap</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>ConfirmDialog</name>
@@ -143,6 +151,10 @@
         <source>Scanning...</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Scanning: %1 / %2</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>DayPhotosPage</name>
@@ -164,6 +176,14 @@
     </message>
     <message>
         <source>Share</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Set as day cover</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>View full photo</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -210,6 +230,124 @@
     </message>
     <message>
         <source>photos</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 days</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>1 day</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Add %n day(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Add more days…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Dismiss</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Group</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Group %n day(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Hidden</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hide hidden events</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Merge into another trip…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Name this trip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Photos automatically grouped by date. Group several days into a trip for a multi-day event.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rename</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rename trip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select days to group into a trip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select the days to add to this trip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select the days to combine into a trip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show hidden events</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Suggested trip: %1 (%2)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Trip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ungroup</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ungrouping trip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unhide</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Year in review</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>day</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>days</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -312,6 +450,22 @@
     <message>
         <source>✗ Ignore (not a face or low quality, won't be shown again)
 ✓ Identify (assign to a person)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Is this…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Possible match</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Very likely</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>photographed the same day</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -498,6 +652,10 @@
     </message>
     <message>
         <source>photos</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Trip: %1</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -1040,6 +1198,18 @@
         <source>Who is this?</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Matching people:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Selected person</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>“%1” already exists — tap it below to avoid a duplicate</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>SettingsPage</name>
@@ -1195,6 +1365,93 @@
         <source>Restart Nami to apply the new language</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>A backup includes everyone you've identified, their photos and your trips, so you can restore it all on a new device. Links to your contacts are left out, since those contacts may not exist on the new phone — you can link them again there. It's encrypted with a passphrase you choose — if you forget it, the backup can't be recovered. On the new phone, scan your gallery first, then restore: this is always safe, whether your photos ended up at the same path or not, and whatever Nami version you're running.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Backup</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Backup failed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Backup written to %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose a passphrase to encrypt the backup. There is no way to recover it if you forget the passphrase, so keep it somewhere safe.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Create backup</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enter the backup's passphrase</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Events</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Identifications and trips will be added to what's already on this device. Nothing is deleted.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Include photos without people</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Last backup: %n day(s) ago</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Last backup: today</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No backup found in %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No backup yet — make one before switching phones</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Protect this backup</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restore backup</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restore failed — wrong passphrase or corrupted file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restore this backup?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restored %1 photos (%2 relinked by content), %3 faces, %4 people, %5 trips (%6 photos skipped, not found on this device)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select folder containing the backup</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show every photo from a day or trip in Events, not just the ones where someone has been identified.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>UnknownFacesPage</name>
@@ -1238,6 +1495,276 @@
     <name>TripDetailPage</name>
     <message>
         <source>Share photos</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 photos</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>1 photo</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Merge into another trip…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No location data</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No photos</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rename trip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Set as trip cover</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sort by day</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sort by location</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stop %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>View full photo</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>photo</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>photos</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>~%1 km traveled</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>PassphraseDialog</name>
+    <message>
+        <source>At least 8 characters</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Confirm passphrase</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Create</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enter passphrase</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Passphrase</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Passphrases don't match</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restore</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>RestoreBackupDialog</name>
+    <message>
+        <source>%1 photos, %2 people</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Backups are named nami-backup-*.json</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No backup found in this folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restore</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select a backup to restore</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>SelectTripDialog</name>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Group more days into a trip first</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Merge</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Merge into which trip?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No other trips</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>TripNameDialog</name>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Name this trip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Trip name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>e.g. Rome, Summer holidays</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>YearDetailPage</name>
+    <message>
+        <source>%1 photos</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 trips</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 · %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>1 photo</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>1 trip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Event day</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No events this year</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Other event days</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Trip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Trips</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>day</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>days</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>photo</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>photos</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>YearsPage</name>
+    <message>
+        <source>%1 event days</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 photos</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 trips</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 · %2 · %3</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>1 event day</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>1 photo</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>1 trip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A recap of your trips and events, year by year</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No events yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Year in review</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Your yearly recap appears once you have a few events</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
