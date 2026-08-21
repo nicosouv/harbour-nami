@@ -917,6 +917,10 @@
             <numerusform></numerusform>
         </translation>
     </message>
+    <message>
+        <source>Review</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>PersonPage</name>
@@ -1872,6 +1876,45 @@
     </message>
     <message>
         <source>%1 kB</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>ReviewMatchesPage</name>
+    <message>
+        <source>%1 of %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All done</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Every match for this person has been confirmed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Is this %1?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not them</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing left to confirm</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>See the whole photo</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Skip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Yes</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
