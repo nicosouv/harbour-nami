@@ -56,20 +56,26 @@ Page {
         rebuildPhotoModel()
     }
 
+    function recountTotals() {
+        var unconfirmed = 0
+        for (var i = 0; i < allPhotos.length; i++) {
+            if (allPhotos[i].verified !== true) unconfirmed++
+        }
+        totalPhotos = allPhotos.length
+        unconfirmedTotal = unconfirmed
+    }
+
     // Rebuild the visible grid from allPhotos. getPersonPhotos() already sorts
     // newest first, so "oldest first" is just a reversal.
     function rebuildPhotoModel() {
         photosModel.clear()
 
         var visible = []
-        var unconfirmed = 0
         for (var i = 0; i < allPhotos.length; i++) {
-            if (allPhotos[i].verified !== true) unconfirmed++
             if (unconfirmedOnly && allPhotos[i].verified === true) continue
             visible.push(allPhotos[i])
         }
-        totalPhotos = allPhotos.length
-        unconfirmedTotal = unconfirmed
+        recountTotals()
 
         if (!newestFirst) {
             visible.reverse()
@@ -78,6 +84,34 @@ Page {
         for (var j = 0; j < visible.length; j++) {
             photosModel.append(visible[j])
         }
+    }
+
+    // Drop one row without rebuilding the whole grid, so the other photos do
+    // not blink out and back in.
+    function dropRow(photoId) {
+        for (var i = 0; i < photosModel.count; i++) {
+            // Called from a signal handler, never from a binding: get() inside
+            // a binding is what crashed the identify page.
+            if (photosModel.get(i).photo_id === photoId) {
+                photosModel.remove(i)
+                break
+            }
+        }
+        recountTotals()
+    }
+
+    // The remorse lives on the page, not on the photo's delegate: the action
+    // removes that photo from the model, which destroys the very item a
+    // ListItem remorse would be attached to. Its callback is defined here too,
+    // so it does not outlive the context menu that triggered it.
+    function removePhotoFromPerson(photoId) {
+        Remorse.popupAction(page, qsTr("Removing"), function() {
+            if (!facePipeline.removePersonFromPhoto(personId, photoId)) {
+                return
+            }
+            forgetPhoto(photoId)
+            dropRow(photoId)
+        })
     }
 
     // Drop a photo from the backing list too, otherwise it reappears on the
@@ -539,17 +573,7 @@ Page {
 
                                 MenuItem {
                                     text: qsTr("Remove from person")
-                                    onClicked: {
-                                        // Capture before the remorse timer fires:
-                                        // index shifts if the grid changes meanwhile
-                                        var photoId = model.photo_id
-                                        photoItem.remorseAction(qsTr("Removing"), function() {
-                                            if (facePipeline.removePersonFromPhoto(page.personId, photoId)) {
-                                                page.forgetPhoto(photoId)
-                                                page.rebuildPhotoModel()
-                                            }
-                                        })
-                                    }
+                                    onClicked: page.removePhotoFromPerson(model.photo_id)
                                 }
 
                                 MenuItem {
