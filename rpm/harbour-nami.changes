@@ -26,6 +26,9 @@
   screen, and give the grid room to breathe
 - Take back a confirmation on a single photo, which also makes "Confirm all
   matches" undoable
+- Fix "Remove from person" doing nothing: the countdown stayed on screen and
+  the photo was still there on the next visit
+- Sort people by their most recent photo, and remember which sort you chose
 - Fix English counts reading "1 people" and "1 photos"
 - Translations completed for French, Italian, Spanish, Finnish, German and
   Norwegian
