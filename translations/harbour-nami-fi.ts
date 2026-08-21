@@ -107,6 +107,14 @@
         <source>Thanks to Frank Paul Silye for the Norwegian Bokmål translation</source>
         <translation>Kiitos Frank Paul Silyelle norjan bokmål -käännöksestä</translation>
     </message>
+    <message>
+        <source>Events grouped by day, with multi-day trips and an offline route map</source>
+        <translation>Tapahtumat päivittäin, monipäiväiset matkat ja offline-reittikartta</translation>
+    </message>
+    <message>
+        <source>Memories from previous years, plus a year-by-year recap</source>
+        <translation>Muistoja aiemmilta vuosilta sekä vuosikatsaus</translation>
+    </message>
 </context>
 <context>
     <name>ConfirmDialog</name>
@@ -143,6 +151,10 @@
         <source>Scanning...</source>
         <translation>Skannataan...</translation>
     </message>
+    <message>
+        <source>Scanning: %1 / %2</source>
+        <translation>Skannataan: %1 / %2</translation>
+    </message>
 </context>
 <context>
     <name>DayPhotosPage</name>
@@ -165,6 +177,14 @@
     <message>
         <source>Share</source>
         <translation>Jaa</translation>
+    </message>
+    <message>
+        <source>Set as day cover</source>
+        <translation>Aseta päivän kansikuvaksi</translation>
+    </message>
+    <message>
+        <source>View full photo</source>
+        <translation>Näytä koko kuva</translation>
     </message>
 </context>
 <context>
@@ -211,6 +231,124 @@
     <message>
         <source>photos</source>
         <translation>kuvaa</translation>
+    </message>
+    <message>
+        <source>%1 days</source>
+        <translation>%1 päivää</translation>
+    </message>
+    <message>
+        <source>1 day</source>
+        <translation>1 päivä</translation>
+    </message>
+    <message numerus="yes">
+        <source>Add %n day(s)</source>
+        <translation>
+            <numerusform>Lisää %n päivä</numerusform>
+            <numerusform>Lisää %n päivää</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Add more days…</source>
+        <translation>Lisää päiviä…</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Peruuta</translation>
+    </message>
+    <message>
+        <source>Dismiss</source>
+        <translation>Hylkää</translation>
+    </message>
+    <message>
+        <source>Group</source>
+        <translation>Ryhmitä</translation>
+    </message>
+    <message numerus="yes">
+        <source>Group %n day(s)</source>
+        <translation>
+            <numerusform>Ryhmitä %n päivä</numerusform>
+            <numerusform>Ryhmitä %n päivää</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Hidden</source>
+        <translation>Piilotettu</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Piilota</translation>
+    </message>
+    <message>
+        <source>Hide hidden events</source>
+        <translation>Piilota piilotetut tapahtumat</translation>
+    </message>
+    <message>
+        <source>Merge into another trip…</source>
+        <translation>Yhdistä toiseen matkaan…</translation>
+    </message>
+    <message>
+        <source>Name this trip</source>
+        <translation>Nimeä tämä matka</translation>
+    </message>
+    <message>
+        <source>Photos automatically grouped by date. Group several days into a trip for a multi-day event.</source>
+        <translation>Kuvat ryhmitellään automaattisesti päivämäärän mukaan. Ryhmitä useampi päivä matkaksi monipäiväistä tapahtumaa varten.</translation>
+    </message>
+    <message>
+        <source>Rename</source>
+        <translation>Nimeä uudelleen</translation>
+    </message>
+    <message>
+        <source>Rename trip</source>
+        <translation>Nimeä matka uudelleen</translation>
+    </message>
+    <message>
+        <source>Select days to group into a trip</source>
+        <translation>Valitse matkaksi ryhmiteltävät päivät</translation>
+    </message>
+    <message>
+        <source>Select the days to add to this trip</source>
+        <translation>Valitse tähän matkaan lisättävät päivät</translation>
+    </message>
+    <message>
+        <source>Select the days to combine into a trip</source>
+        <translation>Valitse päivät, jotka yhdistetään matkaksi</translation>
+    </message>
+    <message>
+        <source>Show hidden events</source>
+        <translation>Näytä piilotetut tapahtumat</translation>
+    </message>
+    <message>
+        <source>Suggested trip: %1 (%2)</source>
+        <translation>Ehdotettu matka: %1 (%2)</translation>
+    </message>
+    <message>
+        <source>Trip</source>
+        <translation>Matka</translation>
+    </message>
+    <message>
+        <source>Ungroup</source>
+        <translation>Pura ryhmä</translation>
+    </message>
+    <message>
+        <source>Ungrouping trip</source>
+        <translation>Puretaan matkaa</translation>
+    </message>
+    <message>
+        <source>Unhide</source>
+        <translation>Näytä</translation>
+    </message>
+    <message>
+        <source>Year in review</source>
+        <translation>Vuosikatsaus</translation>
+    </message>
+    <message>
+        <source>day</source>
+        <translation>päivä</translation>
+    </message>
+    <message>
+        <source>days</source>
+        <translation>päivää</translation>
     </message>
 </context>
 <context>
@@ -314,6 +452,22 @@
 ✓ Identify (assign to a person)</source>
         <translation>✗ Ohita (ei kasvot tai heikko laatu, ei näytetä uudelleen)
 ✓ Tunnista (liitä henkilöön)</translation>
+    </message>
+    <message>
+        <source>Is this…</source>
+        <translation>Onko tämä…</translation>
+    </message>
+    <message>
+        <source>Possible match</source>
+        <translation>Mahdollinen osuma</translation>
+    </message>
+    <message>
+        <source>Very likely</source>
+        <translation>Hyvin todennäköinen</translation>
+    </message>
+    <message>
+        <source>photographed the same day</source>
+        <translation>kuvattu samana päivänä</translation>
     </message>
 </context>
 <context>
@@ -500,6 +654,10 @@
     <message>
         <source>photos</source>
         <translation>kuvaa</translation>
+    </message>
+    <message>
+        <source>Trip: %1</source>
+        <translation>Matka: %1</translation>
     </message>
 </context>
 <context>
@@ -1041,6 +1199,18 @@
         <source>Who is this?</source>
         <translation>Kuka tämä on?</translation>
     </message>
+    <message>
+        <source>Matching people:</source>
+        <translation>Vastaavat henkilöt:</translation>
+    </message>
+    <message>
+        <source>Selected person</source>
+        <translation>Valittu henkilö</translation>
+    </message>
+    <message>
+        <source>“%1” already exists — tap it below to avoid a duplicate</source>
+        <translation>”%1” on jo olemassa, valitse se alta välttääksesi kaksoiskappaleen</translation>
+    </message>
 </context>
 <context>
     <name>SettingsPage</name>
@@ -1196,6 +1366,93 @@
         <source>Restart Nami to apply the new language</source>
         <translation>Käynnistä Nami uudelleen käyttääksesi uutta kieltä</translation>
     </message>
+    <message>
+        <source>A backup includes everyone you've identified, their photos and your trips, so you can restore it all on a new device. Links to your contacts are left out, since those contacts may not exist on the new phone — you can link them again there. It's encrypted with a passphrase you choose — if you forget it, the backup can't be recovered. On the new phone, scan your gallery first, then restore: this is always safe, whether your photos ended up at the same path or not, and whatever Nami version you're running.</source>
+        <translation>Varmuuskopio sisältää kaikki tunnistamasi henkilöt, heidän kuvansa ja matkasi, joten voit palauttaa kaiken uuteen laitteeseen. Yhteystietolinkit jätetään pois, koska niitä yhteystietoja ei ehkä ole uudessa puhelimessa, voit liittää ne siellä uudelleen. Kopio salataan valitsemallasi salalauseella: jos unohdat sen, varmuuskopiota ei voi palauttaa. Skannaa uudessa puhelimessa ensin galleria ja palauta sitten: tämä on aina turvallista riippumatta siitä, päätyivätkö kuvat samaan polkuun, ja mistä Nami-versiosta tahansa.</translation>
+    </message>
+    <message>
+        <source>Backup</source>
+        <translation>Varmuuskopio</translation>
+    </message>
+    <message>
+        <source>Backup failed</source>
+        <translation>Varmuuskopiointi epäonnistui</translation>
+    </message>
+    <message>
+        <source>Backup written to %1</source>
+        <translation>Varmuuskopio tallennettu: %1</translation>
+    </message>
+    <message>
+        <source>Choose a passphrase to encrypt the backup. There is no way to recover it if you forget the passphrase, so keep it somewhere safe.</source>
+        <translation>Valitse salalause varmuuskopion salaamiseen. Sitä ei voi palauttaa, jos unohdat sen, joten säilytä se turvallisesti.</translation>
+    </message>
+    <message>
+        <source>Create backup</source>
+        <translation>Luo varmuuskopio</translation>
+    </message>
+    <message>
+        <source>Enter the backup's passphrase</source>
+        <translation>Anna varmuuskopion salalause</translation>
+    </message>
+    <message>
+        <source>Events</source>
+        <translation>Tapahtumat</translation>
+    </message>
+    <message>
+        <source>Identifications and trips will be added to what's already on this device. Nothing is deleted.</source>
+        <translation>Tunnistukset ja matkat lisätään siihen, mitä laitteella jo on. Mitään ei poisteta.</translation>
+    </message>
+    <message>
+        <source>Include photos without people</source>
+        <translation>Sisällytä kuvat ilman henkilöitä</translation>
+    </message>
+    <message numerus="yes">
+        <source>Last backup: %n day(s) ago</source>
+        <translation>
+            <numerusform>Viimeisin varmuuskopio: %n päivä sitten</numerusform>
+            <numerusform>Viimeisin varmuuskopio: %n päivää sitten</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Last backup: today</source>
+        <translation>Viimeisin varmuuskopio: tänään</translation>
+    </message>
+    <message>
+        <source>No backup found in %1</source>
+        <translation>Varmuuskopiota ei löytynyt kansiosta %1</translation>
+    </message>
+    <message>
+        <source>No backup yet — make one before switching phones</source>
+        <translation>Ei vielä varmuuskopiota, tee sellainen ennen puhelimen vaihtoa</translation>
+    </message>
+    <message>
+        <source>Protect this backup</source>
+        <translation>Suojaa tämä varmuuskopio</translation>
+    </message>
+    <message>
+        <source>Restore backup</source>
+        <translation>Palauta varmuuskopio</translation>
+    </message>
+    <message>
+        <source>Restore failed — wrong passphrase or corrupted file</source>
+        <translation>Palautus epäonnistui: väärä salalause tai vioittunut tiedosto</translation>
+    </message>
+    <message>
+        <source>Restore this backup?</source>
+        <translation>Palautetaanko tämä varmuuskopio?</translation>
+    </message>
+    <message>
+        <source>Restored %1 photos (%2 relinked by content), %3 faces, %4 people, %5 trips (%6 photos skipped, not found on this device)</source>
+        <translation>Palautettu %1 kuvaa (%2 linkitetty uudelleen sisällön perusteella), %3 kasvoa, %4 henkilöä, %5 matkaa (%6 kuvaa ohitettu, ei löytynyt tästä laitteesta)</translation>
+    </message>
+    <message>
+        <source>Select folder containing the backup</source>
+        <translation>Valitse varmuuskopion kansio</translation>
+    </message>
+    <message>
+        <source>Show every photo from a day or trip in Events, not just the ones where someone has been identified.</source>
+        <translation>Näytä Tapahtumissa kaikki päivän tai matkan kuvat, ei vain niitä joissa joku on tunnistettu.</translation>
+    </message>
 </context>
 <context>
     <name>UnknownFacesPage</name>
@@ -1240,6 +1497,276 @@
     <message>
         <source>Share photos</source>
         <translation>Jaa kuvat</translation>
+    </message>
+    <message>
+        <source>%1 photos</source>
+        <translation>%1 kuvaa</translation>
+    </message>
+    <message>
+        <source>1 photo</source>
+        <translation>1 kuva</translation>
+    </message>
+    <message>
+        <source>Merge into another trip…</source>
+        <translation>Yhdistä toiseen matkaan…</translation>
+    </message>
+    <message>
+        <source>No location data</source>
+        <translation>Ei sijaintitietoja</translation>
+    </message>
+    <message>
+        <source>No photos</source>
+        <translation>Ei kuvia</translation>
+    </message>
+    <message>
+        <source>Rename trip</source>
+        <translation>Nimeä matka uudelleen</translation>
+    </message>
+    <message>
+        <source>Set as trip cover</source>
+        <translation>Aseta matkan kansikuvaksi</translation>
+    </message>
+    <message>
+        <source>Sort by day</source>
+        <translation>Järjestä päivän mukaan</translation>
+    </message>
+    <message>
+        <source>Sort by location</source>
+        <translation>Järjestä sijainnin mukaan</translation>
+    </message>
+    <message>
+        <source>Stop %1</source>
+        <translation>Pysähdys %1</translation>
+    </message>
+    <message>
+        <source>View full photo</source>
+        <translation>Näytä koko kuva</translation>
+    </message>
+    <message>
+        <source>photo</source>
+        <translation>kuva</translation>
+    </message>
+    <message>
+        <source>photos</source>
+        <translation>kuvaa</translation>
+    </message>
+    <message>
+        <source>~%1 km traveled</source>
+        <translation>~%1 km matkattu</translation>
+    </message>
+</context>
+<context>
+    <name>PassphraseDialog</name>
+    <message>
+        <source>At least 8 characters</source>
+        <translation>Vähintään 8 merkkiä</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Peruuta</translation>
+    </message>
+    <message>
+        <source>Confirm passphrase</source>
+        <translation>Vahvista salalause</translation>
+    </message>
+    <message>
+        <source>Create</source>
+        <translation>Luo</translation>
+    </message>
+    <message>
+        <source>Enter passphrase</source>
+        <translation>Anna salalause</translation>
+    </message>
+    <message>
+        <source>Passphrase</source>
+        <translation>Salalause</translation>
+    </message>
+    <message>
+        <source>Passphrases don't match</source>
+        <translation>Salalauseet eivät täsmää</translation>
+    </message>
+    <message>
+        <source>Restore</source>
+        <translation>Palauta</translation>
+    </message>
+</context>
+<context>
+    <name>RestoreBackupDialog</name>
+    <message>
+        <source>%1 photos, %2 people</source>
+        <translation>%1 kuvaa, %2 henkilöä</translation>
+    </message>
+    <message>
+        <source>Backups are named nami-backup-*.json</source>
+        <translation>Varmuuskopiot on nimetty nami-backup-*.json</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Peruuta</translation>
+    </message>
+    <message>
+        <source>No backup found in this folder</source>
+        <translation>Tässä kansiossa ei ole varmuuskopiota</translation>
+    </message>
+    <message>
+        <source>Restore</source>
+        <translation>Palauta</translation>
+    </message>
+    <message>
+        <source>Select a backup to restore</source>
+        <translation>Valitse palautettava varmuuskopio</translation>
+    </message>
+</context>
+<context>
+    <name>SelectTripDialog</name>
+    <message>
+        <source>Cancel</source>
+        <translation>Peruuta</translation>
+    </message>
+    <message>
+        <source>Group more days into a trip first</source>
+        <translation>Ryhmitä ensin useampi päivä matkaksi</translation>
+    </message>
+    <message>
+        <source>Merge</source>
+        <translation>Yhdistä</translation>
+    </message>
+    <message>
+        <source>Merge into which trip?</source>
+        <translation>Mihin matkaan yhdistetään?</translation>
+    </message>
+    <message>
+        <source>No other trips</source>
+        <translation>Ei muita matkoja</translation>
+    </message>
+</context>
+<context>
+    <name>TripNameDialog</name>
+    <message>
+        <source>Cancel</source>
+        <translation>Peruuta</translation>
+    </message>
+    <message>
+        <source>Name this trip</source>
+        <translation>Nimeä tämä matka</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>Tallenna</translation>
+    </message>
+    <message>
+        <source>Trip name</source>
+        <translation>Matkan nimi</translation>
+    </message>
+    <message>
+        <source>e.g. Rome, Summer holidays</source>
+        <translation>esim. Rooma, Kesäloma</translation>
+    </message>
+</context>
+<context>
+    <name>YearDetailPage</name>
+    <message>
+        <source>%1 photos</source>
+        <translation>%1 kuvaa</translation>
+    </message>
+    <message>
+        <source>%1 trips</source>
+        <translation>%1 matkaa</translation>
+    </message>
+    <message>
+        <source>%1 · %2</source>
+        <translation>%1 · %2</translation>
+    </message>
+    <message>
+        <source>1 photo</source>
+        <translation>1 kuva</translation>
+    </message>
+    <message>
+        <source>1 trip</source>
+        <translation>1 matka</translation>
+    </message>
+    <message>
+        <source>Event day</source>
+        <translation>Tapahtumapäivä</translation>
+    </message>
+    <message>
+        <source>No events this year</source>
+        <translation>Ei tapahtumia tänä vuonna</translation>
+    </message>
+    <message>
+        <source>Other event days</source>
+        <translation>Muut tapahtumapäivät</translation>
+    </message>
+    <message>
+        <source>Trip</source>
+        <translation>Matka</translation>
+    </message>
+    <message>
+        <source>Trips</source>
+        <translation>Matkat</translation>
+    </message>
+    <message>
+        <source>day</source>
+        <translation>päivä</translation>
+    </message>
+    <message>
+        <source>days</source>
+        <translation>päivää</translation>
+    </message>
+    <message>
+        <source>photo</source>
+        <translation>kuva</translation>
+    </message>
+    <message>
+        <source>photos</source>
+        <translation>kuvaa</translation>
+    </message>
+</context>
+<context>
+    <name>YearsPage</name>
+    <message>
+        <source>%1 event days</source>
+        <translation>%1 tapahtumapäivää</translation>
+    </message>
+    <message>
+        <source>%1 photos</source>
+        <translation>%1 kuvaa</translation>
+    </message>
+    <message>
+        <source>%1 trips</source>
+        <translation>%1 matkaa</translation>
+    </message>
+    <message>
+        <source>%1 · %2 · %3</source>
+        <translation>%1 · %2 · %3</translation>
+    </message>
+    <message>
+        <source>1 event day</source>
+        <translation>1 tapahtumapäivä</translation>
+    </message>
+    <message>
+        <source>1 photo</source>
+        <translation>1 kuva</translation>
+    </message>
+    <message>
+        <source>1 trip</source>
+        <translation>1 matka</translation>
+    </message>
+    <message>
+        <source>A recap of your trips and events, year by year</source>
+        <translation>Yhteenveto matkoistasi ja tapahtumistasi vuosi kerrallaan</translation>
+    </message>
+    <message>
+        <source>No events yet</source>
+        <translation>Ei vielä tapahtumia</translation>
+    </message>
+    <message>
+        <source>Year in review</source>
+        <translation>Vuosikatsaus</translation>
+    </message>
+    <message>
+        <source>Your yearly recap appears once you have a few events</source>
+        <translation>Vuosikatsaus ilmestyy, kun sinulla on muutama tapahtuma</translation>
     </message>
 </context>
 </TS>

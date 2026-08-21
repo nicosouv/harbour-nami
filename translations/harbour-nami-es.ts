@@ -107,6 +107,14 @@
         <source>Thanks to Frank Paul Silye for the Norwegian Bokmål translation</source>
         <translation>Gracias a Frank Paul Silye por la traducción al noruego bokmål</translation>
     </message>
+    <message>
+        <source>Events grouped by day, with multi-day trips and an offline route map</source>
+        <translation>Eventos agrupados por día, con viajes de varios días y mapa sin conexión</translation>
+    </message>
+    <message>
+        <source>Memories from previous years, plus a year-by-year recap</source>
+        <translation>Recuerdos de años anteriores, con un resumen año por año</translation>
+    </message>
 </context>
 <context>
     <name>ConfirmDialog</name>
@@ -143,6 +151,10 @@
         <source>Scanning...</source>
         <translation>Escaneando...</translation>
     </message>
+    <message>
+        <source>Scanning: %1 / %2</source>
+        <translation>Analizando: %1 / %2</translation>
+    </message>
 </context>
 <context>
     <name>DayPhotosPage</name>
@@ -165,6 +177,14 @@
     <message>
         <source>Share</source>
         <translation>Compartir</translation>
+    </message>
+    <message>
+        <source>Set as day cover</source>
+        <translation>Establecer como portada del día</translation>
+    </message>
+    <message>
+        <source>View full photo</source>
+        <translation>Ver foto completa</translation>
     </message>
 </context>
 <context>
@@ -211,6 +231,124 @@
     <message>
         <source>photos</source>
         <translation>fotos</translation>
+    </message>
+    <message>
+        <source>%1 days</source>
+        <translation>%1 días</translation>
+    </message>
+    <message>
+        <source>1 day</source>
+        <translation>1 día</translation>
+    </message>
+    <message numerus="yes">
+        <source>Add %n day(s)</source>
+        <translation>
+            <numerusform>Añadir %n día</numerusform>
+            <numerusform>Añadir %n días</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Add more days…</source>
+        <translation>Añadir más días…</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Cancelar</translation>
+    </message>
+    <message>
+        <source>Dismiss</source>
+        <translation>Descartar</translation>
+    </message>
+    <message>
+        <source>Group</source>
+        <translation>Agrupar</translation>
+    </message>
+    <message numerus="yes">
+        <source>Group %n day(s)</source>
+        <translation>
+            <numerusform>Agrupar %n día</numerusform>
+            <numerusform>Agrupar %n días</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Hidden</source>
+        <translation>Oculto</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Ocultar</translation>
+    </message>
+    <message>
+        <source>Hide hidden events</source>
+        <translation>Ocultar los eventos ocultos</translation>
+    </message>
+    <message>
+        <source>Merge into another trip…</source>
+        <translation>Fusionar con otro viaje…</translation>
+    </message>
+    <message>
+        <source>Name this trip</source>
+        <translation>Da nombre a este viaje</translation>
+    </message>
+    <message>
+        <source>Photos automatically grouped by date. Group several days into a trip for a multi-day event.</source>
+        <translation>Fotos agrupadas automáticamente por fecha. Agrupa varios días en un viaje para un evento de varios días.</translation>
+    </message>
+    <message>
+        <source>Rename</source>
+        <translation>Renombrar</translation>
+    </message>
+    <message>
+        <source>Rename trip</source>
+        <translation>Renombrar viaje</translation>
+    </message>
+    <message>
+        <source>Select days to group into a trip</source>
+        <translation>Selecciona los días para agrupar en un viaje</translation>
+    </message>
+    <message>
+        <source>Select the days to add to this trip</source>
+        <translation>Selecciona los días para añadir a este viaje</translation>
+    </message>
+    <message>
+        <source>Select the days to combine into a trip</source>
+        <translation>Selecciona los días para combinar en un viaje</translation>
+    </message>
+    <message>
+        <source>Show hidden events</source>
+        <translation>Mostrar los eventos ocultos</translation>
+    </message>
+    <message>
+        <source>Suggested trip: %1 (%2)</source>
+        <translation>Viaje sugerido: %1 (%2)</translation>
+    </message>
+    <message>
+        <source>Trip</source>
+        <translation>Viaje</translation>
+    </message>
+    <message>
+        <source>Ungroup</source>
+        <translation>Desagrupar</translation>
+    </message>
+    <message>
+        <source>Ungrouping trip</source>
+        <translation>Desagrupando viaje</translation>
+    </message>
+    <message>
+        <source>Unhide</source>
+        <translation>Mostrar</translation>
+    </message>
+    <message>
+        <source>Year in review</source>
+        <translation>Resumen del año</translation>
+    </message>
+    <message>
+        <source>day</source>
+        <translation>día</translation>
+    </message>
+    <message>
+        <source>days</source>
+        <translation>días</translation>
     </message>
 </context>
 <context>
@@ -314,6 +452,22 @@
 ✓ Identify (assign to a person)</source>
         <translation>✗ Ignorar (no es una cara o es de baja calidad, no se mostrará más)
 ✓ Identificar (asignar a una persona)</translation>
+    </message>
+    <message>
+        <source>Is this…</source>
+        <translation>¿Es…</translation>
+    </message>
+    <message>
+        <source>Possible match</source>
+        <translation>Posible coincidencia</translation>
+    </message>
+    <message>
+        <source>Very likely</source>
+        <translation>Muy probable</translation>
+    </message>
+    <message>
+        <source>photographed the same day</source>
+        <translation>fotografiado el mismo día</translation>
     </message>
 </context>
 <context>
@@ -500,6 +654,10 @@
     <message>
         <source>photos</source>
         <translation>fotos</translation>
+    </message>
+    <message>
+        <source>Trip: %1</source>
+        <translation>Viaje: %1</translation>
     </message>
 </context>
 <context>
@@ -1041,6 +1199,18 @@
         <source>Who is this?</source>
         <translation>¿Quién es?</translation>
     </message>
+    <message>
+        <source>Matching people:</source>
+        <translation>Personas coincidentes:</translation>
+    </message>
+    <message>
+        <source>Selected person</source>
+        <translation>Persona seleccionada</translation>
+    </message>
+    <message>
+        <source>“%1” already exists — tap it below to avoid a duplicate</source>
+        <translation>«%1» ya existe, tócalo abajo para evitar un duplicado</translation>
+    </message>
 </context>
 <context>
     <name>SettingsPage</name>
@@ -1196,6 +1366,93 @@
         <source>Restart Nami to apply the new language</source>
         <translation>Reinicia Nami para aplicar el nuevo idioma</translation>
     </message>
+    <message>
+        <source>A backup includes everyone you've identified, their photos and your trips, so you can restore it all on a new device. Links to your contacts are left out, since those contacts may not exist on the new phone — you can link them again there. It's encrypted with a passphrase you choose — if you forget it, the backup can't be recovered. On the new phone, scan your gallery first, then restore: this is always safe, whether your photos ended up at the same path or not, and whatever Nami version you're running.</source>
+        <translation>Una copia de seguridad incluye a todas las personas que has identificado, sus fotos y tus viajes, para que puedas restaurarlo todo en un dispositivo nuevo. Los vínculos con tus contactos quedan fuera, porque esos contactos pueden no existir en el nuevo teléfono, allí podrás volver a vincularlos. Está cifrada con una frase de contraseña que tú eliges: si la olvidas, la copia no se puede recuperar. En el teléfono nuevo, analiza primero tu galería y luego restaura: siempre es seguro, tanto si tus fotos acaban en la misma ruta como si no, y sea cual sea la versión de Nami.</translation>
+    </message>
+    <message>
+        <source>Backup</source>
+        <translation>Copia de seguridad</translation>
+    </message>
+    <message>
+        <source>Backup failed</source>
+        <translation>Error en la copia de seguridad</translation>
+    </message>
+    <message>
+        <source>Backup written to %1</source>
+        <translation>Copia guardada en %1</translation>
+    </message>
+    <message>
+        <source>Choose a passphrase to encrypt the backup. There is no way to recover it if you forget the passphrase, so keep it somewhere safe.</source>
+        <translation>Elige una frase de contraseña para cifrar la copia. No hay forma de recuperarla si la olvidas, guárdala en un lugar seguro.</translation>
+    </message>
+    <message>
+        <source>Create backup</source>
+        <translation>Crear copia de seguridad</translation>
+    </message>
+    <message>
+        <source>Enter the backup's passphrase</source>
+        <translation>Introduce la frase de la copia</translation>
+    </message>
+    <message>
+        <source>Events</source>
+        <translation>Eventos</translation>
+    </message>
+    <message>
+        <source>Identifications and trips will be added to what's already on this device. Nothing is deleted.</source>
+        <translation>Las identificaciones y los viajes se añaden a lo que ya hay en este dispositivo. No se borra nada.</translation>
+    </message>
+    <message>
+        <source>Include photos without people</source>
+        <translation>Incluir fotos sin personas</translation>
+    </message>
+    <message numerus="yes">
+        <source>Last backup: %n day(s) ago</source>
+        <translation>
+            <numerusform>Última copia: hace %n día</numerusform>
+            <numerusform>Última copia: hace %n días</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Last backup: today</source>
+        <translation>Última copia: hoy</translation>
+    </message>
+    <message>
+        <source>No backup found in %1</source>
+        <translation>No se encontró ninguna copia en %1</translation>
+    </message>
+    <message>
+        <source>No backup yet — make one before switching phones</source>
+        <translation>Sin copias aún, crea una antes de cambiar de teléfono</translation>
+    </message>
+    <message>
+        <source>Protect this backup</source>
+        <translation>Proteger esta copia</translation>
+    </message>
+    <message>
+        <source>Restore backup</source>
+        <translation>Restaurar copia de seguridad</translation>
+    </message>
+    <message>
+        <source>Restore failed — wrong passphrase or corrupted file</source>
+        <translation>Error al restaurar: frase incorrecta o archivo dañado</translation>
+    </message>
+    <message>
+        <source>Restore this backup?</source>
+        <translation>¿Restaurar esta copia?</translation>
+    </message>
+    <message>
+        <source>Restored %1 photos (%2 relinked by content), %3 faces, %4 people, %5 trips (%6 photos skipped, not found on this device)</source>
+        <translation>Restauradas %1 fotos (%2 revinculadas por contenido), %3 rostros, %4 personas, %5 viajes (%6 fotos omitidas, no encontradas en este dispositivo)</translation>
+    </message>
+    <message>
+        <source>Select folder containing the backup</source>
+        <translation>Elige la carpeta de la copia</translation>
+    </message>
+    <message>
+        <source>Show every photo from a day or trip in Events, not just the ones where someone has been identified.</source>
+        <translation>Mostrar todas las fotos de un día o viaje en Eventos, no solo aquellas en las que se ha identificado a alguien.</translation>
+    </message>
 </context>
 <context>
     <name>UnknownFacesPage</name>
@@ -1240,6 +1497,276 @@
     <message>
         <source>Share photos</source>
         <translation>Compartir las fotos</translation>
+    </message>
+    <message>
+        <source>%1 photos</source>
+        <translation>%1 fotos</translation>
+    </message>
+    <message>
+        <source>1 photo</source>
+        <translation>1 foto</translation>
+    </message>
+    <message>
+        <source>Merge into another trip…</source>
+        <translation>Fusionar con otro viaje…</translation>
+    </message>
+    <message>
+        <source>No location data</source>
+        <translation>Sin datos de ubicación</translation>
+    </message>
+    <message>
+        <source>No photos</source>
+        <translation>Sin fotos</translation>
+    </message>
+    <message>
+        <source>Rename trip</source>
+        <translation>Renombrar viaje</translation>
+    </message>
+    <message>
+        <source>Set as trip cover</source>
+        <translation>Establecer como portada del viaje</translation>
+    </message>
+    <message>
+        <source>Sort by day</source>
+        <translation>Ordenar por día</translation>
+    </message>
+    <message>
+        <source>Sort by location</source>
+        <translation>Ordenar por lugar</translation>
+    </message>
+    <message>
+        <source>Stop %1</source>
+        <translation>Parada %1</translation>
+    </message>
+    <message>
+        <source>View full photo</source>
+        <translation>Ver foto completa</translation>
+    </message>
+    <message>
+        <source>photo</source>
+        <translation>foto</translation>
+    </message>
+    <message>
+        <source>photos</source>
+        <translation>fotos</translation>
+    </message>
+    <message>
+        <source>~%1 km traveled</source>
+        <translation>~%1 km recorridos</translation>
+    </message>
+</context>
+<context>
+    <name>PassphraseDialog</name>
+    <message>
+        <source>At least 8 characters</source>
+        <translation>Al menos 8 caracteres</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Cancelar</translation>
+    </message>
+    <message>
+        <source>Confirm passphrase</source>
+        <translation>Confirma la frase</translation>
+    </message>
+    <message>
+        <source>Create</source>
+        <translation>Crear</translation>
+    </message>
+    <message>
+        <source>Enter passphrase</source>
+        <translation>Introduce la frase</translation>
+    </message>
+    <message>
+        <source>Passphrase</source>
+        <translation>Frase de contraseña</translation>
+    </message>
+    <message>
+        <source>Passphrases don't match</source>
+        <translation>Las frases no coinciden</translation>
+    </message>
+    <message>
+        <source>Restore</source>
+        <translation>Restaurar</translation>
+    </message>
+</context>
+<context>
+    <name>RestoreBackupDialog</name>
+    <message>
+        <source>%1 photos, %2 people</source>
+        <translation>%1 fotos, %2 personas</translation>
+    </message>
+    <message>
+        <source>Backups are named nami-backup-*.json</source>
+        <translation>Las copias se llaman nami-backup-*.json</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Cancelar</translation>
+    </message>
+    <message>
+        <source>No backup found in this folder</source>
+        <translation>No hay copias en esta carpeta</translation>
+    </message>
+    <message>
+        <source>Restore</source>
+        <translation>Restaurar</translation>
+    </message>
+    <message>
+        <source>Select a backup to restore</source>
+        <translation>Elige una copia para restaurar</translation>
+    </message>
+</context>
+<context>
+    <name>SelectTripDialog</name>
+    <message>
+        <source>Cancel</source>
+        <translation>Cancelar</translation>
+    </message>
+    <message>
+        <source>Group more days into a trip first</source>
+        <translation>Primero agrupa varios días en un viaje</translation>
+    </message>
+    <message>
+        <source>Merge</source>
+        <translation>Fusionar</translation>
+    </message>
+    <message>
+        <source>Merge into which trip?</source>
+        <translation>¿Con qué viaje fusionar?</translation>
+    </message>
+    <message>
+        <source>No other trips</source>
+        <translation>No hay otros viajes</translation>
+    </message>
+</context>
+<context>
+    <name>TripNameDialog</name>
+    <message>
+        <source>Cancel</source>
+        <translation>Cancelar</translation>
+    </message>
+    <message>
+        <source>Name this trip</source>
+        <translation>Da nombre a este viaje</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>Guardar</translation>
+    </message>
+    <message>
+        <source>Trip name</source>
+        <translation>Nombre del viaje</translation>
+    </message>
+    <message>
+        <source>e.g. Rome, Summer holidays</source>
+        <translation>p. ej. Roma, Vacaciones de verano</translation>
+    </message>
+</context>
+<context>
+    <name>YearDetailPage</name>
+    <message>
+        <source>%1 photos</source>
+        <translation>%1 fotos</translation>
+    </message>
+    <message>
+        <source>%1 trips</source>
+        <translation>%1 viajes</translation>
+    </message>
+    <message>
+        <source>%1 · %2</source>
+        <translation>%1 · %2</translation>
+    </message>
+    <message>
+        <source>1 photo</source>
+        <translation>1 foto</translation>
+    </message>
+    <message>
+        <source>1 trip</source>
+        <translation>1 viaje</translation>
+    </message>
+    <message>
+        <source>Event day</source>
+        <translation>Día con eventos</translation>
+    </message>
+    <message>
+        <source>No events this year</source>
+        <translation>Sin eventos este año</translation>
+    </message>
+    <message>
+        <source>Other event days</source>
+        <translation>Otros días con eventos</translation>
+    </message>
+    <message>
+        <source>Trip</source>
+        <translation>Viaje</translation>
+    </message>
+    <message>
+        <source>Trips</source>
+        <translation>Viajes</translation>
+    </message>
+    <message>
+        <source>day</source>
+        <translation>día</translation>
+    </message>
+    <message>
+        <source>days</source>
+        <translation>días</translation>
+    </message>
+    <message>
+        <source>photo</source>
+        <translation>foto</translation>
+    </message>
+    <message>
+        <source>photos</source>
+        <translation>fotos</translation>
+    </message>
+</context>
+<context>
+    <name>YearsPage</name>
+    <message>
+        <source>%1 event days</source>
+        <translation>%1 días con eventos</translation>
+    </message>
+    <message>
+        <source>%1 photos</source>
+        <translation>%1 fotos</translation>
+    </message>
+    <message>
+        <source>%1 trips</source>
+        <translation>%1 viajes</translation>
+    </message>
+    <message>
+        <source>%1 · %2 · %3</source>
+        <translation>%1 · %2 · %3</translation>
+    </message>
+    <message>
+        <source>1 event day</source>
+        <translation>1 día con eventos</translation>
+    </message>
+    <message>
+        <source>1 photo</source>
+        <translation>1 foto</translation>
+    </message>
+    <message>
+        <source>1 trip</source>
+        <translation>1 viaje</translation>
+    </message>
+    <message>
+        <source>A recap of your trips and events, year by year</source>
+        <translation>Un resumen de tus viajes y eventos, año por año</translation>
+    </message>
+    <message>
+        <source>No events yet</source>
+        <translation>Aún no hay eventos</translation>
+    </message>
+    <message>
+        <source>Year in review</source>
+        <translation>Resumen del año</translation>
+    </message>
+    <message>
+        <source>Your yearly recap appears once you have a few events</source>
+        <translation>Tu resumen anual aparece cuando tengas algunos eventos</translation>
     </message>
 </context>
 </TS>
