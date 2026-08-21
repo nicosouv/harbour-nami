@@ -99,10 +99,10 @@ ctest --test-dir build-tests --output-on-failure
 
 ## Documentation
 
-- [ARCHITECTURE.md](ARCHITECTURE.md) - how the pieces fit together
-- [BUILDING.md](BUILDING.md) - build details
-- [INSTALL.md](INSTALL.md) - installation notes
-- [ROADMAP.md](ROADMAP.md) - what is done and what is planned
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) - how the pieces fit together
+- [docs/BUILDING.md](docs/BUILDING.md) - build details
+- [docs/INSTALL.md](docs/INSTALL.md) - installation notes
+- [docs/ROADMAP.md](docs/ROADMAP.md) - what is done and what is planned
 - [rpm/harbour-nami.changes](rpm/harbour-nami.changes) - release notes
 
 ## License
