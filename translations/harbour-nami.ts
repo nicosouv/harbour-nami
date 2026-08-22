@@ -20,14 +20,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Events grouped by day</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Memories from previous years</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Scan folders of your choice, SD card included</source>
         <translation type="unfinished"></translation>
     </message>
@@ -36,15 +28,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>100% on-device processing</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>About</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Automatic face detection</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -72,23 +56,11 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>No internet connection required</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Open Source Software</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Platform</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Privacy-first design</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Smart photo grouping</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -129,10 +101,6 @@
 </context>
 <context>
     <name>CoverPage</name>
-    <message>
-        <source>%1 / %2</source>
-        <translation type="unfinished"></translation>
-    </message>
     <message numerus="yes">
         <source>%n people</source>
         <translation type="unfinished">
@@ -146,10 +114,6 @@
             <numerusform></numerusform>
             <numerusform></numerusform>
         </translation>
-    </message>
-    <message>
-        <source>Scanning...</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Scanning: %1 / %2</source>
@@ -168,22 +132,6 @@
     </message>
     <message>
         <source>No photos</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Share photos</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Share</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Set as day cover</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>View full photo</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -206,10 +154,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Share photos</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Select photos</source>
         <translation type="unfinished"></translation>
     </message>
@@ -226,10 +170,6 @@
     </message>
     <message>
         <source>No events detected</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Photos automatically grouped by date</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -367,61 +307,6 @@
     </message>
 </context>
 <context>
-    <name>IdentifyFaceDialog</name>
-    <message>
-        <source>Link to a contact</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Or create a person only in the app:</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Cancel</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Enter a name above to create the first person</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Enter name (e.g., John, Mom, Friend)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Identify</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>No people yet</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Or assign to existing person:</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Person name</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>View in photo</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Who is this?</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>photo</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>photos</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
     <name>IdentifyFacesPage</name>
     <message>
         <source>%1 of %2</source>
@@ -516,14 +401,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Delete person?</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Enter name</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Events</source>
         <translation type="unfinished"></translation>
     </message>
@@ -560,19 +437,11 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>People (%1)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Pull down to scan your gallery</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Rename</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Rename Person</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -588,23 +457,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Sort by Name</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Sort by Photos</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>This will remove %1 and unlink all their photos</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Unknown</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>most photos</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -660,10 +513,6 @@
     </message>
     <message>
         <source>No photos found from this day in previous years</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Photos from this day in previous years</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -785,15 +634,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Enter name</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>No photos</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Photos</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -806,10 +647,6 @@
     </message>
     <message>
         <source>Rename</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Rename Person</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -829,14 +666,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>with this person</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Share photos</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Share</source>
         <translation type="unfinished"></translation>
     </message>
@@ -849,61 +678,11 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Show unconfirmed only</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Show all photos</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Unconfirmed photos</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Nothing left to confirm</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Every match for this person has been confirmed</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message numerus="yes">
-        <source>%n match(es) to confirm</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>%n selected</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>All</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Confirm this match</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Select photos</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Tap photos to select</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>That many photos will not go through in one share</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>To confirm (%1)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -933,10 +712,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Share All Photos</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>This person has no associated photos yet</source>
         <translation type="unfinished"></translation>
     </message>
@@ -960,39 +735,7 @@
 <context>
     <name>PhotoViewerPage</name>
     <message>
-        <source>Close</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Failed to load image</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Share</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Photo details</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Hide details</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Copy file path</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Copy path</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>File path copied</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Rotate</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1332,10 +1075,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Grid</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Remove</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1389,10 +1128,6 @@
     </message>
     <message>
         <source>Recognition strictness</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Scan folder</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1539,49 +1274,7 @@
     </message>
 </context>
 <context>
-    <name>UnknownFacesPage</name>
-    <message numerus="yes">
-        <source>%n faces found</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>1 face found</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>All detected faces have been identified</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Identify people</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>No faces to identify</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>No unknown faces</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Tap on a face to give it a name. Faces from the same person will be grouped together automatically.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Unknown Faces</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
     <name>TripDetailPage</name>
-    <message>
-        <source>Share photos</source>
-        <translation type="unfinished"></translation>
-    </message>
     <message>
         <source>%1 photos</source>
         <translation type="unfinished"></translation>
@@ -1608,14 +1301,6 @@
     </message>
     <message>
         <source>Set as trip cover</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Sort by day</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Sort by location</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1880,10 +1565,6 @@
     </message>
     <message>
         <source>Tap photos to select</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>That many photos will not go through in one share</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

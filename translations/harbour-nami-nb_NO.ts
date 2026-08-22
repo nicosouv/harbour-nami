@@ -4,16 +4,8 @@
 <context>
     <name>AboutPage</name>
     <message>
-        <source>100% on-device processing</source>
-        <translation>100 % prosessering på enheten</translation>
-    </message>
-    <message>
         <source>About</source>
         <translation>Om</translation>
-    </message>
-    <message>
-        <source>Automatic face detection</source>
-        <translation>Automatisk ansiktsgjenkjenning</translation>
     </message>
     <message>
         <source>Face Recognition Gallery</source>
@@ -40,24 +32,12 @@
         <translation>ML-motor</translation>
     </message>
     <message>
-        <source>No internet connection required</source>
-        <translation>Krever ingen internettilkobling</translation>
-    </message>
-    <message>
         <source>Open Source Software</source>
         <translation>Programvare med åpen kildekode</translation>
     </message>
     <message>
         <source>Platform</source>
         <translation>Plattform</translation>
-    </message>
-    <message>
-        <source>Privacy-first design</source>
-        <translation>Personvernfokusert design</translation>
-    </message>
-    <message>
-        <source>Smart photo grouping</source>
-        <translation>Smart bildegruppering</translation>
     </message>
     <message>
         <source>Source Code</source>
@@ -121,10 +101,6 @@
 </context>
 <context>
     <name>CoverPage</name>
-    <message>
-        <source>%1 / %2</source>
-        <translation>%1 / %2</translation>
-    </message>
     <message numerus="yes">
         <source>%n people</source>
         <translation>
@@ -138,10 +114,6 @@
             <numerusform>%n bilde</numerusform>
             <numerusform>%n bilder</numerusform>
         </translation>
-    </message>
-    <message>
-        <source>Scanning...</source>
-        <translation>Skanner...</translation>
     </message>
     <message>
         <source>Scanning: %1 / %2</source>
@@ -161,10 +133,6 @@
     <message>
         <source>No events detected</source>
         <translation>Ingen hendelser oppdaget</translation>
-    </message>
-    <message>
-        <source>Photos automatically grouped by date</source>
-        <translation>Bilder grupperes automatisk etter dato</translation>
     </message>
     <message>
         <source>photo</source>
@@ -301,53 +269,6 @@
     </message>
 </context>
 <context>
-    <name>IdentifyFaceDialog</name>
-    <message>
-        <source>Cancel</source>
-        <translation>Avbryt</translation>
-    </message>
-    <message>
-        <source>Enter a name above to create the first person</source>
-        <translation>Skriv inn et navn over for å opprette den første personen</translation>
-    </message>
-    <message>
-        <source>Enter name (e.g., John, Mom, Friend)</source>
-        <translation>Skriv inn navn (f.eks. Ola, Mamma, Venn)</translation>
-    </message>
-    <message>
-        <source>Identify</source>
-        <translation>Identifiser</translation>
-    </message>
-    <message>
-        <source>No people yet</source>
-        <translation>Ingen personer ennå</translation>
-    </message>
-    <message>
-        <source>Or assign to existing person:</source>
-        <translation>Eller legg til eksisterende person:</translation>
-    </message>
-    <message>
-        <source>Person name</source>
-        <translation>Navn på person</translation>
-    </message>
-    <message>
-        <source>View in photo</source>
-        <translation>Vis i bilde</translation>
-    </message>
-    <message>
-        <source>Who is this?</source>
-        <translation>Hvem er dette?</translation>
-    </message>
-    <message>
-        <source>photo</source>
-        <translation>bilde</translation>
-    </message>
-    <message>
-        <source>photos</source>
-        <translation>bilder</translation>
-    </message>
-</context>
-<context>
     <name>IdentifyFacesPage</name>
     <message>
         <source>%1 of %2</source>
@@ -419,14 +340,6 @@
         <translation>Slett</translation>
     </message>
     <message>
-        <source>Delete person?</source>
-        <translation>Slette person?</translation>
-    </message>
-    <message>
-        <source>Enter name</source>
-        <translation>Skriv inn navn</translation>
-    </message>
-    <message>
         <source>Events</source>
         <translation>Hendelser</translation>
     </message>
@@ -463,20 +376,12 @@
         <translation>Ingen ansikter oppdaget ennå</translation>
     </message>
     <message>
-        <source>People (%1)</source>
-        <translation>Personer (%1)</translation>
-    </message>
-    <message>
         <source>Pull down to scan your gallery</source>
         <translation>Dra ned for å skanne galleriet ditt</translation>
     </message>
     <message>
         <source>Rename</source>
         <translation>Gi nytt navn</translation>
-    </message>
-    <message>
-        <source>Rename Person</source>
-        <translation>Endre navn på person</translation>
     </message>
     <message>
         <source>Scan Gallery</source>
@@ -491,24 +396,8 @@
         <translation>Innstillinger</translation>
     </message>
     <message>
-        <source>Sort by Name</source>
-        <translation>Sorter etter navn</translation>
-    </message>
-    <message>
-        <source>Sort by Photos</source>
-        <translation>Sorter etter bilder</translation>
-    </message>
-    <message>
-        <source>This will remove %1 and unlink all their photos</source>
-        <translation>Dette vil fjerne %1 og koble fra alle bildene deres</translation>
-    </message>
-    <message>
         <source>Unknown</source>
         <translation>Ukjent</translation>
-    </message>
-    <message>
-        <source>most photos</source>
-        <translation>flest bilder</translation>
     </message>
     <message>
         <source>people</source>
@@ -584,10 +473,6 @@
     <message>
         <source>No photos found from this day in previous years</source>
         <translation>Ingen bilder funnet fra denne dagen i tidligere år</translation>
-    </message>
-    <message>
-        <source>Photos from this day in previous years</source>
-        <translation>Bilder fra denne dagen tidligere år</translation>
     </message>
     <message>
         <source>photo</source>
@@ -688,16 +573,8 @@
         <translation>Sletter %1</translation>
     </message>
     <message>
-        <source>Enter name</source>
-        <translation>Skriv inn navn</translation>
-    </message>
-    <message>
         <source>No photos</source>
         <translation>Ingen bilder</translation>
-    </message>
-    <message>
-        <source>Photos</source>
-        <translation>Bilder</translation>
     </message>
     <message>
         <source>Remove from person</source>
@@ -710,10 +587,6 @@
     <message>
         <source>Rename</source>
         <translation>Gi nytt navn</translation>
-    </message>
-    <message>
-        <source>Rename Person</source>
-        <translation>Endre navn på person</translation>
     </message>
     <message>
         <source>This person hasn't been detected in any photos yet</source>
@@ -732,27 +605,12 @@
         <translation>bilder</translation>
     </message>
     <message>
-        <source>with this person</source>
-        <translation>med denne personen</translation>
-    </message>
-    <message>
         <source>%1 is already linked to this contact. Merge %2 into %1?</source>
         <translation>%1 er allerede koblet til denne kontakten. Slå sammen %2 med %1?</translation>
-    </message>
-    <message numerus="yes">
-        <source>%n match(es) to confirm</source>
-        <translation>
-            <numerusform>%n treff å bekrefte</numerusform>
-            <numerusform>%n treff å bekrefte</numerusform>
-        </translation>
     </message>
     <message>
         <source>Change linked contact</source>
         <translation>Bytt koblet kontakt</translation>
-    </message>
-    <message>
-        <source>Every match for this person has been confirmed</source>
-        <translation>Alle treff for denne personen er bekreftet</translation>
     </message>
     <message>
         <source>Link to contact</source>
@@ -767,10 +625,6 @@
         <translation>Nyeste først</translation>
     </message>
     <message>
-        <source>Nothing left to confirm</source>
-        <translation>Ingenting igjen å bekrefte</translation>
-    </message>
-    <message>
         <source>Oldest first</source>
         <translation>Eldste først</translation>
     </message>
@@ -783,35 +637,8 @@
         <translation>Del</translation>
     </message>
     <message>
-        <source>Share photos</source>
-        <translation>Del bilder</translation>
-    </message>
-    <message>
-        <source>Show all photos</source>
-        <translation>Vis alle bilder</translation>
-    </message>
-    <message>
-        <source>Show unconfirmed only</source>
-        <translation>Vis bare ubekreftede</translation>
-    </message>
-    <message>
-        <source>Unconfirmed photos</source>
-        <translation>Ubekreftede bilder</translation>
-    </message>
-    <message>
         <source>Unlink contact</source>
         <translation>Fjern kontaktkobling</translation>
-    </message>
-    <message numerus="yes">
-        <source>%n selected</source>
-        <translation>
-            <numerusform>%n valgt</numerusform>
-            <numerusform>%n valgt</numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>All</source>
-        <translation>Alle</translation>
     </message>
     <message>
         <source>Confirm this match</source>
@@ -820,18 +647,6 @@
     <message>
         <source>Select photos</source>
         <translation>Velg bilder</translation>
-    </message>
-    <message>
-        <source>Tap photos to select</source>
-        <translation>Trykk på bildene for å velge</translation>
-    </message>
-    <message>
-        <source>That many photos will not go through in one share</source>
-        <translation>Så mange bilder går ikke gjennom i én deling</translation>
-    </message>
-    <message>
-        <source>To confirm (%1)</source>
-        <translation>Å bekrefte (%1)</translation>
     </message>
     <message>
         <source>Undo confirmation</source>
@@ -860,10 +675,6 @@
         <translation>Bilder</translation>
     </message>
     <message>
-        <source>Share All Photos</source>
-        <translation>Del alle bilder</translation>
-    </message>
-    <message>
         <source>This person has no associated photos yet</source>
         <translation>Denne personen har ingen tilknyttede bilder ennå</translation>
     </message>
@@ -887,14 +698,6 @@
 <context>
     <name>PhotoViewerPage</name>
     <message>
-        <source>Close</source>
-        <translation>Lukk</translation>
-    </message>
-    <message>
-        <source>Failed to load image</source>
-        <translation>Klarte ikke å laste inn bilde</translation>
-    </message>
-    <message>
         <source>%1 B</source>
         <translation>%1 B</translation>
     </message>
@@ -905,14 +708,6 @@
     <message>
         <source>%1 kB</source>
         <translation>%1 kB</translation>
-    </message>
-    <message>
-        <source>Copy file path</source>
-        <translation>Kopier filbane</translation>
-    </message>
-    <message>
-        <source>Copy path</source>
-        <translation>Kopier bane</translation>
     </message>
     <message>
         <source>E</source>
@@ -927,10 +722,6 @@
         <translation>Filbanen er kopiert</translation>
     </message>
     <message>
-        <source>Hide details</source>
-        <translation>Skjul detaljer</translation>
-    </message>
-    <message>
         <source>Location</source>
         <translation>Sted</translation>
     </message>
@@ -943,20 +734,8 @@
         <translation>Ikke i Nami-biblioteket</translation>
     </message>
     <message>
-        <source>Photo details</source>
-        <translation>Bildedetaljer</translation>
-    </message>
-    <message>
-        <source>Rotate</source>
-        <translation>Roter</translation>
-    </message>
-    <message>
         <source>S</source>
         <translation>S</translation>
-    </message>
-    <message>
-        <source>Share</source>
-        <translation>Del</translation>
     </message>
     <message>
         <source>Size</source>
@@ -1220,10 +999,6 @@
         <translation>Strikthet for gjenkjenning</translation>
     </message>
     <message>
-        <source>Scan folder</source>
-        <translation>Skann mappe</translation>
-    </message>
-    <message>
         <source>Scanning</source>
         <translation>Skanning</translation>
     </message>
@@ -1423,64 +1198,10 @@
     </message>
 </context>
 <context>
-    <name>UnknownFacesPage</name>
-    <message numerus="yes">
-        <source>%n faces found</source>
-        <translation>
-            <numerusform>%n ansikt funnet</numerusform>
-            <numerusform>%n ansikter funnet</numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>1 face found</source>
-        <translation>1 ansikt funnet</translation>
-    </message>
-    <message>
-        <source>All detected faces have been identified</source>
-        <translation>Alle oppdagede ansikter har blitt identifisert</translation>
-    </message>
-    <message>
-        <source>Identify people</source>
-        <translation>Identifiser personer</translation>
-    </message>
-    <message>
-        <source>No faces to identify</source>
-        <translation>Ingen ansikter å identifisere</translation>
-    </message>
-    <message>
-        <source>No unknown faces</source>
-        <translation>Ingen ukjente ansikter</translation>
-    </message>
-    <message>
-        <source>Tap on a face to give it a name. Faces from the same person will be grouped together automatically.</source>
-        <translation>Trykk på et ansikt for å gi det et navn. Ansikter av samme person vil bli gruppert sammen automatisk.</translation>
-    </message>
-    <message>
-        <source>Unknown Faces</source>
-        <translation>Ukjente ansikter</translation>
-    </message>
-</context>
-<context>
     <name>DayPhotosPage</name>
     <message>
         <source>No photos</source>
         <translation>Ingen bilder</translation>
-    </message>
-    <message>
-        <source>Set as day cover</source>
-        <translation>Bruk som dagens forsidebilde</translation>
-    </message>
-    <message>
-        <source>Share</source>
-        <translation>Del</translation>
-    </message>
-    <message>
-        <source>Share photos</source>
-        <translation>Del bilder</translation>
-    </message>
-    <message>
-        <source>View full photo</source>
-        <translation>Vis fullt bilde</translation>
     </message>
     <message>
         <source>photo</source>
@@ -1500,10 +1221,6 @@
     <message>
         <source>No photos</source>
         <translation>Ingen bilder</translation>
-    </message>
-    <message>
-        <source>Share photos</source>
-        <translation>Del bilder</translation>
     </message>
     <message>
         <source>photo</source>
@@ -1671,18 +1388,6 @@
     <message>
         <source>Set as trip cover</source>
         <translation>Bruk som turens forsidebilde</translation>
-    </message>
-    <message>
-        <source>Share photos</source>
-        <translation>Del bilder</translation>
-    </message>
-    <message>
-        <source>Sort by day</source>
-        <translation>Sorter etter dag</translation>
-    </message>
-    <message>
-        <source>Sort by location</source>
-        <translation>Sorter etter sted</translation>
     </message>
     <message>
         <source>Stop %1</source>
@@ -1862,10 +1567,6 @@
     <message>
         <source>Tap photos to select</source>
         <translation>Trykk på bildene for å velge</translation>
-    </message>
-    <message>
-        <source>That many photos will not go through in one share</source>
-        <translation>Så mange bilder går ikke gjennom i én deling</translation>
     </message>
     <message>
         <source>Too heavy for one share, deselect a few</source>

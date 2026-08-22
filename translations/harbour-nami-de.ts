@@ -20,14 +20,6 @@
         <translation>Personen mit Kontakten verknüpfen</translation>
     </message>
     <message>
-        <source>Events grouped by day</source>
-        <translation>Ereignisse nach Tag gruppiert</translation>
-    </message>
-    <message>
-        <source>Memories from previous years</source>
-        <translation>Erinnerungen aus früheren Jahren</translation>
-    </message>
-    <message>
         <source>Scan folders of your choice, SD card included</source>
         <translation>Scannen beliebiger Ordner, SD-Karte inklusive</translation>
     </message>
@@ -36,16 +28,8 @@
         <translation>Datenexport und vollständige Löschung (DSGVO)</translation>
     </message>
     <message>
-        <source>100% on-device processing</source>
-        <translation>100 % Verarbeitung auf dem Gerät</translation>
-    </message>
-    <message>
         <source>About</source>
         <translation>Über</translation>
-    </message>
-    <message>
-        <source>Automatic face detection</source>
-        <translation>Automatische Gesichtserkennung</translation>
     </message>
     <message>
         <source>Face Recognition Gallery</source>
@@ -72,24 +56,12 @@
         <translation>ML-Engine</translation>
     </message>
     <message>
-        <source>No internet connection required</source>
-        <translation>Keine Internetverbindung erforderlich</translation>
-    </message>
-    <message>
         <source>Open Source Software</source>
         <translation>Open-Source-Software</translation>
     </message>
     <message>
         <source>Platform</source>
         <translation>Plattform</translation>
-    </message>
-    <message>
-        <source>Privacy-first design</source>
-        <translation>Datenschutz an erster Stelle</translation>
-    </message>
-    <message>
-        <source>Smart photo grouping</source>
-        <translation>Intelligente Fotogruppierung</translation>
     </message>
     <message>
         <source>Source Code</source>
@@ -129,10 +101,6 @@
 </context>
 <context>
     <name>CoverPage</name>
-    <message>
-        <source>%1 / %2</source>
-        <translation>%1 / %2</translation>
-    </message>
     <message numerus="yes">
         <source>%n people</source>
         <translation>
@@ -146,10 +114,6 @@
             <numerusform>%n Foto</numerusform>
             <numerusform>%n Fotos</numerusform>
         </translation>
-    </message>
-    <message>
-        <source>Scanning...</source>
-        <translation>Scanne...</translation>
     </message>
     <message>
         <source>Scanning: %1 / %2</source>
@@ -171,22 +135,6 @@
         <translation>Keine Fotos</translation>
     </message>
     <message>
-        <source>Share photos</source>
-        <translation>Fotos teilen</translation>
-    </message>
-    <message>
-        <source>Share</source>
-        <translation>Teilen</translation>
-    </message>
-    <message>
-        <source>Set as day cover</source>
-        <translation>Als Tagesbild festlegen</translation>
-    </message>
-    <message>
-        <source>View full photo</source>
-        <translation>Ganzes Foto anzeigen</translation>
-    </message>
-    <message>
         <source>Select photos</source>
         <translation>Fotos auswählen</translation>
     </message>
@@ -206,10 +154,6 @@
         <translation>Keine Fotos</translation>
     </message>
     <message>
-        <source>Share photos</source>
-        <translation>Fotos teilen</translation>
-    </message>
-    <message>
         <source>Select photos</source>
         <translation>Fotos auswählen</translation>
     </message>
@@ -227,10 +171,6 @@
     <message>
         <source>No events detected</source>
         <translation>Keine Ereignisse erkannt</translation>
-    </message>
-    <message>
-        <source>Photos automatically grouped by date</source>
-        <translation>Automatisch nach Datum gruppierte Fotos</translation>
     </message>
     <message>
         <source>photo</source>
@@ -367,61 +307,6 @@
     </message>
 </context>
 <context>
-    <name>IdentifyFaceDialog</name>
-    <message>
-        <source>Link to a contact</source>
-        <translation>Mit Kontakt verknüpfen</translation>
-    </message>
-    <message>
-        <source>Or create a person only in the app:</source>
-        <translation>Oder nur eine Person in der App erstellen:</translation>
-    </message>
-    <message>
-        <source>Cancel</source>
-        <translation>Abbrechen</translation>
-    </message>
-    <message>
-        <source>Enter a name above to create the first person</source>
-        <translation>Geben Sie oben einen Namen ein, um die erste Person anzulegen</translation>
-    </message>
-    <message>
-        <source>Enter name (e.g., John, Mom, Friend)</source>
-        <translation>Name eingeben (z. B. Jan, Mama, Freund)</translation>
-    </message>
-    <message>
-        <source>Identify</source>
-        <translation>Identifizieren</translation>
-    </message>
-    <message>
-        <source>No people yet</source>
-        <translation>Noch keine Personen</translation>
-    </message>
-    <message>
-        <source>Or assign to existing person:</source>
-        <translation>Oder einer vorhandenen Person zuordnen:</translation>
-    </message>
-    <message>
-        <source>Person name</source>
-        <translation>Name der Person</translation>
-    </message>
-    <message>
-        <source>View in photo</source>
-        <translation>Im Foto anzeigen</translation>
-    </message>
-    <message>
-        <source>Who is this?</source>
-        <translation>Wer ist das?</translation>
-    </message>
-    <message>
-        <source>photo</source>
-        <translation>Foto</translation>
-    </message>
-    <message>
-        <source>photos</source>
-        <translation>Fotos</translation>
-    </message>
-</context>
-<context>
     <name>IdentifyFacesPage</name>
     <message>
         <source>%1 of %2</source>
@@ -517,14 +402,6 @@
         <translation>Löschen</translation>
     </message>
     <message>
-        <source>Delete person?</source>
-        <translation>Person löschen?</translation>
-    </message>
-    <message>
-        <source>Enter name</source>
-        <translation>Namen eingeben</translation>
-    </message>
-    <message>
         <source>Events</source>
         <translation>Ereignisse</translation>
     </message>
@@ -561,20 +438,12 @@
         <translation>Noch keine Gesichter erkannt</translation>
     </message>
     <message>
-        <source>People (%1)</source>
-        <translation>Personen (%1)</translation>
-    </message>
-    <message>
         <source>Pull down to scan your gallery</source>
         <translation>Nach unten ziehen, um die Galerie zu scannen</translation>
     </message>
     <message>
         <source>Rename</source>
         <translation>Umbenennen</translation>
-    </message>
-    <message>
-        <source>Rename Person</source>
-        <translation>Person umbenennen</translation>
     </message>
     <message>
         <source>Scan Gallery</source>
@@ -589,24 +458,8 @@
         <translation>Einstellungen</translation>
     </message>
     <message>
-        <source>Sort by Name</source>
-        <translation>Nach Name sortieren</translation>
-    </message>
-    <message>
-        <source>Sort by Photos</source>
-        <translation>Nach Fotos sortieren</translation>
-    </message>
-    <message>
-        <source>This will remove %1 and unlink all their photos</source>
-        <translation>Dies entfernt %1 und löst alle zugehörigen Fotos</translation>
-    </message>
-    <message>
         <source>Unknown</source>
         <translation>Unbekannt</translation>
-    </message>
-    <message>
-        <source>most photos</source>
-        <translation>meiste Fotos</translation>
     </message>
     <message>
         <source>people</source>
@@ -662,10 +515,6 @@
     <message>
         <source>No photos found from this day in previous years</source>
         <translation>Keine Fotos von diesem Tag aus früheren Jahren</translation>
-    </message>
-    <message>
-        <source>Photos from this day in previous years</source>
-        <translation>Fotos von diesem Tag aus früheren Jahren</translation>
     </message>
     <message>
         <source>photo</source>
@@ -786,16 +635,8 @@
         <translation>%1 wird gelöscht</translation>
     </message>
     <message>
-        <source>Enter name</source>
-        <translation>Namen eingeben</translation>
-    </message>
-    <message>
         <source>No photos</source>
         <translation>Keine Fotos</translation>
-    </message>
-    <message>
-        <source>Photos</source>
-        <translation>Fotos</translation>
     </message>
     <message>
         <source>Remove from person</source>
@@ -808,10 +649,6 @@
     <message>
         <source>Rename</source>
         <translation>Umbenennen</translation>
-    </message>
-    <message>
-        <source>Rename Person</source>
-        <translation>Person umbenennen</translation>
     </message>
     <message>
         <source>This person hasn't been detected in any photos yet</source>
@@ -830,14 +667,6 @@
         <translation>Fotos</translation>
     </message>
     <message>
-        <source>with this person</source>
-        <translation>mit dieser Person</translation>
-    </message>
-    <message>
-        <source>Share photos</source>
-        <translation>Fotos teilen</translation>
-    </message>
-    <message>
         <source>Share</source>
         <translation>Teilen</translation>
     </message>
@@ -850,62 +679,12 @@
         <translation>Älteste zuerst</translation>
     </message>
     <message>
-        <source>Show unconfirmed only</source>
-        <translation>Nur unbestätigte anzeigen</translation>
-    </message>
-    <message>
-        <source>Show all photos</source>
-        <translation>Alle Fotos anzeigen</translation>
-    </message>
-    <message>
-        <source>Unconfirmed photos</source>
-        <translation>Unbestätigte Fotos</translation>
-    </message>
-    <message>
-        <source>Nothing left to confirm</source>
-        <translation>Nichts mehr zu bestätigen</translation>
-    </message>
-    <message>
-        <source>Every match for this person has been confirmed</source>
-        <translation>Alle Übereinstimmungen dieser Person wurden bestätigt</translation>
-    </message>
-    <message numerus="yes">
-        <source>%n match(es) to confirm</source>
-        <translation>
-            <numerusform>%n Übereinstimmung zu bestätigen</numerusform>
-            <numerusform>%n Übereinstimmungen zu bestätigen</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>%n selected</source>
-        <translation>
-            <numerusform>%n ausgewählt</numerusform>
-            <numerusform>%n ausgewählt</numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>All</source>
-        <translation>Alle</translation>
-    </message>
-    <message>
         <source>Confirm this match</source>
         <translation>Diese Übereinstimmung bestätigen</translation>
     </message>
     <message>
         <source>Select photos</source>
         <translation>Fotos auswählen</translation>
-    </message>
-    <message>
-        <source>Tap photos to select</source>
-        <translation>Fotos zum Auswählen antippen</translation>
-    </message>
-    <message>
-        <source>That many photos will not go through in one share</source>
-        <translation>So viele Fotos gehen in einem Vorgang nicht durch</translation>
-    </message>
-    <message>
-        <source>To confirm (%1)</source>
-        <translation>Zu bestätigen (%1)</translation>
     </message>
     <message>
         <source>Undo confirmation</source>
@@ -934,10 +713,6 @@
         <translation>Fotos</translation>
     </message>
     <message>
-        <source>Share All Photos</source>
-        <translation>Alle Fotos teilen</translation>
-    </message>
-    <message>
         <source>This person has no associated photos yet</source>
         <translation>Diese Person hat noch keine zugeordneten Fotos</translation>
     </message>
@@ -961,40 +736,8 @@
 <context>
     <name>PhotoViewerPage</name>
     <message>
-        <source>Close</source>
-        <translation>Schließen</translation>
-    </message>
-    <message>
-        <source>Failed to load image</source>
-        <translation>Bild konnte nicht geladen werden</translation>
-    </message>
-    <message>
-        <source>Share</source>
-        <translation>Teilen</translation>
-    </message>
-    <message>
-        <source>Photo details</source>
-        <translation>Fotodetails</translation>
-    </message>
-    <message>
-        <source>Hide details</source>
-        <translation>Details ausblenden</translation>
-    </message>
-    <message>
-        <source>Copy file path</source>
-        <translation>Dateipfad kopieren</translation>
-    </message>
-    <message>
-        <source>Copy path</source>
-        <translation>Pfad kopieren</translation>
-    </message>
-    <message>
         <source>File path copied</source>
         <translation>Dateipfad kopiert</translation>
-    </message>
-    <message>
-        <source>Rotate</source>
-        <translation>Drehen</translation>
     </message>
     <message>
         <source>Taken</source>
@@ -1333,10 +1076,6 @@
         <translation>Liste</translation>
     </message>
     <message>
-        <source>Grid</source>
-        <translation>Raster</translation>
-    </message>
-    <message>
         <source>Remove</source>
         <translation>Entfernen</translation>
     </message>
@@ -1391,10 +1130,6 @@
     <message>
         <source>Recognition strictness</source>
         <translation>Strenge der Erkennung</translation>
-    </message>
-    <message>
-        <source>Scan folder</source>
-        <translation>Scan-Ordner</translation>
     </message>
     <message>
         <source>Scanning</source>
@@ -1540,49 +1275,7 @@
     </message>
 </context>
 <context>
-    <name>UnknownFacesPage</name>
-    <message numerus="yes">
-        <source>%n faces found</source>
-        <translation>
-            <numerusform>%n Gesicht gefunden</numerusform>
-            <numerusform>%n Gesichter gefunden</numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>1 face found</source>
-        <translation>1 Gesicht gefunden</translation>
-    </message>
-    <message>
-        <source>All detected faces have been identified</source>
-        <translation>Alle erkannten Gesichter wurden identifiziert</translation>
-    </message>
-    <message>
-        <source>Identify people</source>
-        <translation>Personen identifizieren</translation>
-    </message>
-    <message>
-        <source>No faces to identify</source>
-        <translation>Keine Gesichter zu identifizieren</translation>
-    </message>
-    <message>
-        <source>No unknown faces</source>
-        <translation>Keine unbekannten Gesichter</translation>
-    </message>
-    <message>
-        <source>Tap on a face to give it a name. Faces from the same person will be grouped together automatically.</source>
-        <translation>Tippen Sie auf ein Gesicht, um ihm einen Namen zu geben. Gesichter derselben Person werden automatisch gruppiert.</translation>
-    </message>
-    <message>
-        <source>Unknown Faces</source>
-        <translation>Unbekannte Gesichter</translation>
-    </message>
-</context>
-<context>
     <name>TripDetailPage</name>
-    <message>
-        <source>Share photos</source>
-        <translation>Fotos teilen</translation>
-    </message>
     <message>
         <source>%1 photos</source>
         <translation>%1 Fotos</translation>
@@ -1610,14 +1303,6 @@
     <message>
         <source>Set as trip cover</source>
         <translation>Als Reisebild festlegen</translation>
-    </message>
-    <message>
-        <source>Sort by day</source>
-        <translation>Nach Tag sortieren</translation>
-    </message>
-    <message>
-        <source>Sort by location</source>
-        <translation>Nach Ort sortieren</translation>
     </message>
     <message>
         <source>Stop %1</source>
@@ -1882,10 +1567,6 @@
     <message>
         <source>Tap photos to select</source>
         <translation>Fotos zum Auswählen antippen</translation>
-    </message>
-    <message>
-        <source>That many photos will not go through in one share</source>
-        <translation>So viele Fotos gehen in einem Vorgang nicht durch</translation>
     </message>
     <message>
         <source>Too heavy for one share, deselect a few</source>

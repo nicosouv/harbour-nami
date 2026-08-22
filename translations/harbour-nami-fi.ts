@@ -20,14 +20,6 @@
         <translation>Henkilöiden yhdistäminen yhteystietoihin</translation>
     </message>
     <message>
-        <source>Events grouped by day</source>
-        <translation>Tapahtumat ryhmiteltyinä päivittäin</translation>
-    </message>
-    <message>
-        <source>Memories from previous years</source>
-        <translation>Muistoja aiemmilta vuosilta</translation>
-    </message>
-    <message>
         <source>Scan folders of your choice, SD card included</source>
         <translation>Valitsemiesi kansioiden skannaus, myös SD-kortti</translation>
     </message>
@@ -36,16 +28,8 @@
         <translation>Tietojen vienti ja täydellinen poisto (GDPR)</translation>
     </message>
     <message>
-        <source>100% on-device processing</source>
-        <translation>Käsittely 100 % laitteella</translation>
-    </message>
-    <message>
         <source>About</source>
         <translation>Tietoja</translation>
-    </message>
-    <message>
-        <source>Automatic face detection</source>
-        <translation>Automaattinen kasvojen havaitseminen</translation>
     </message>
     <message>
         <source>Face Recognition Gallery</source>
@@ -72,24 +56,12 @@
         <translation>ML-moottori</translation>
     </message>
     <message>
-        <source>No internet connection required</source>
-        <translation>Ei vaadi internetyhteyttä</translation>
-    </message>
-    <message>
         <source>Open Source Software</source>
         <translation>Avoimen lähdekoodin ohjelmisto</translation>
     </message>
     <message>
         <source>Platform</source>
         <translation>Alusta</translation>
-    </message>
-    <message>
-        <source>Privacy-first design</source>
-        <translation>Yksityisyys etusijalla</translation>
-    </message>
-    <message>
-        <source>Smart photo grouping</source>
-        <translation>Älykäs kuvien ryhmittely</translation>
     </message>
     <message>
         <source>Source Code</source>
@@ -129,10 +101,6 @@
 </context>
 <context>
     <name>CoverPage</name>
-    <message>
-        <source>%1 / %2</source>
-        <translation>%1 / %2</translation>
-    </message>
     <message numerus="yes">
         <source>%n people</source>
         <translation>
@@ -146,10 +114,6 @@
             <numerusform>%n kuva</numerusform>
             <numerusform>%n kuvaa</numerusform>
         </translation>
-    </message>
-    <message>
-        <source>Scanning...</source>
-        <translation>Skannataan...</translation>
     </message>
     <message>
         <source>Scanning: %1 / %2</source>
@@ -171,22 +135,6 @@
         <translation>Ei kuvia</translation>
     </message>
     <message>
-        <source>Share photos</source>
-        <translation>Jaa kuvat</translation>
-    </message>
-    <message>
-        <source>Share</source>
-        <translation>Jaa</translation>
-    </message>
-    <message>
-        <source>Set as day cover</source>
-        <translation>Aseta päivän kansikuvaksi</translation>
-    </message>
-    <message>
-        <source>View full photo</source>
-        <translation>Näytä koko kuva</translation>
-    </message>
-    <message>
         <source>Select photos</source>
         <translation>Valitse kuvia</translation>
     </message>
@@ -206,10 +154,6 @@
         <translation>Ei kuvia</translation>
     </message>
     <message>
-        <source>Share photos</source>
-        <translation>Jaa kuvat</translation>
-    </message>
-    <message>
         <source>Select photos</source>
         <translation>Valitse kuvia</translation>
     </message>
@@ -227,10 +171,6 @@
     <message>
         <source>No events detected</source>
         <translation>Tapahtumia ei havaittu</translation>
-    </message>
-    <message>
-        <source>Photos automatically grouped by date</source>
-        <translation>Kuvat ryhmitelty automaattisesti päivämäärän mukaan</translation>
     </message>
     <message>
         <source>photo</source>
@@ -367,61 +307,6 @@
     </message>
 </context>
 <context>
-    <name>IdentifyFaceDialog</name>
-    <message>
-        <source>Link to a contact</source>
-        <translation>Yhdistä yhteystietoon</translation>
-    </message>
-    <message>
-        <source>Or create a person only in the app:</source>
-        <translation>Tai luo henkilö vain sovellukseen:</translation>
-    </message>
-    <message>
-        <source>Cancel</source>
-        <translation>Peruuta</translation>
-    </message>
-    <message>
-        <source>Enter a name above to create the first person</source>
-        <translation>Luo ensimmäinen henkilö antamalla nimi yllä</translation>
-    </message>
-    <message>
-        <source>Enter name (e.g., John, Mom, Friend)</source>
-        <translation>Anna nimi (esim. Jussi, Äiti, Ystävä)</translation>
-    </message>
-    <message>
-        <source>Identify</source>
-        <translation>Tunnista</translation>
-    </message>
-    <message>
-        <source>No people yet</source>
-        <translation>Ei vielä henkilöitä</translation>
-    </message>
-    <message>
-        <source>Or assign to existing person:</source>
-        <translation>Tai liitä olemassa olevaan henkilöön:</translation>
-    </message>
-    <message>
-        <source>Person name</source>
-        <translation>Henkilön nimi</translation>
-    </message>
-    <message>
-        <source>View in photo</source>
-        <translation>Näytä kuvassa</translation>
-    </message>
-    <message>
-        <source>Who is this?</source>
-        <translation>Kuka tämä on?</translation>
-    </message>
-    <message>
-        <source>photo</source>
-        <translation>kuva</translation>
-    </message>
-    <message>
-        <source>photos</source>
-        <translation>kuvaa</translation>
-    </message>
-</context>
-<context>
     <name>IdentifyFacesPage</name>
     <message>
         <source>%1 of %2</source>
@@ -517,14 +402,6 @@
         <translation>Poista</translation>
     </message>
     <message>
-        <source>Delete person?</source>
-        <translation>Poistetaanko henkilö?</translation>
-    </message>
-    <message>
-        <source>Enter name</source>
-        <translation>Anna nimi</translation>
-    </message>
-    <message>
         <source>Events</source>
         <translation>Tapahtumat</translation>
     </message>
@@ -561,20 +438,12 @@
         <translation>Kasvoja ei ole vielä havaittu</translation>
     </message>
     <message>
-        <source>People (%1)</source>
-        <translation>Henkilöt (%1)</translation>
-    </message>
-    <message>
         <source>Pull down to scan your gallery</source>
         <translation>Skannaa galleria vetämällä alas</translation>
     </message>
     <message>
         <source>Rename</source>
         <translation>Nimeä uudelleen</translation>
-    </message>
-    <message>
-        <source>Rename Person</source>
-        <translation>Nimeä henkilö uudelleen</translation>
     </message>
     <message>
         <source>Scan Gallery</source>
@@ -589,24 +458,8 @@
         <translation>Asetukset</translation>
     </message>
     <message>
-        <source>Sort by Name</source>
-        <translation>Järjestä nimen mukaan</translation>
-    </message>
-    <message>
-        <source>Sort by Photos</source>
-        <translation>Järjestä kuvien mukaan</translation>
-    </message>
-    <message>
-        <source>This will remove %1 and unlink all their photos</source>
-        <translation>Tämä poistaa henkilön %1 ja irrottaa kaikki hänen kuvansa</translation>
-    </message>
-    <message>
         <source>Unknown</source>
         <translation>Tuntematon</translation>
-    </message>
-    <message>
-        <source>most photos</source>
-        <translation>eniten kuvia</translation>
     </message>
     <message>
         <source>people</source>
@@ -662,10 +515,6 @@
     <message>
         <source>No photos found from this day in previous years</source>
         <translation>Ei kuvia tältä päivältä aiemmilta vuosilta</translation>
-    </message>
-    <message>
-        <source>Photos from this day in previous years</source>
-        <translation>Kuvia tältä päivältä aiempina vuosina</translation>
     </message>
     <message>
         <source>photo</source>
@@ -786,16 +635,8 @@
         <translation>Poistetaan %1</translation>
     </message>
     <message>
-        <source>Enter name</source>
-        <translation>Anna nimi</translation>
-    </message>
-    <message>
         <source>No photos</source>
         <translation>Ei kuvia</translation>
-    </message>
-    <message>
-        <source>Photos</source>
-        <translation>Kuvat</translation>
     </message>
     <message>
         <source>Remove from person</source>
@@ -808,10 +649,6 @@
     <message>
         <source>Rename</source>
         <translation>Nimeä uudelleen</translation>
-    </message>
-    <message>
-        <source>Rename Person</source>
-        <translation>Nimeä henkilö uudelleen</translation>
     </message>
     <message>
         <source>This person hasn't been detected in any photos yet</source>
@@ -830,14 +667,6 @@
         <translation>kuvaa</translation>
     </message>
     <message>
-        <source>with this person</source>
-        <translation>tämän henkilön kanssa</translation>
-    </message>
-    <message>
-        <source>Share photos</source>
-        <translation>Jaa kuvat</translation>
-    </message>
-    <message>
         <source>Share</source>
         <translation>Jaa</translation>
     </message>
@@ -850,62 +679,12 @@
         <translation>Vanhimmat ensin</translation>
     </message>
     <message>
-        <source>Show unconfirmed only</source>
-        <translation>Näytä vain vahvistamattomat</translation>
-    </message>
-    <message>
-        <source>Show all photos</source>
-        <translation>Näytä kaikki kuvat</translation>
-    </message>
-    <message>
-        <source>Unconfirmed photos</source>
-        <translation>Vahvistamattomat kuvat</translation>
-    </message>
-    <message>
-        <source>Nothing left to confirm</source>
-        <translation>Ei enää vahvistettavaa</translation>
-    </message>
-    <message>
-        <source>Every match for this person has been confirmed</source>
-        <translation>Kaikki tämän henkilön osumat on vahvistettu</translation>
-    </message>
-    <message numerus="yes">
-        <source>%n match(es) to confirm</source>
-        <translation>
-            <numerusform>%n osuma vahvistettavana</numerusform>
-            <numerusform>%n osumaa vahvistettavana</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>%n selected</source>
-        <translation>
-            <numerusform>%n valittu</numerusform>
-            <numerusform>%n valittu</numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>All</source>
-        <translation>Kaikki</translation>
-    </message>
-    <message>
         <source>Confirm this match</source>
         <translation>Vahvista tämä osuma</translation>
     </message>
     <message>
         <source>Select photos</source>
         <translation>Valitse kuvia</translation>
-    </message>
-    <message>
-        <source>Tap photos to select</source>
-        <translation>Valitse kuvat napauttamalla</translation>
-    </message>
-    <message>
-        <source>That many photos will not go through in one share</source>
-        <translation>Näin monta kuvaa ei mene läpi yhdellä jakamisella</translation>
-    </message>
-    <message>
-        <source>To confirm (%1)</source>
-        <translation>Vahvistettavia (%1)</translation>
     </message>
     <message>
         <source>Undo confirmation</source>
@@ -934,10 +713,6 @@
         <translation>Kuvat</translation>
     </message>
     <message>
-        <source>Share All Photos</source>
-        <translation>Jaa kaikki kuvat</translation>
-    </message>
-    <message>
         <source>This person has no associated photos yet</source>
         <translation>Tällä henkilöllä ei ole vielä liitettyjä kuvia</translation>
     </message>
@@ -961,40 +736,8 @@
 <context>
     <name>PhotoViewerPage</name>
     <message>
-        <source>Close</source>
-        <translation>Sulje</translation>
-    </message>
-    <message>
-        <source>Failed to load image</source>
-        <translation>Kuvan lataus epäonnistui</translation>
-    </message>
-    <message>
-        <source>Share</source>
-        <translation>Jaa</translation>
-    </message>
-    <message>
-        <source>Photo details</source>
-        <translation>Kuvan tiedot</translation>
-    </message>
-    <message>
-        <source>Hide details</source>
-        <translation>Piilota tiedot</translation>
-    </message>
-    <message>
-        <source>Copy file path</source>
-        <translation>Kopioi tiedostopolku</translation>
-    </message>
-    <message>
-        <source>Copy path</source>
-        <translation>Kopioi polku</translation>
-    </message>
-    <message>
         <source>File path copied</source>
         <translation>Tiedostopolku kopioitu</translation>
-    </message>
-    <message>
-        <source>Rotate</source>
-        <translation>Käännä</translation>
     </message>
     <message>
         <source>Taken</source>
@@ -1333,10 +1076,6 @@
         <translation>Luettelo</translation>
     </message>
     <message>
-        <source>Grid</source>
-        <translation>Ruudukko</translation>
-    </message>
-    <message>
         <source>Remove</source>
         <translation>Poista</translation>
     </message>
@@ -1391,10 +1130,6 @@
     <message>
         <source>Recognition strictness</source>
         <translation>Tunnistuksen tarkkuus</translation>
-    </message>
-    <message>
-        <source>Scan folder</source>
-        <translation>Skannattava kansio</translation>
     </message>
     <message>
         <source>Scanning</source>
@@ -1540,49 +1275,7 @@
     </message>
 </context>
 <context>
-    <name>UnknownFacesPage</name>
-    <message numerus="yes">
-        <source>%n faces found</source>
-        <translation>
-            <numerusform>%n kasvot löydetty</numerusform>
-            <numerusform>%n kasvot löydetty</numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>1 face found</source>
-        <translation>1 kasvot löydetty</translation>
-    </message>
-    <message>
-        <source>All detected faces have been identified</source>
-        <translation>Kaikki havaitut kasvot on tunnistettu</translation>
-    </message>
-    <message>
-        <source>Identify people</source>
-        <translation>Tunnista henkilöt</translation>
-    </message>
-    <message>
-        <source>No faces to identify</source>
-        <translation>Ei tunnistettavia kasvoja</translation>
-    </message>
-    <message>
-        <source>No unknown faces</source>
-        <translation>Ei tuntemattomia kasvoja</translation>
-    </message>
-    <message>
-        <source>Tap on a face to give it a name. Faces from the same person will be grouped together automatically.</source>
-        <translation>Anna kasvoille nimi napauttamalla. Saman henkilön kasvot ryhmitellään automaattisesti.</translation>
-    </message>
-    <message>
-        <source>Unknown Faces</source>
-        <translation>Tuntemattomat kasvot</translation>
-    </message>
-</context>
-<context>
     <name>TripDetailPage</name>
-    <message>
-        <source>Share photos</source>
-        <translation>Jaa kuvat</translation>
-    </message>
     <message>
         <source>%1 photos</source>
         <translation>%1 kuvaa</translation>
@@ -1610,14 +1303,6 @@
     <message>
         <source>Set as trip cover</source>
         <translation>Aseta matkan kansikuvaksi</translation>
-    </message>
-    <message>
-        <source>Sort by day</source>
-        <translation>Järjestä päivän mukaan</translation>
-    </message>
-    <message>
-        <source>Sort by location</source>
-        <translation>Järjestä sijainnin mukaan</translation>
     </message>
     <message>
         <source>Stop %1</source>
@@ -1882,10 +1567,6 @@
     <message>
         <source>Tap photos to select</source>
         <translation>Valitse kuvat napauttamalla</translation>
-    </message>
-    <message>
-        <source>That many photos will not go through in one share</source>
-        <translation>Näin monta kuvaa ei mene läpi yhdellä jakamisella</translation>
     </message>
     <message>
         <source>Too heavy for one share, deselect a few</source>
