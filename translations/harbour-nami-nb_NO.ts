@@ -1402,6 +1402,25 @@
         <source>days</source>
         <translation>dager</translation>
     </message>
+    <message numerus="yes">
+        <source>%n photo(s) forgotten</source>
+        <translation>
+            <numerusform>%n bilde glemt</numerusform>
+            <numerusform>%n bilder glemt</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Forget deleted photos</source>
+        <translation>Glem slettede bilder</translation>
+    </message>
+    <message>
+        <source>Nothing to clean up</source>
+        <translation>Ingenting å rydde</translation>
+    </message>
+    <message>
+        <source>Photos you deleted from your phone stay in Nami as empty tiles. This forgets them. It runs on its own after every scan, so you only need it to clean up without rescanning.</source>
+        <translation>Bilder du har slettet fra telefonen blir liggende i Nami som tomme ruter. Dette glemmer dem. Det skjer av seg selv etter hver skanning, så knappen trengs bare for å rydde uten å skanne på nytt.</translation>
+    </message>
 </context>
 <context>
     <name>UnknownFacesPage</name>

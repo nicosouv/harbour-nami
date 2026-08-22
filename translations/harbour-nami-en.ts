@@ -85,6 +85,13 @@
 <context>
     <name>SettingsPage</name>
     <message numerus="yes">
+        <source>%n photo(s) forgotten</source>
+        <translation>
+            <numerusform>%n photo forgotten</numerusform>
+            <numerusform>%n photos forgotten</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
         <source>Last backup: %n day(s) ago</source>
         <translation>
             <numerusform>Last backup: %n day ago</numerusform>

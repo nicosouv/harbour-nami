@@ -718,6 +718,74 @@ bool FaceDatabase::deleteFacesForPhoto(int photoId)
     return query.exec();
 }
 
+int FaceDatabase::removeMissingPhotos()
+{
+    QSqlQuery sel(m_db);
+    if (!sel.exec("SELECT id, file_path FROM photos")) {
+        qWarning() << "Could not list photos to prune:" << sel.lastError().text();
+        return 0;
+    }
+
+    QVector<QPair<int, QString>> gone;
+    // One stat per folder rather than per file: a gallery is a handful of
+    // directories holding thousands of photos.
+    QHash<QString, bool> folderExists;
+
+    while (sel.next()) {
+        const int id = sel.value(0).toInt();
+        const QString path = sel.value(1).toString();
+
+        if (QFileInfo::exists(path)) {
+            continue;
+        }
+
+        const QString folder = QFileInfo(path).absolutePath();
+        auto known = folderExists.find(folder);
+        if (known == folderExists.end()) {
+            known = folderExists.insert(folder, QFileInfo(folder).isDir());
+        }
+
+        // The whole folder is gone, which is exactly what an unmounted SD
+        // card looks like. Deleting a photo the user still has, because a
+        // card was popped out, would throw away identification work that
+        // cannot be recovered - so only prune when the folder is still
+        // there and the file inside it is not.
+        if (!known.value()) {
+            continue;
+        }
+
+        gone.append(qMakePair(id, path));
+    }
+
+    if (gone.isEmpty()) {
+        return 0;
+    }
+
+    beginTransaction();
+
+    QSqlQuery delPhoto(m_db);
+    delPhoto.prepare("DELETE FROM photos WHERE id = :id");
+    QSqlQuery delCover(m_db);
+    delCover.prepare("DELETE FROM event_covers WHERE photo_path = :path");
+
+    for (const auto &entry : gone) {
+        deleteFacesForPhoto(entry.first);
+
+        delPhoto.bindValue(":id", entry.first);
+        delPhoto.exec();
+
+        // A day or trip whose cover was one of these would otherwise keep
+        // pointing at a file that no longer exists
+        delCover.bindValue(":path", entry.second);
+        delCover.exec();
+    }
+
+    commitTransaction();
+
+    qCDebug(lcNami) << "Pruned" << gone.size() << "photos that are no longer on disk";
+    return gone.size();
+}
+
 QSet<QString> FaceDatabase::getProcessedFilePaths()
 {
     QSet<QString> paths;
