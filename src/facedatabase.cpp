@@ -464,21 +464,7 @@ QVector<Photo> FaceDatabase::getAllPhotos()
 
     if (query.exec("SELECT * FROM photos ORDER BY date_taken DESC")) {
         while (query.next()) {
-            Photo photo;
-            photo.id = query.value("id").toInt();
-            photo.filePath = query.value("file_path").toString();
-            photo.dateTaken = QDateTime::fromString(query.value("date_taken").toString(), Qt::ISODate);
-            photo.width = query.value("width").toInt();
-            photo.height = query.value("height").toInt();
-            photo.processedAt = QDateTime::fromString(query.value("processed_at").toString(), Qt::ISODate);
-            photo.rotation = query.value("rotation").toInt();
-            QVariant lat = query.value("latitude");
-            QVariant lon = query.value("longitude");
-            photo.hasLocation = !lat.isNull() && !lon.isNull();
-            photo.latitude = photo.hasLocation ? lat.toDouble() : 0.0;
-            photo.longitude = photo.hasLocation ? lon.toDouble() : 0.0;
-            photo.fileHash = query.value("file_hash").toString();
-            photos.append(photo);
+            photos.append(photoFromRow(query));
         }
     }
 
@@ -1062,6 +1048,10 @@ QVector<PersonPhoto> FaceDatabase::getPhotosForPerson(int personId)
         entry.similarityScore = score;
         entry.verified = query.value("verified").toInt() == 1;
 
+        // Mapped by hand rather than through photoFromRow(): the projection
+        // above deliberately leaves out id, processed_at and file_hash, and
+        // asking QSqlQuery for a column that is not in the result logs a
+        // warning per row.
         Photo &photo = entry.photo;
         photo.id = photoId;
         photo.filePath = query.value("file_path").toString();
@@ -1856,27 +1846,6 @@ Memory readMemoryRow(const QSqlQuery &query)
     return memory;
 }
 
-Photo readPhotoRow(const QSqlQuery &query)
-{
-    Photo photo;
-    photo.id = query.value("id").toInt();
-    photo.filePath = query.value("file_path").toString();
-    photo.dateTaken = QDateTime::fromString(query.value("date_taken").toString(), Qt::ISODate);
-    photo.width = query.value("width").toInt();
-    photo.height = query.value("height").toInt();
-    photo.processedAt = QDateTime::fromString(query.value("processed_at").toString(), Qt::ISODate);
-    photo.rotation = query.value("rotation").toInt();
-    photo.fileHash = query.value("file_hash").toString();
-
-    const QVariant lat = query.value("latitude");
-    const QVariant lon = query.value("longitude");
-    photo.hasLocation = !lat.isNull() && !lon.isNull();
-    photo.latitude = photo.hasLocation ? lat.toDouble() : 0.0;
-    photo.longitude = photo.hasLocation ? lon.toDouble() : 0.0;
-
-    return photo;
-}
-
 // Every edit the user makes takes the memory out of the recipes' hands
 bool markMemoryEdited(QSqlDatabase &db, int memoryId)
 {
@@ -2059,7 +2028,7 @@ QVector<MemoryPhoto> FaceDatabase::getMemoryPhotos(int memoryId, bool includedOn
 
     while (query.next()) {
         MemoryPhoto entry;
-        entry.photo = readPhotoRow(query);
+        entry.photo = photoFromRow(query);
         entry.position = query.value("position").toInt();
         entry.included = query.value("included").toBool();
         photos.append(entry);
@@ -2231,20 +2200,7 @@ QVector<Photo> FaceDatabase::getRecentPhotos(int limit)
 
     if (query.exec()) {
         while (query.next()) {
-            Photo photo;
-            photo.id = query.value("id").toInt();
-            photo.filePath = query.value("file_path").toString();
-            photo.dateTaken = QDateTime::fromString(query.value("date_taken").toString(), Qt::ISODate);
-            photo.width = query.value("width").toInt();
-            photo.height = query.value("height").toInt();
-            photo.processedAt = QDateTime::fromString(query.value("processed_at").toString(), Qt::ISODate);
-            photo.rotation = query.value("rotation").toInt();
-            QVariant lat = query.value("latitude");
-            QVariant lon = query.value("longitude");
-            photo.hasLocation = !lat.isNull() && !lon.isNull();
-            photo.latitude = photo.hasLocation ? lat.toDouble() : 0.0;
-            photo.longitude = photo.hasLocation ? lon.toDouble() : 0.0;
-            photos.append(photo);
+            photos.append(photoFromRow(query));
         }
     }
 
