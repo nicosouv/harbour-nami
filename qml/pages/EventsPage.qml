@@ -1,5 +1,6 @@
 import QtQuick 2.6
 import Sailfish.Silica 1.0
+import "../js/faceutils.js" as FaceUtils
 import "../js/geoutils.js" as GeoUtils
 import "../js/eventsettings.js" as EventSettings
 import "../js/eventsmodel.js" as EventsModel
@@ -636,7 +637,7 @@ Page {
                     width: Theme.itemSizeExtraLarge
                     height: Theme.itemSizeExtraLarge
                     anchors.verticalCenter: parent.verticalCenter
-                    source: model.coverPhoto ? "file://" + model.coverPhoto : ""
+                    source: FaceUtils.thumbUrl(model.coverPhoto)
                     fillMode: Image.PreserveAspectCrop
                     autoTransform: true
                     clip: true

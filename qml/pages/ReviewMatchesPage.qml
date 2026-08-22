@@ -140,7 +140,7 @@ Page {
 
                 Image {
                     anchors.fill: parent
-                    source: current ? "file://" + current.file_path : ""
+                    source: current ? FaceUtils.thumbUrl(current.file_path) : ""
                     fillMode: Image.PreserveAspectCrop
                     autoTransform: true
                     rotation: current ? (current.rotation || 0) : 0

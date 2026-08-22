@@ -1175,9 +1175,12 @@ bool FacePipeline::deleteAllData()
 
     invalidatePersonPrototypes();
 
-    // Face crops cached by the image provider are derived biometric data
+    // Face crops cached by the image provider are derived biometric data.
+    // Photo thumbnails are copies of the user's photos, so "clear all data"
+    // has to take those with it too.
     QString cacheDir = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
     QDir(cacheDir + "/faces").removeRecursively();
+    QDir(cacheDir + "/thumbs").removeRecursively();
 
     return m_database->deleteAllData();
 }

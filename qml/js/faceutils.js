@@ -14,6 +14,16 @@ function cropUrl(photoPath, x, y, w, h, round) {
     return url
 }
 
+// Whole-photo thumbnail, served from the provider's disk cache. Grids use
+// this rather than file:// so a page of a couple of hundred photos does not
+// re-decode the originals every time it opens.
+function thumbUrl(photoPath) {
+    if (!photoPath) {
+        return ""
+    }
+    return "image://faces/thumb?path=" + encodeURIComponent(photoPath)
+}
+
 // Avatar URL for a person's best face; "" when the person has none.
 // Round by default (list circles); pass round=false for square tiles (grid)
 function personAvatarUrl(pipeline, personId, round) {

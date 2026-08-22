@@ -1,6 +1,7 @@
 import QtQuick 2.6
 import Sailfish.Silica 1.0
 import "../components"
+import "../js/faceutils.js" as FaceUtils
 
 // A memory's photos scattered like polaroids thrown on a table
 Page {
@@ -186,7 +187,7 @@ Page {
                                 margins: parent.width * 0.05
                             }
                             height: parent.height - parent.width * 0.24
-                            source: model.file_path ? "file://" + model.file_path : ""
+                            source: FaceUtils.thumbUrl(model.file_path)
                             fillMode: Image.PreserveAspectCrop
                             autoTransform: true
                             clip: true

@@ -528,8 +528,7 @@ Page {
                                         contentItem.children: [
                                             Image {
                                                 anchors.fill: parent
-                                                source: photoItem.photo.file_path
-                                                    ? "file://" + photoItem.photo.file_path : ""
+                                                source: FaceUtils.thumbUrl(photoItem.photo.file_path)
                                                 // The tile already carries the
                                                 // photo's own proportions, so
                                                 // this crops almost nothing

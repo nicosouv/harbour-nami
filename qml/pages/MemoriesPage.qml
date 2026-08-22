@@ -1,5 +1,6 @@
 import QtQuick 2.6
 import Sailfish.Silica 1.0
+import "../js/faceutils.js" as FaceUtils
 
 Page {
     id: page
@@ -188,7 +189,7 @@ Page {
 
                     Image {
                         anchors.fill: parent
-                        source: model.coverPhoto ? "file://" + model.coverPhoto : ""
+                        source: FaceUtils.thumbUrl(model.coverPhoto)
                         fillMode: Image.PreserveAspectCrop
                         autoTransform: true
                         clip: true
