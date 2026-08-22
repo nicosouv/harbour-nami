@@ -384,6 +384,14 @@ Page {
                     onClicked: sortMode = "recent"
                 }
             }
+
+            // The chips sat directly on top of the first row of faces; the
+            // underline marking the active one needs room to read as one
+            Item {
+                width: parent.width
+                height: Theme.paddingLarge
+                visible: totalPeople > 0
+            }
         }
     }
 

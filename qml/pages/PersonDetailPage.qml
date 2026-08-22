@@ -464,10 +464,18 @@ Page {
                         // modelData with their own
                         property var group: modelData
 
-                        SectionHeader {
-                            width: parent.width
+                        // A plain label rather than SectionHeader: Silica
+                        // right-aligns that one, which pushed long month names
+                        // against the edge until they were clipped. Left is
+                        // also the axis the photo rows below already sit on.
+                        Label {
+                            x: Theme.horizontalPageMargin
+                            width: parent.width - 2 * Theme.horizontalPageMargin
                             text: photoSection.group.title
                             visible: photoSection.group.title.length > 0
+                            font.pixelSize: Theme.fontSizeSmall
+                            color: Theme.highlightColor
+                            truncationMode: TruncationMode.Fade
                         }
 
                         Repeater {

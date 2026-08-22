@@ -1627,6 +1627,14 @@
         <source>Share</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>By day</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>By location</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>PassphraseDialog</name>

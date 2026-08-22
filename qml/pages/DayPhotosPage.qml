@@ -2,6 +2,7 @@ import QtQuick 2.6
 import Sailfish.Silica 1.0
 import "../components"
 import "../js/eventsettings.js" as EventSettings
+import "../js/mosaic.js" as Mosaic
 
 // All photos taken on a given day (opened from the Events page)
 Page {
@@ -11,11 +12,12 @@ Page {
     property string title: ""
     property string coverPath: ""
 
-    allowedOrientations: Orientation.All
+    // Plain arrays: the mosaic needs a computed width and height per photo,
+    // which are not model roles
+    property var photos: []
+    property var photoRows: []
 
-    ListModel {
-        id: photosModel
-    }
+    allowedOrientations: Orientation.All
 
     PhotoShareAction { id: shareAction }
     PhotoSelection { id: selection }
@@ -24,23 +26,25 @@ Page {
         if (!facePipeline || !facePipeline.initialized || dateKey.length === 0) return
 
         coverPath = facePipeline.getEventCovers()["day:" + dateKey] || ""
-        photosModel.clear()
 
         // Collect the day's photos across every person, deduplicated
         var seen = {}
         var items = []
         var people = facePipeline.getAllPeople()
         for (var i = 0; i < people.length; i++) {
-            var photos = facePipeline.getPersonPhotos(people[i].person_id)
-            for (var j = 0; j < photos.length; j++) {
-                var photo = photos[j]
+            var personPhotos = facePipeline.getPersonPhotos(people[i].person_id)
+            for (var j = 0; j < personPhotos.length; j++) {
+                var photo = personPhotos[j]
                 if (!photo.timestamp || seen[photo.file_path]) continue
                 var key = Qt.formatDate(new Date(photo.timestamp * 1000), "yyyy-MM-dd")
                 if (key === dateKey) {
                     seen[photo.file_path] = true
                     items.push({
                         file_path: photo.file_path,
-                        timestamp: photo.timestamp
+                        timestamp: photo.timestamp,
+                        width: photo.width,
+                        height: photo.height,
+                        rotation: photo.rotation
                     })
                 }
             }
@@ -57,24 +61,38 @@ Page {
                     seen[extraPhoto.file_path] = true
                     items.push({
                         file_path: extraPhoto.file_path,
-                        timestamp: extraPhoto.timestamp
+                        timestamp: extraPhoto.timestamp,
+                        width: extraPhoto.width,
+                        height: extraPhoto.height,
+                        rotation: extraPhoto.rotation
                     })
                 }
             }
         }
 
         items.sort(function(a, b) { return a.timestamp - b.timestamp })
-        for (var n = 0; n < items.length; n++) {
-            photosModel.append(items[n])
+        photos = items
+        rebuildRows()
+    }
+
+    function rebuildRows() {
+        var avail = photoList.width - 2 * Theme.horizontalPageMargin
+        if (avail <= 0) {
+            photoRows = []
+            return
         }
+        photoRows = Mosaic.layout(photos, avail, avail / 3, Theme.paddingSmall)
     }
 
     Component.onCompleted: {
         loadPhotos()
     }
 
-    SilicaGridView {
-        id: gridView
+    // A list of mosaic rows rather than a grid of squares: photos keep their
+    // own shape, and the view still only builds the rows on screen. A grid
+    // could not do this - it lays every cell out on one fixed size.
+    SilicaListView {
+        id: photoList
         anchors {
             left: parent.left
             right: parent.right
@@ -82,115 +100,128 @@ Page {
             bottom: selectionBar.top
         }
         clip: true
+        spacing: Theme.paddingSmall
 
-        cellWidth: width / 3
-        cellHeight: cellWidth
-
-        model: photosModel
+        model: photoRows
+        onWidthChanged: page.rebuildRows()
 
         PullDownMenu {
             MenuItem {
                 text: qsTr("Select photos")
-                enabled: photosModel.count > 0 && !selection.active
+                enabled: photos.length > 0 && !selection.active
                 onClicked: selection.begin("")
             }
         }
 
         header: PageHeader {
             title: page.title
-            description: gridView.count + " " + (gridView.count === 1 ? qsTr("photo") : qsTr("photos"))
+            description: photos.length + " "
+                         + (photos.length === 1 ? qsTr("photo") : qsTr("photos"))
         }
 
-        delegate: ListItem {
-            id: photoItem
-            width: gridView.cellWidth
-            contentHeight: gridView.cellHeight
+        delegate: Row {
+            id: photoRow
+            x: Theme.horizontalPageMargin
+            spacing: Theme.paddingSmall
+            property var cells: modelData
 
-            // Wrap content in Item to fix ContextMenu positioning
-            contentItem.children: [
-                Image {
-                    anchors.fill: parent
-                    anchors.margins: Theme.paddingSmall / 2
-                    source: model.file_path ? "file://" + model.file_path : ""
-                    fillMode: Image.PreserveAspectCrop
-                    autoTransform: true
-                    clip: true
-                    asynchronous: true
-                    sourceSize.width: 400
-                    sourceSize.height: 400
+            Repeater {
+                model: photoRow.cells
 
-                    BusyIndicator {
-                        anchors.centerIn: parent
-                        running: parent.status === Image.Loading
-                        size: BusyIndicatorSize.Small
+                delegate: ListItem {
+                    id: photoItem
+
+                    property var photo: modelData.photo
+
+                    width: modelData.width
+                    contentHeight: modelData.height
+
+                    contentItem.children: [
+                        Image {
+                            anchors.fill: parent
+                            source: photoItem.photo.file_path
+                                ? "file://" + photoItem.photo.file_path : ""
+                            fillMode: Image.PreserveAspectCrop
+                            autoTransform: true
+                            rotation: photoItem.photo.rotation || 0
+                            clip: true
+                            asynchronous: true
+                            sourceSize.width: 500
+                            sourceSize.height: 500
+
+                            Rectangle {
+                                anchors.fill: parent
+                                visible: parent.status !== Image.Ready
+                                color: Theme.rgba(Theme.highlightBackgroundColor, 0.12)
+                            }
+
+                            // Selection state
+                            Rectangle {
+                                anchors.fill: parent
+                                visible: selection.active
+                                color: selection.isSelected(photoItem.photo.file_path)
+                                       ? Theme.rgba(Theme.highlightBackgroundColor, 0.45)
+                                       : Theme.rgba("black", 0.35)
+                                z: 90
+
+                                Icon {
+                                    anchors.centerIn: parent
+                                    source: "image://theme/icon-m-acknowledge"
+                                    opacity: selection.isSelected(photoItem.photo.file_path)
+                                             ? 1 : 0.25
+                                }
+                            }
+
+                            // Marks the photo currently used as this day's cover
+                            Rectangle {
+                                visible: photoItem.photo.file_path === coverPath
+                                anchors {
+                                    top: parent.top
+                                    right: parent.right
+                                    margins: Theme.paddingSmall
+                                }
+                                width: Theme.iconSizeSmall
+                                height: width
+                                radius: width / 2
+                                color: Theme.rgba("#FFC107", 0.95)
+                                z: 100
+
+                                Label {
+                                    anchors.centerIn: parent
+                                    text: "★"
+                                    font.pixelSize: Theme.fontSizeExtraSmall
+                                    color: "white"
+                                }
+                            }
+                        }
+                    ]
+
+                    onClicked: {
+                        if (selection.active) {
+                            selection.toggle(photoItem.photo.file_path)
+                            return
+                        }
+                        pageStack.push(Qt.resolvedUrl("PhotoViewerPage.qml"), {
+                            photoPath: photoItem.photo.file_path
+                        })
                     }
 
-                    // Selection state
-                    Rectangle {
-                        anchors.fill: parent
-                        visible: selection.active
-                        color: selection.isSelected(model.file_path)
-                               ? Theme.rgba(Theme.highlightBackgroundColor, 0.45)
-                               : Theme.rgba("black", 0.35)
-                        z: 90
-
-                        Icon {
-                            anchors.centerIn: parent
-                            source: "image://theme/icon-m-acknowledge"
-                            opacity: selection.isSelected(model.file_path) ? 1 : 0.25
+                    // Long press picks photos, the way a gallery does. An
+                    // inline ContextMenu is not an option in a list of rows:
+                    // it would open under the whole row, not the photo.
+                    onPressAndHold: {
+                        if (!selection.active) {
+                            selection.begin(photoItem.photo.file_path)
+                        } else {
+                            selection.toggle(photoItem.photo.file_path)
                         }
                     }
-
-                    // Marks the photo currently used as this day's cover
-                    Rectangle {
-                        visible: model.file_path === coverPath
-                        anchors {
-                            top: parent.top
-                            right: parent.right
-                            margins: Theme.paddingSmall
-                        }
-                        width: Theme.iconSizeSmall
-                        height: width
-                        radius: width / 2
-                        color: Theme.rgba("#FFC107", 0.95)
-                        border.color: "white"
-                        border.width: 2
-                        z: 100
-
-                        Label {
-                            anchors.centerIn: parent
-                            text: "★"
-                            font.pixelSize: Theme.fontSizeExtraSmall
-                            color: "white"
-                        }
-                    }
-                }
-            ]
-
-            onClicked: {
-                if (selection.active) {
-                    selection.toggle(model.file_path)
-                    return
-                }
-                pageStack.push(Qt.resolvedUrl("PhotoViewerPage.qml"), {
-                    photoPath: model.file_path
-                })
-            }
-
-            // A SilicaGridView cannot push its next row down for an inline
-            // ContextMenu, so long press enters selection mode instead. The
-            // per-photo actions live there (share) or on the photo itself.
-            onPressAndHold: {
-                if (!selection.active) {
-                    selection.begin(model.file_path)
-                } else {
-                    selection.toggle(model.file_path)
                 }
             }
         }
 
         ViewPlaceholder {
-            enabled: gridView.count === 0
+            enabled: photos.length === 0
             text: qsTr("No photos")
         }
 

@@ -1693,6 +1693,14 @@
         <source>Share</source>
         <translation>Del</translation>
     </message>
+    <message>
+        <source>By day</source>
+        <translation>Etter dag</translation>
+    </message>
+    <message>
+        <source>By location</source>
+        <translation>Etter sted</translation>
+    </message>
 </context>
 <context>
     <name>TripNameDialog</name>
