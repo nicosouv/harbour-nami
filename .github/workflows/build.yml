@@ -4,6 +4,11 @@ on:
   push:
     tags:
       - 'v*.*.*'
+  # Also on pull requests: the unit and syntax lanes prove the code is
+  # correct and well-formed, but only this one proves it still builds for
+  # the device. Finding that out when the tag is already pushed means
+  # burning a version number on a build error.
+  pull_request:
   workflow_dispatch:
 
 permissions:
