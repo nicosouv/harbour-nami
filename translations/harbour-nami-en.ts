@@ -44,13 +44,6 @@
             <numerusform>%n to confirm</numerusform>
         </translation>
     </message>
-    <message numerus="yes">
-        <source>%n match(es) to confirm</source>
-        <translation>
-            <numerusform>%n match to confirm</numerusform>
-            <numerusform>%n matches to confirm</numerusform>
-        </translation>
-    </message>
 </context>
 <context>
     <name>PhotoSelectionBar</name>
