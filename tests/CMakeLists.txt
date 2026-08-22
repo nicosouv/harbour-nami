@@ -66,6 +66,37 @@ target_include_directories(tst_faceimageprovider PRIVATE ${NAMI_SRC})
 target_link_libraries(tst_faceimageprovider Qt5::Core Qt5::Gui Qt5::Quick Qt5::Test)
 add_test(NAME faceimageprovider COMMAND tst_faceimageprovider)
 
+# The recognition engine end to end. Off by default: it is the only target
+# that needs OpenCV (>= 4.8, the 4.6 DNN importer cannot read YuNet 2023mar),
+# the ML models and the reference portraits, which is the whole reason the
+# rest of this suite is kept free of them.
+#
+#   docker compose run --rm pipeline
+#
+option(WITH_PIPELINE_TESTS "Build the OpenCV recognition test" OFF)
+
+if(WITH_PIPELINE_TESTS)
+    find_package(OpenCV REQUIRED COMPONENTS core imgproc dnn objdetect)
+
+    add_executable(tst_pipeline
+        ${CMAKE_CURRENT_LIST_DIR}/tst_pipeline.cpp
+        ${NAMI_SRC}/facedetector.cpp
+        ${NAMI_SRC}/facerecognizer.cpp
+        ${NAMI_SRC}/facedatabase.cpp
+        ${NAMI_SRC}/logging.cpp
+    )
+    target_include_directories(tst_pipeline PRIVATE ${NAMI_SRC} ${OpenCV_INCLUDE_DIRS})
+    target_compile_definitions(tst_pipeline PRIVATE
+        NAMI_MODELS_DIR="${CMAKE_CURRENT_LIST_DIR}/../python/models"
+        NAMI_FIXTURES_DIR="${CMAKE_CURRENT_LIST_DIR}/fixtures"
+    )
+    target_link_libraries(tst_pipeline
+        Qt5::Core Qt5::Gui Qt5::Sql Qt5::Test ${OpenCV_LIBS})
+    add_test(NAME pipeline COMMAND tst_pipeline)
+else()
+    message(STATUS "Recognition test off (-DWITH_PIPELINE_TESTS=ON to enable)")
+endif()
+
 # Backup encryption: a bug here loses someone's whole library
 add_executable(tst_backupcrypto
     ${CMAKE_CURRENT_LIST_DIR}/tst_backupcrypto.cpp

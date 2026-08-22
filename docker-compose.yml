@@ -23,3 +23,22 @@ services:
       - .:/src
     working_dir: /src
     command: bash tests/syntax-check.sh
+
+  # The recognition engine end to end. Its own image (OpenCV >= 4.8) and its
+  # own downloads: the ML models and the reference portraits, both checksum
+  # pinned and skipped when already present.
+  pipeline:
+    build:
+      context: ./tests
+      dockerfile: Dockerfile.pipeline
+    volumes:
+      - .:/src
+    working_dir: /src
+    command: >
+      bash -c "bash scripts/download_models_for_build.sh
+      && bash tests/fixtures/download_faces.sh
+      && cmake -S tests -B /build-pipeline -G Ninja -DCMAKE_BUILD_TYPE=Debug
+      -DWITH_PIPELINE_TESTS=ON
+      && cmake --build /build-pipeline --target tst_pipeline
+      && QT_QPA_PLATFORM=offscreen ctest --test-dir /build-pipeline
+      -R pipeline --output-on-failure"
