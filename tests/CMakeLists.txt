@@ -11,7 +11,7 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_AUTOMOC ON)
 
-find_package(Qt5 REQUIRED COMPONENTS Core Sql Test)
+find_package(Qt5 REQUIRED COMPONENTS Core Gui Quick Sql Test)
 find_package(OpenSSL REQUIRED)
 
 enable_testing()
@@ -55,6 +55,16 @@ add_executable(tst_filehash
 target_include_directories(tst_filehash PRIVATE ${NAMI_SRC})
 target_link_libraries(tst_filehash Qt5::Core Qt5::Test)
 add_test(NAME filehash COMMAND tst_filehash)
+
+# Face crops: the geometry behind every avatar and thumbnail in the app
+add_executable(tst_faceimageprovider
+    ${CMAKE_CURRENT_LIST_DIR}/tst_faceimageprovider.cpp
+    ${NAMI_SRC}/faceimageprovider.cpp
+    ${NAMI_SRC}/logging.cpp
+)
+target_include_directories(tst_faceimageprovider PRIVATE ${NAMI_SRC})
+target_link_libraries(tst_faceimageprovider Qt5::Core Qt5::Gui Qt5::Quick Qt5::Test)
+add_test(NAME faceimageprovider COMMAND tst_faceimageprovider)
 
 # Backup encryption: a bug here loses someone's whole library
 add_executable(tst_backupcrypto
