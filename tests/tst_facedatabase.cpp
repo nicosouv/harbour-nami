@@ -32,6 +32,7 @@ private slots:
     void photoLookupByPathMatchesLookupById();
     void prunesPhotosDeletedFromDisk();
     void keepsPhotosWhoseWholeFolderIsGone();
+    void personPhotosJoinKeepsTheBestFacePerPhoto();
 
 private:
     // A photo file has to exist on disk for the import to accept it
@@ -334,6 +335,54 @@ void TstFaceDatabase::keepsPhotosWhoseWholeFolderIsGone()
 
     QCOMPARE(m_db->removeMissingPhotos(), 0);
     QVERIFY(m_db->getPhotoByPath(onCard).id > 0);
+}
+
+// The grids read this instead of asking for faces and then looking each
+// photo up separately. One row per photo, carrying the best-matching face.
+void TstFaceDatabase::personPhotosJoinKeepsTheBestFacePerPhoto()
+{
+    const int alice = m_db->createPerson("Alice");
+    const QDateTime taken = QDateTime::fromString("2026-07-14T10:00:00", Qt::ISODate);
+
+    const QString path = makePhotoFile("group.jpg");
+    const int photoId = m_db->addPhoto(path, taken, 4000, 3000);
+    QVERIFY(photoId > 0);
+
+    // Same person detected twice in one photo, at different confidence
+    FaceEmbedding embedding(128, 0.3f);
+    QVERIFY(m_db->addFace(photoId, QRectF(0.1, 0.1, 0.2, 0.2), 0.9f,
+                          embedding, alice, 0.61f, false) > 0);
+    const int betterFace = m_db->addFace(photoId, QRectF(0.5, 0.2, 0.3, 0.3), 0.9f,
+                                         embedding, alice, 0.88f, true);
+    QVERIFY(betterFace > 0);
+
+    addPhotoWithFace("solo.jpg", taken.addDays(1), alice, true, 0.7f);
+
+    const QVector<PersonPhoto> photos = m_db->getPhotosForPerson(alice);
+
+    // Two photos, not three faces
+    QCOMPARE(photos.size(), 2);
+
+    const PersonPhoto *group = nullptr;
+    for (const PersonPhoto &entry : photos) {
+        if (entry.photo.id == photoId) {
+            group = &entry;
+        }
+    }
+    QVERIFY(group != nullptr);
+    QCOMPARE(group->faceId, betterFace);
+    QCOMPARE(group->verified, true);
+    QVERIFY(qAbs(group->similarityScore - 0.88f) < 0.001f);
+
+    // The photo's own columns come along in the same row
+    QCOMPARE(group->photo.filePath, path);
+    QCOMPARE(group->photo.width, 4000);
+    QCOMPARE(group->photo.height, 3000);
+    QCOMPARE(group->photo.dateTaken, taken);
+
+    // Someone with no photos gets an empty list, not a stray row
+    const int bob = m_db->createPerson("Bob");
+    QCOMPARE(m_db->getPhotosForPerson(bob).size(), 0);
 }
 
 QTEST_MAIN(TstFaceDatabase)

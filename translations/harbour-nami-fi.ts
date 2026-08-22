@@ -530,73 +530,6 @@
     </message>
 </context>
 <context>
-    <name>ModelDownloadPage</name>
-    <message>
-        <source>All models run 100% on your device. No data is sent to external servers.</source>
-        <translation>Kaikki mallit toimivat 100 % laitteellasi. Tietoja ei lähetetä ulkoisille palvelimille.</translation>
-    </message>
-    <message>
-        <source>ArcFace Recognition</source>
-        <translation>ArcFace-tunnistus</translation>
-    </message>
-    <message>
-        <source>Continue</source>
-        <translation>Jatka</translation>
-    </message>
-    <message>
-        <source>Download Models</source>
-        <translation>Lataa mallit</translation>
-    </message>
-    <message>
-        <source>Downloading %1...</source>
-        <translation>Ladataan %1...</translation>
-    </message>
-    <message>
-        <source>ML Models Setup</source>
-        <translation>ML-mallien asennus</translation>
-    </message>
-    <message>
-        <source>Manual Installation</source>
-        <translation>Manuaalinen asennus</translation>
-    </message>
-    <message>
-        <source>Manual installation required</source>
-        <translation>Vaatii manuaalisen asennuksen</translation>
-    </message>
-    <message>
-        <source>Nami requires machine learning models for face detection and recognition.</source>
-        <translation>Nami tarvitsee koneoppimismalleja kasvojen havaitsemiseen ja tunnistamiseen.</translation>
-    </message>
-    <message>
-        <source>Not installed</source>
-        <translation>Ei asennettu</translation>
-    </message>
-    <message>
-        <source>Open Documentation</source>
-        <translation>Avaa dokumentaatio</translation>
-    </message>
-    <message>
-        <source>Required Models</source>
-        <translation>Vaaditut mallit</translation>
-    </message>
-    <message>
-        <source>Size: %1 MB</source>
-        <translation>Koko: %1 Mt</translation>
-    </message>
-    <message>
-        <source>The ArcFace model requires manual installation. Please see the documentation for instructions.</source>
-        <translation>ArcFace-malli vaatii manuaalisen asennuksen. Katso ohjeet dokumentaatiosta.</translation>
-    </message>
-    <message>
-        <source>YuNet Face Detection</source>
-        <translation>YuNet-kasvojenhavaitseminen</translation>
-    </message>
-    <message>
-        <source>✓ Installed</source>
-        <translation>✓ Asennettu</translation>
-    </message>
-</context>
-<context>
     <name>PersonDetailPage</name>
     <message>
         <source>Merge duplicates?</source>
@@ -700,37 +633,6 @@
     <message>
         <source>Review</source>
         <translation>Käy läpi</translation>
-    </message>
-</context>
-<context>
-    <name>PersonPage</name>
-    <message>
-        <source>No photos</source>
-        <translation>Ei kuvia</translation>
-    </message>
-    <message>
-        <source>Photos</source>
-        <translation>Kuvat</translation>
-    </message>
-    <message>
-        <source>This person has no associated photos yet</source>
-        <translation>Tällä henkilöllä ei ole vielä liitettyjä kuvia</translation>
-    </message>
-    <message>
-        <source>Unknown</source>
-        <translation>Tuntematon</translation>
-    </message>
-    <message>
-        <source>photo</source>
-        <translation>kuva</translation>
-    </message>
-    <message>
-        <source>photos</source>
-        <translation>kuvaa</translation>
-    </message>
-    <message>
-        <source>Share all photos</source>
-        <translation>Jaa kaikki kuvat</translation>
     </message>
 </context>
 <context>

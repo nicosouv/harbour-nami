@@ -971,6 +971,77 @@ bool FaceDatabase::mergePersons(int fromPersonId, int intoPersonId)
     return true;
 }
 
+QVector<PersonPhoto> FaceDatabase::getPhotosForPerson(int personId)
+{
+    QVector<PersonPhoto> result;
+
+    // One join instead of a face query plus a photo lookup per photo, and no
+    // embedding column: the grids never read it, and pulling half a kilobyte
+    // per face across a few hundred photos was most of the query cost.
+    QSqlQuery query(m_db);
+    query.prepare(R"(
+        SELECT f.id AS face_id, f.photo_id AS photo_id,
+               f.bbox_x, f.bbox_y, f.bbox_width, f.bbox_height,
+               f.similarity_score, f.verified,
+               p.file_path, p.date_taken, p.width, p.height, p.rotation,
+               p.latitude, p.longitude
+        FROM faces f
+        JOIN photos p ON p.id = f.photo_id
+        WHERE f.person_id = :person_id
+    )");
+    query.bindValue(":person_id", personId);
+
+    if (!query.exec()) {
+        qWarning() << "getPhotosForPerson failed:" << query.lastError().text();
+        return result;
+    }
+
+    // A photo can hold several faces of the same person; keep the best match
+    QHash<int, int> indexByPhoto;
+    while (query.next()) {
+        const int photoId = query.value("photo_id").toInt();
+        const float score = query.value("similarity_score").toFloat();
+
+        auto existing = indexByPhoto.find(photoId);
+        if (existing != indexByPhoto.end()
+                && result[existing.value()].similarityScore >= score) {
+            continue;
+        }
+
+        PersonPhoto entry;
+        entry.faceId = query.value("face_id").toInt();
+        entry.bbox = QRectF(query.value("bbox_x").toDouble(),
+                            query.value("bbox_y").toDouble(),
+                            query.value("bbox_width").toDouble(),
+                            query.value("bbox_height").toDouble());
+        entry.similarityScore = score;
+        entry.verified = query.value("verified").toInt() == 1;
+
+        Photo &photo = entry.photo;
+        photo.id = photoId;
+        photo.filePath = query.value("file_path").toString();
+        photo.dateTaken = QDateTime::fromString(query.value("date_taken").toString(),
+                                                Qt::ISODate);
+        photo.width = query.value("width").toInt();
+        photo.height = query.value("height").toInt();
+        photo.rotation = query.value("rotation").toInt();
+        const QVariant lat = query.value("latitude");
+        const QVariant lon = query.value("longitude");
+        photo.hasLocation = !lat.isNull() && !lon.isNull();
+        photo.latitude = photo.hasLocation ? lat.toDouble() : 0.0;
+        photo.longitude = photo.hasLocation ? lon.toDouble() : 0.0;
+
+        if (existing != indexByPhoto.end()) {
+            result[existing.value()] = entry;
+        } else {
+            indexByPhoto.insert(photoId, result.size());
+            result.append(entry);
+        }
+    }
+
+    return result;
+}
+
 QVector<Face> FaceDatabase::getFacesForPerson(int personId)
 {
     QVector<Face> faces;
