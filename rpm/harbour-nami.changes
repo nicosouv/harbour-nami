@@ -24,6 +24,9 @@
   looking at, instead of going back and opening the next one
 - Photos now decode at screen size rather than at their full megapixels, so
   the viewer holds a few megabytes instead of a few hundred
+- Photo grids no longer decode the original file every time a page opens:
+  thumbnails are kept on disk, so a day holding a couple of hundred photos
+  fills in quickly and is instant on the next visit
 
 * Fri Aug 21 2026 Nicolas Souveton <souvetonnicolas@gmail.com> 0.8.5-1
 - Share photos from the photo viewer, a person, a day, a trip or a memory
