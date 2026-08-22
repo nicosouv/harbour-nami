@@ -75,6 +75,24 @@ Page {
         rebuildRows()
     }
 
+    // Built once per opening: the viewer browses the whole list, so the
+    // tapped photo is just where it starts.
+    function openViewer(path) {
+        var paths = browsePaths()
+        pageStack.push(Qt.resolvedUrl("PhotoViewerPage.qml"), {
+            photoPaths: paths,
+            photoIndex: Math.max(0, paths.indexOf(path))
+        })
+    }
+
+    function browsePaths() {
+        var paths = []
+        for (var i = 0; i < photos.length; i++) {
+            paths.push(photos[i].file_path)
+        }
+        return paths
+    }
+
     function rebuildRows() {
         var avail = photoList.width - 2 * Theme.horizontalPageMargin
         if (avail <= 0) {
@@ -201,9 +219,7 @@ Page {
                             selection.toggle(photoItem.photo.file_path)
                             return
                         }
-                        pageStack.push(Qt.resolvedUrl("PhotoViewerPage.qml"), {
-                            photoPath: photoItem.photo.file_path
-                        })
+                        page.openViewer(photoItem.photo.file_path)
                     }
 
                     // Long press picks photos, the way a gallery does. An

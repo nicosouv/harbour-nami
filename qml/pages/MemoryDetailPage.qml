@@ -65,6 +65,25 @@ Page {
         }
     }
 
+    // Built once per opening: the viewer browses the whole list, so the
+    // tapped photo is just where it starts.
+    function openViewer(path) {
+        var paths = browsePaths()
+        pageStack.push(Qt.resolvedUrl("PhotoViewerPage.qml"), {
+            photoPaths: paths,
+            photoIndex: Math.max(0, paths.indexOf(path))
+        })
+    }
+
+    function browsePaths() {
+        var paths = []
+        for (var i = 0; i < photosModel.count; i++) {
+            // From a click handler, never a binding
+            paths.push(photosModel.get(i).file_path)
+        }
+        return paths
+    }
+
     Component.onCompleted: {
         loadPhotos()
     }
@@ -221,9 +240,7 @@ Page {
                                 selection.toggle(model.file_path)
                                 return
                             }
-                            pageStack.push(Qt.resolvedUrl("PhotoViewerPage.qml"), {
-                                photoPath: model.file_path
-                            })
+                            page.openViewer(model.file_path)
                         }
                         onPressAndHold: {
                             if (!selection.active) {

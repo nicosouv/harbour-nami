@@ -1945,4 +1945,11 @@
         <translation type="unfinished"></translation>
     </message>
 </context>
+<context>
+    <name>ZoomableImage</name>
+    <message>
+        <source>Failed to load image</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
 </TS>

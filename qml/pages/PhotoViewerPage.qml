@@ -7,42 +7,33 @@ import "../components"
  * zoomed in place. What the app knows about it sits right underneath,
  * always visible: no pulley menu, no panel to open first.
  *
- * The page scrolls as one, except while the photo is zoomed in - the photo
- * then takes the drag so it can be panned, and a double tap gives the page
- * back.
+ * Photos are browsed by swiping sideways. The pager is a ListView with no
+ * cache buffer, and every photo decodes at screen size rather than at the
+ * file's own megapixels, so walking a gallery holds a couple of screen-sized
+ * bitmaps rather than a growing pile of full-resolution ones.
  */
 Page {
     id: page
 
+    // Browsing a list: paths plus where to start. A single photo can also be
+    // handed over on its own (the review screen does that).
+    property var photoPaths: []
+    property int photoIndex: 0
     property string photoPath: ""
+
+    readonly property var paths: (photoPaths && photoPaths.length > 0)
+        ? photoPaths : (photoPath ? [photoPath] : [])
+    readonly property string currentPath: (pager.currentIndex >= 0
+                                           && pager.currentIndex < paths.length)
+        ? paths[pager.currentIndex] : ""
+
     // User-applied rotation on top of EXIF auto-orientation, persisted
     property int userRotation: 0
-
-    // Rotation is animated from a counter that only ever grows, so going from
-    // 270 back to 0 turns forward instead of spinning back through 180.
     property int rotationTurns: 0
-    readonly property bool quarterTurned: (rotationTurns % 2) !== 0
-
-    // Zoom is a plain multiplier over the fit-to-viewport size. Panning is
-    // left to the Flickable, which is why the image is sized rather than
-    // scaled: contentWidth/contentHeight then match what is actually drawn,
-    // and the view can no longer be panned into empty space.
-    property real zoom: 1.0
-    readonly property real minZoom: 1.0
-    readonly property real maxZoom: 6.0
-    readonly property real doubleTapZoom: 2.5
-    readonly property bool zoomed: zoom > minZoom + 0.01
 
     property var details: ({})
 
-    // Focal point of the zoom in progress: a normalised position inside the
-    // photo (anchorN*) pinned to a fixed point of the viewport (anchorV*).
-    // Re-applied on every zoom change, so zooming keeps whatever the user
-    // aimed at under their finger instead of drifting to a corner.
-    property real anchorNx: 0.5
-    property real anchorNy: 0.5
-    property real anchorVx: 0
-    property real anchorVy: 0
+    readonly property bool zoomed: pager.currentItem ? pager.currentItem.zoomed : false
 
     allowedOrientations: Orientation.All
 
@@ -51,71 +42,11 @@ Page {
     readonly property real stageHeight: isPortrait ? page.height * 0.62
                                                    : page.height * 0.78
 
-    // Natural size of the photo. Image.implicitWidth already accounts for the
-    // EXIF orientation applied by autoTransform; the database values are the
-    // fallback while the image is still loading.
-    readonly property real naturalWidth: photoImage.implicitWidth > 0
-        ? photoImage.implicitWidth
-        : ((details.width > 0) ? details.width : page.width)
-    readonly property real naturalHeight: photoImage.implicitHeight > 0
-        ? photoImage.implicitHeight
-        : ((details.height > 0) ? details.height : page.height)
-
-    // Bounding box once the user's own rotation is applied
-    readonly property real turnedWidth: quarterTurned ? naturalHeight : naturalWidth
-    readonly property real turnedHeight: quarterTurned ? naturalWidth : naturalHeight
-
-    readonly property real fitScale: (turnedWidth > 0 && turnedHeight > 0)
-        ? Math.min(stage.width / turnedWidth, stage.height / turnedHeight)
-        : 1
-    readonly property real baseWidth: turnedWidth * fitScale
-    readonly property real baseHeight: turnedHeight * fitScale
-
-    function clamp(value, lo, hi) {
-        if (hi <= lo) return lo
-        return Math.max(lo, Math.min(value, hi))
-    }
-
-    // Remember what the user is aiming at, in stage coordinates
-    function beginZoom(focusX, focusY) {
-        anchorVx = focusX
-        anchorVy = focusY
-        anchorNx = frame.width > 0
-            ? (stage.contentX + focusX - frame.x) / frame.width : 0.5
-        anchorNy = frame.height > 0
-            ? (stage.contentY + focusY - frame.y) / frame.height : 0.5
-    }
-
-    function applyAnchor() {
-        stage.contentX = clamp(anchorNx * frame.width + frame.x - anchorVx,
-                               0, stage.contentWidth - stage.width)
-        stage.contentY = clamp(anchorNy * frame.height + frame.y - anchorVy,
-                               0, stage.contentHeight - stage.height)
-    }
-
-    function zoomTo(newZoom, focusX, focusY) {
-        beginZoom(focusX, focusY)
-        zoom = clamp(newZoom, minZoom, maxZoom)
-    }
-
-    // Zoom buttons work on the middle of the stage, which is what the user is
-    // looking at; anchoring them at the origin is what used to send the view
-    // off to the top-left corner.
-    function zoomBy(factor) {
-        zoomTo(zoom * factor, stage.width / 2, stage.height / 2)
-    }
-
-    function resetZoom() {
-        zoomTo(minZoom, stage.width / 2, stage.height / 2)
-    }
-
     function rotatePhoto() {
         rotationTurns += 1
-        // Fitting changes with every quarter turn, so start from fit again
-        resetZoom()
         userRotation = ((rotationTurns % 4) + 4) % 4 * 90
-        if (facePipeline && facePipeline.initialized) {
-            facePipeline.setPhotoRotation(photoPath, userRotation)
+        if (facePipeline && facePipeline.initialized && currentPath) {
+            facePipeline.setPhotoRotation(currentPath, userRotation)
         }
     }
 
@@ -131,18 +62,34 @@ Page {
     }
 
     function copyPath() {
-        Clipboard.text = page.photoPath
+        Clipboard.text = page.currentPath
         copyBanner.show(qsTr("File path copied"))
     }
 
-    onZoomChanged: applyAnchor()
+    // Reading the details means a database lookup, and sometimes an EXIF read
+    // for a photo that was never scanned. Flicking through twenty photos must
+    // not do that twenty times, so it waits for the swipe to settle.
+    function loadCurrentPhoto() {
+        if (!facePipeline || !facePipeline.initialized || !currentPath) {
+            details = ({})
+            return
+        }
+        userRotation = facePipeline.photoRotation(currentPath)
+        rotationTurns = Math.round(userRotation / 90)
+        details = facePipeline.photoDetails(currentPath)
+    }
+
+    Timer {
+        id: detailsSettle
+        interval: 180
+        onTriggered: page.loadCurrentPhoto()
+    }
+
+    onCurrentPathChanged: detailsSettle.restart()
 
     Component.onCompleted: {
-        if (facePipeline && facePipeline.initialized && photoPath) {
-            userRotation = facePipeline.photoRotation(photoPath)
-            rotationTurns = Math.round(userRotation / 90)
-            details = facePipeline.photoDetails(photoPath)
-        }
+        pager.currentIndex = Math.max(0, Math.min(photoIndex, paths.length - 1))
+        loadCurrentPhoto()
     }
 
     PhotoShareAction { id: shareAction }
@@ -169,85 +116,57 @@ Page {
                     color: Theme.rgba(Theme.highlightDimmerColor, 0.25)
                 }
 
-                PinchArea {
+                // Swiping sideways walks the gallery. cacheBuffer is 0 on
+                // purpose: the default keeps delegates alive well past the
+                // edges of the screen, which here means extra decoded photos
+                // for no visible gain.
+                SilicaListView {
+                    id: pager
                     anchors.fill: parent
+                    orientation: ListView.Horizontal
+                    snapMode: ListView.SnapOneItem
+                    highlightRangeMode: ListView.StrictlyEnforceRange
+                    highlightMoveDuration: 200
+                    cacheBuffer: 0
+                    clip: true
+                    model: page.paths
 
-                    property real startZoom: 1.0
+                    // A zoomed photo takes the drag so it can be panned; a
+                    // double tap zooms back out and hands the pager back
+                    interactive: !page.zoomed
 
-                    onPinchStarted: {
-                        startZoom = page.zoom
-                        page.beginZoom(pinch.startCenter.x, pinch.startCenter.y)
-                    }
-                    onPinchUpdated: {
-                        page.anchorVx = pinch.center.x
-                        page.anchorVy = pinch.center.y
-                        page.zoom = page.clamp(startZoom * pinch.scale,
-                                               page.minZoom, page.maxZoom)
-                    }
+                    delegate: ZoomableImage {
+                        width: pager.width
+                        height: pager.height
+                        source: modelData ? "file://" + modelData : ""
+                        // Only the photo on screen carries the user's
+                        // rotation; the others are at rest anyway
+                        rotationTurns: index === pager.currentIndex
+                                       ? page.rotationTurns : 0
+                        naturalWidthHint: index === pager.currentIndex
+                                          ? (details.width || 0) : 0
+                        naturalHeightHint: index === pager.currentIndex
+                                           ? (details.height || 0) : 0
 
-                    Flickable {
-                        id: stage
-                        anchors.fill: parent
-                        clip: true
-
-                        // Exactly the drawn size, so panning stops at the edges
-                        contentWidth: Math.max(width, frame.width)
-                        contentHeight: Math.max(height, frame.height)
-                        interactive: page.zoomed
-
-                        Item {
-                            id: frame
-                            width: page.baseWidth * page.zoom
-                            height: page.baseHeight * page.zoom
-                            // Centred while smaller than the viewport
-                            x: Math.max(0, (stage.contentWidth - width) / 2)
-                            y: Math.max(0, (stage.contentHeight - height) / 2)
-
-                            Image {
-                                id: photoImage
-                                anchors.centerIn: parent
-                                // Swapped on a quarter turn so the rotated
-                                // image still lands inside the frame
-                                width: page.quarterTurned ? frame.height : frame.width
-                                height: page.quarterTurned ? frame.width : frame.height
-                                rotation: page.rotationTurns * 90
-                                source: photoPath ? "file://" + photoPath : ""
-                                fillMode: Image.PreserveAspectFit
-                                autoTransform: true  // honor EXIF orientation
-                                asynchronous: true
-
-                                Behavior on rotation {
-                                    NumberAnimation { duration: 200; easing.type: Easing.OutQuad }
-                                }
-                            }
-                        }
-
-                        // Double tap zooms in at the tapped point, or back out
-                        MouseArea {
-                            width: stage.contentWidth
-                            height: stage.contentHeight
-                            onDoubleClicked: {
-                                // Mouse coordinates are in content space
-                                var vx = mouse.x - stage.contentX
-                                var vy = mouse.y - stage.contentY
-                                page.zoomTo(page.zoomed ? page.minZoom
-                                                        : page.doubleTapZoom, vx, vy)
-                            }
-                        }
+                        // Leaving a photo zoomed and coming back to it later
+                        // would strand the pager on a photo it cannot leave
+                        onVisibleChanged: if (!visible) resetZoom()
                     }
                 }
 
-                BusyIndicator {
-                    anchors.centerIn: parent
-                    running: photoImage.status === Image.Loading
-                    size: BusyIndicatorSize.Large
-                }
-
+                // Position in the gallery, only when there is one to be in
                 Label {
-                    anchors.centerIn: parent
-                    visible: photoImage.status === Image.Error
-                    text: qsTr("Failed to load image")
-                    color: Theme.secondaryColor
+                    anchors {
+                        left: parent.left
+                        leftMargin: Theme.horizontalPageMargin
+                        top: parent.top
+                        topMargin: Theme.paddingMedium
+                    }
+                    visible: page.paths.length > 1
+                    text: (pager.currentIndex + 1) + " / " + page.paths.length
+                    font.pixelSize: Theme.fontSizeSmall
+                    color: Theme.highlightColor
+                    opacity: 0.8
                 }
 
                 // Zoom level, only while it is not at fit size
@@ -258,7 +177,8 @@ Page {
                         bottom: parent.bottom
                         bottomMargin: Theme.paddingMedium
                     }
-                    text: Math.round(page.zoom * 100) + "%"
+                    text: pager.currentItem
+                          ? Math.round(pager.currentItem.zoom * 100) + "%" : ""
                     font.pixelSize: Theme.fontSizeSmall
                     color: Theme.highlightColor
                     opacity: page.zoomed ? 0.9 : 0
@@ -278,16 +198,21 @@ Page {
                     IconButton {
                         icon.source: "image://theme/icon-m-remove"
                         enabled: page.zoomed
-                        onClicked: page.zoomBy(1 / 1.5)
+                        onClicked: if (pager.currentItem) pager.currentItem.zoomBy(1 / 1.5)
                     }
                     IconButton {
                         icon.source: "image://theme/icon-m-add"
-                        enabled: page.zoom < page.maxZoom
-                        onClicked: page.zoomBy(1.5)
+                        enabled: pager.currentItem
+                                 && pager.currentItem.zoom < pager.currentItem.maxZoom
+                        onClicked: if (pager.currentItem) pager.currentItem.zoomBy(1.5)
                     }
                     IconButton {
                         icon.source: "image://theme/icon-m-refresh"
-                        onClicked: page.rotatePhoto()
+                        onClicked: {
+                            page.rotatePhoto()
+                            // Fitting changes with every quarter turn
+                            if (pager.currentItem) pager.currentItem.resetZoom()
+                        }
                     }
                 }
             }
@@ -323,7 +248,7 @@ Page {
                         verticalCenter: parent.verticalCenter
                     }
                     icon.source: "image://theme/icon-m-share"
-                    onClicked: shareAction.sharePhoto(page.photoPath)
+                    onClicked: shareAction.sharePhoto(page.currentPath)
                 }
             }
 
@@ -411,7 +336,7 @@ Page {
                         rightMargin: Theme.paddingMedium
                         verticalCenter: parent.verticalCenter
                     }
-                    text: details.file_path || page.photoPath
+                    text: details.file_path || page.currentPath
                     font.pixelSize: Theme.fontSizeExtraSmall
                     color: Theme.secondaryHighlightColor
                     wrapMode: Text.WrapAnywhere

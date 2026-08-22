@@ -1946,4 +1946,11 @@
         <translation>Kyllä</translation>
     </message>
 </context>
+<context>
+    <name>ZoomableImage</name>
+    <message>
+        <source>Failed to load image</source>
+        <translation>Kuvan lataus epäonnistui</translation>
+    </message>
+</context>
 </TS>
