@@ -73,8 +73,56 @@ docker compose run --rm syntax
 It stops at `-fsyntax-only`: no linking, no RPM. `src/harbour-nami.cpp` is
 skipped, since `sailfishapp.h` exists only inside the SDK.
 
+## `tst_pipeline` — the recognition engine end to end
+
+```
+docker compose run --rm pipeline
+```
+
+Real JPEGs in, detection, alignment, embedding, storage, matching. The only
+test here that would have caught the accuracy bugs the P0 audit found, since
+none of them threw: channels in the wrong order, no landmark alignment, an
+aspect ratio distorted by a non-uniform resize. All three just made
+recognition quietly worse.
+
+It is also the only guard on the thresholds. `AUTO_MATCH_THRESHOLD` and
+`GROUPING_THRESHOLD` are numbers somebody picked; here they meet two faces
+that really are the same person, three years apart, and two that really are
+not. Measured: 0.85 for the same person, 0.61-0.63 for different ones.
+
+Off by default (`-DWITH_PIPELINE_TESTS=ON`), because it needs what the rest
+of the suite deliberately avoids:
+
+- **OpenCV >= 4.8.** The YuNet 2023mar model uses layers the 4.6 DNN importer
+  rejects outright, and 4.6 is what Ubuntu 24.04 ships, hence the separate
+  Debian image in `tests/Dockerfile.pipeline`.
+- **The ML models**, via `scripts/download_models_for_build.sh`.
+- **Three reference portraits**, via `tests/fixtures/download_faces.sh`.
+  Public domain NASA studio portraits, checksum pinned and gitignored: a
+  face recognition project should not carry photos of people in its history.
+  Two are the same astronaut in 2013 and 2016 (different hair, clothing,
+  pose); the third is a different astronaut of similar build and colouring,
+  so rejecting her is not free.
+
+The compose service runs both downloads first; they no-op once the checksums
+match.
+
 ## Not covered
 
-There is no end-to-end test: nothing exercises detection, recognition and the
-UI together, and nothing drives the real interface. See the notes in the pull
-request discussion for what that would take.
+**The interface.** `Sailfish.Silica` is closed Jolla code and cannot be
+installed on a build machine, so no test can instantiate a `Page`, a
+`PageHeader` or read `Theme`. A Silica stub was considered and rejected: the
+bugs `check_qml.py` exists for (a `ContextMenu` inside a `GridView`,
+`autoTransform` under a QtQuick 2.0 import, `ListModel.get()` in a binding)
+are all behaviours of the real Silica and the real QML engine, and a stub
+would have caught none of them while suggesting otherwise.
+
+**A channel-order regression applied consistently.** Swapping BGR and RGB on
+both sides of a comparison moves the same-person score from 0.85 to 0.81 and
+leaves the separation from different people almost unchanged, so no threshold
+assertion sees it. Catching it would take a golden embedding vector pinned to
+a tolerance, which is not stable enough across OpenCV versions and
+architectures to be worth the flakiness.
+
+**The thumbnail cache budget.** `trimCache` only runs against a 128 MB
+constant, and filling that in a test costs more than the coverage is worth.

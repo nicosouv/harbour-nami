@@ -1,0 +1,25 @@
+# The recognition test needs OpenCV >= 4.8: the YuNet 2023mar model uses
+# layers the 4.6 DNN importer rejects outright, and 4.6 is what Ubuntu 24.04
+# ships. Debian trixie carries 4.10, close to the 4.8 minimal build the RPM
+# bundles.
+#
+# Deliberately a separate image from tests/Dockerfile, which mirrors the CI
+# Qt lane package for package and must stay on Ubuntu to keep meaning that.
+FROM debian:trixie
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends \
+      qtbase5-dev \
+      qtdeclarative5-dev \
+      libqt5sql5-sqlite \
+      libopencv-dev \
+      libssl-dev \
+      cmake \
+      ninja-build \
+      g++ \
+      pkg-config \
+      ca-certificates \
+      curl \
+ && rm -rf /var/lib/apt/lists/*

@@ -63,3 +63,41 @@ jobs:
 
       - name: Compile-check src/
         run: bash tests/syntax-check.sh
+
+  # The recognition engine end to end, on real portraits. Runs in a Debian
+  # container rather than on the runner: the YuNet 2023mar model needs
+  # OpenCV >= 4.8 and ubuntu-latest still ships 4.6.
+  pipeline:
+    runs-on: ubuntu-latest
+    container: debian:trixie
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+
+      - name: Install Qt5 and OpenCV
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends \
+            qtbase5-dev qtdeclarative5-dev libqt5sql5-sqlite libopencv-dev \
+            libssl-dev cmake ninja-build g++ pkg-config ca-certificates curl
+
+      - name: Cache models and reference portraits
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
+        with:
+          path: |
+            python/models
+            tests/fixtures/faces
+          key: nami-recognition-fixtures-v1-${{ hashFiles('scripts/download_models_for_build.sh', 'tests/fixtures/download_faces.sh') }}
+
+      - name: Download models and reference portraits
+        run: |
+          bash scripts/download_models_for_build.sh
+          bash tests/fixtures/download_faces.sh
+
+      - name: Build and run
+        run: |
+          cmake -S tests -B build-pipeline -G Ninja -DCMAKE_BUILD_TYPE=Debug \
+            -DWITH_PIPELINE_TESTS=ON
+          cmake --build build-pipeline --target tst_pipeline
+          QT_QPA_PLATFORM=offscreen ctest --test-dir build-pipeline \
+            -R pipeline --output-on-failure
