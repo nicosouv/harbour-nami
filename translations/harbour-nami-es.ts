@@ -530,73 +530,6 @@
     </message>
 </context>
 <context>
-    <name>ModelDownloadPage</name>
-    <message>
-        <source>All models run 100% on your device. No data is sent to external servers.</source>
-        <translation>Todos los modelos funcionan 100 % en tu dispositivo. No se envían datos a servidores externos.</translation>
-    </message>
-    <message>
-        <source>ArcFace Recognition</source>
-        <translation>Reconocimiento ArcFace</translation>
-    </message>
-    <message>
-        <source>Continue</source>
-        <translation>Continuar</translation>
-    </message>
-    <message>
-        <source>Download Models</source>
-        <translation>Descargar modelos</translation>
-    </message>
-    <message>
-        <source>Downloading %1...</source>
-        <translation>Descargando %1...</translation>
-    </message>
-    <message>
-        <source>ML Models Setup</source>
-        <translation>Configuración de modelos ML</translation>
-    </message>
-    <message>
-        <source>Manual Installation</source>
-        <translation>Instalación manual</translation>
-    </message>
-    <message>
-        <source>Manual installation required</source>
-        <translation>Instalación manual necesaria</translation>
-    </message>
-    <message>
-        <source>Nami requires machine learning models for face detection and recognition.</source>
-        <translation>Nami necesita modelos de aprendizaje automático para la detección y el reconocimiento facial.</translation>
-    </message>
-    <message>
-        <source>Not installed</source>
-        <translation>No instalado</translation>
-    </message>
-    <message>
-        <source>Open Documentation</source>
-        <translation>Abrir documentación</translation>
-    </message>
-    <message>
-        <source>Required Models</source>
-        <translation>Modelos necesarios</translation>
-    </message>
-    <message>
-        <source>Size: %1 MB</source>
-        <translation>Tamaño: %1 MB</translation>
-    </message>
-    <message>
-        <source>The ArcFace model requires manual installation. Please see the documentation for instructions.</source>
-        <translation>El modelo ArcFace requiere instalación manual. Consulta la documentación.</translation>
-    </message>
-    <message>
-        <source>YuNet Face Detection</source>
-        <translation>Detección facial YuNet</translation>
-    </message>
-    <message>
-        <source>✓ Installed</source>
-        <translation>✓ Instalado</translation>
-    </message>
-</context>
-<context>
     <name>PersonDetailPage</name>
     <message>
         <source>Merge duplicates?</source>
@@ -700,37 +633,6 @@
     <message>
         <source>Review</source>
         <translation>Revisar</translation>
-    </message>
-</context>
-<context>
-    <name>PersonPage</name>
-    <message>
-        <source>No photos</source>
-        <translation>No hay fotos</translation>
-    </message>
-    <message>
-        <source>Photos</source>
-        <translation>Fotos</translation>
-    </message>
-    <message>
-        <source>This person has no associated photos yet</source>
-        <translation>Esta persona aún no tiene fotos asociadas</translation>
-    </message>
-    <message>
-        <source>Unknown</source>
-        <translation>Desconocido</translation>
-    </message>
-    <message>
-        <source>photo</source>
-        <translation>foto</translation>
-    </message>
-    <message>
-        <source>photos</source>
-        <translation>fotos</translation>
-    </message>
-    <message>
-        <source>Share all photos</source>
-        <translation>Compartir todas las fotos</translation>
     </message>
 </context>
 <context>

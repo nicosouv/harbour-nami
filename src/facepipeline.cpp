@@ -710,52 +710,44 @@ QVariantList FacePipeline::getPersonPhotos(int personId)
         return result;
     }
 
-    // Get all faces for this person
-    QVector<Face> faces = m_database->getFacesForPerson(personId);
-
-    // Group faces by photo ID to get the best match per photo
-    QMap<int, Face> bestFacePerPhoto;
-    for (const Face &face : faces) {
-        if (!bestFacePerPhoto.contains(face.photoId) ||
-            face.similarityScore > bestFacePerPhoto[face.photoId].similarityScore) {
-            bestFacePerPhoto[face.photoId] = face;
+    // One joined query: the old path asked for every face of the person and
+    // then looked each photo up on its own, which is several hundred round
+    // trips to draw one page.
+    for (const PersonPhoto &entry : m_database->getPhotosForPerson(personId)) {
+        const Photo &photo = entry.photo;
+        if (photo.filePath.isEmpty()) {
+            continue;
         }
+
+        QVariantMap photoMap;
+        photoMap["photo_id"] = photo.id;
+        photoMap["face_id"] = entry.faceId;
+        photoMap["file_path"] = photo.filePath;
+        photoMap["date_taken"] = photo.dateTaken;
+        // Unix epoch seconds; Events/Memories group photos by this
+        photoMap["timestamp"] = photo.dateTaken.isValid()
+            ? photo.dateTaken.toMSecsSinceEpoch() / 1000 : 0;
+        photoMap["similarity_score"] = entry.similarityScore;
+        photoMap["verified"] = entry.verified;
+        photoMap["rotation"] = photo.rotation;
+        // Already EXIF-corrected (the scanner reads them off an
+        // auto-transformed image), so an aspect-ratio layout can use them
+        // directly. 0 when the row predates them being recorded.
+        photoMap["width"] = photo.width;
+        photoMap["height"] = photo.height;
+        photoMap["has_location"] = photo.hasLocation;
+        photoMap["latitude"] = photo.latitude;
+        photoMap["longitude"] = photo.longitude;
+        photoMap["bbox_x"] = entry.bbox.x();
+        photoMap["bbox_y"] = entry.bbox.y();
+        photoMap["bbox_width"] = entry.bbox.width();
+        photoMap["bbox_height"] = entry.bbox.height();
+        result.append(photoMap);
     }
 
-    // Get photo paths with face metadata
-    for (const Face &face : bestFacePerPhoto.values()) {
-        Photo photo = m_database->getPhoto(face.photoId);
-        if (!photo.filePath.isEmpty()) {
-            QVariantMap photoMap;
-            photoMap["photo_id"] = photo.id;
-            photoMap["face_id"] = face.id;
-            photoMap["file_path"] = photo.filePath;
-            photoMap["date_taken"] = photo.dateTaken;
-            // Unix epoch seconds; Events/Memories group photos by this
-            photoMap["timestamp"] = photo.dateTaken.isValid()
-                ? photo.dateTaken.toMSecsSinceEpoch() / 1000 : 0;
-            photoMap["similarity_score"] = face.similarityScore;
-            photoMap["verified"] = face.verified;
-            photoMap["rotation"] = photo.rotation;
-            // Already EXIF-corrected (the scanner reads them off an
-            // auto-transformed image), so an aspect-ratio layout can use them
-            // directly. 0 when the row predates them being recorded.
-            photoMap["width"] = photo.width;
-            photoMap["height"] = photo.height;
-            photoMap["has_location"] = photo.hasLocation;
-            photoMap["latitude"] = photo.latitude;
-            photoMap["longitude"] = photo.longitude;
-            photoMap["bbox_x"] = face.bbox.x();
-            photoMap["bbox_y"] = face.bbox.y();
-            photoMap["bbox_width"] = face.bbox.width();
-            photoMap["bbox_height"] = face.bbox.height();
-            result.append(photoMap);
-        }
-    }
-
-    // QMap iterates by photo id, i.e. scan order, which looks random to the
-    // user. Sort newest first; photos without EXIF date (timestamp 0) sink to
-    // the bottom rather than pretending to be from 1970.
+    // The query returns rows in whatever order SQLite finds them, which looks
+    // random to the user. Sort newest first; photos without an EXIF date
+    // (timestamp 0) sink to the bottom rather than pretending to be from 1970.
     std::sort(result.begin(), result.end(),
               [](const QVariant &a, const QVariant &b) {
                   const qint64 ta = a.toMap().value("timestamp").toLongLong();

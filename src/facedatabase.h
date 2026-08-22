@@ -32,6 +32,20 @@ struct Photo {
 };
 
 /**
+ * @brief A person's photo together with their best face in it
+ *
+ * Deliberately without the embedding: the grids never look at it, and
+ * deserializing 512 bytes per face for a few hundred photos is pure waste.
+ */
+struct PersonPhoto {
+    Photo photo;
+    int faceId;
+    QRectF bbox;
+    float similarityScore;
+    bool verified;
+};
+
+/**
  * @brief User-named group of day-events (e.g. a multi-day trip)
  */
 struct Trip {
@@ -318,6 +332,14 @@ public:
      * Faces, verified flags and rejections carry over.
      */
     bool mergePersons(int fromPersonId, int intoPersonId);
+
+    /**
+     * @brief Every photo a person appears in, with their best face in each
+     *
+     * One joined query rather than a face query followed by a photo lookup
+     * per photo: that N+1 was several hundred round trips to show one page.
+     */
+    QVector<PersonPhoto> getPhotosForPerson(int personId);
 
     /**
      * @brief Get all faces for a person
