@@ -213,12 +213,57 @@ bool FaceDatabase::initializeSchema()
         return false;
     }
 
+    // Memories: a generated story (a set of photos with a title, a cover and
+    // a clip style). UNIQUE(kind, source_key) is what makes regeneration
+    // idempotent: a recipe re-run updates its own row instead of adding one.
+    if (!query.exec(R"(
+        CREATE TABLE IF NOT EXISTS memories (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            kind TEXT NOT NULL,
+            source_key TEXT NOT NULL,
+            title TEXT NOT NULL,
+            subtitle TEXT,
+            cover_photo TEXT,
+            style TEXT NOT NULL DEFAULT 'sentimental',
+            track_id TEXT,
+            sort_date TEXT,
+            score REAL DEFAULT 0.0,
+            dismissed INTEGER DEFAULT 0,
+            edited INTEGER DEFAULT 0,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(kind, source_key)
+        )
+    )")) {
+        emit error("Failed to create memories table: " + query.lastError().text());
+        return false;
+    }
+
+    // A memory's photos in playback order. included = 0 is the user taking a
+    // photo out of the clip: the row stays so the exclusion can be undone.
+    if (!query.exec(R"(
+        CREATE TABLE IF NOT EXISTS memory_photos (
+            memory_id INTEGER NOT NULL,
+            photo_id INTEGER NOT NULL,
+            position INTEGER NOT NULL,
+            included INTEGER DEFAULT 1,
+            PRIMARY KEY (memory_id, photo_id),
+            FOREIGN KEY (memory_id) REFERENCES memories(id) ON DELETE CASCADE,
+            FOREIGN KEY (photo_id) REFERENCES photos(id) ON DELETE CASCADE
+        )
+    )")) {
+        emit error("Failed to create memory_photos table: " + query.lastError().text());
+        return false;
+    }
+
     // Create indexes
     query.exec("CREATE INDEX IF NOT EXISTS idx_faces_photo ON faces(photo_id)");
     query.exec("CREATE INDEX IF NOT EXISTS idx_faces_person ON faces(person_id)");
     query.exec("CREATE INDEX IF NOT EXISTS idx_photos_path ON photos(file_path)");
     query.exec("CREATE INDEX IF NOT EXISTS idx_photos_hash ON photos(file_hash)");
     query.exec("CREATE INDEX IF NOT EXISTS idx_trip_dates_trip ON trip_dates(trip_id)");
+    // memory_id is the leftmost primary key column, so it is already indexed;
+    // photo_id is not, and every photo deletion cascades through it
+    query.exec("CREATE INDEX IF NOT EXISTS idx_memory_photos_photo ON memory_photos(photo_id)");
 
     qCDebug(lcNami) << "Database schema initialized";
     return true;
@@ -1480,6 +1525,8 @@ bool FaceDatabase::deleteAllData()
     if (!query.exec("DELETE FROM negative_matches") ||
         !query.exec("DELETE FROM faces") ||
         !query.exec("DELETE FROM people") ||
+        !query.exec("DELETE FROM memory_photos") ||
+        !query.exec("DELETE FROM memories") ||
         !query.exec("DELETE FROM photos") ||
         !query.exec("DELETE FROM trip_dates") ||
         !query.exec("DELETE FROM trips") ||
@@ -1502,10 +1549,13 @@ bool FaceDatabase::clearFaceData()
 
     QSqlQuery query(m_db);
 
-    // Photos records are kept, but they must be re-processed
+    // Photos records are kept, but they must be re-processed. Memories go:
+    // they were built around people who no longer exist, and the recipes
+    // will generate them again after the rescan.
     if (!query.exec("DELETE FROM negative_matches") ||
         !query.exec("DELETE FROM faces") ||
         !query.exec("DELETE FROM people") ||
+        !query.exec("DELETE FROM memories") ||
         !query.exec("UPDATE photos SET processed_at = NULL")) {
         m_db.rollback();
         return false;
@@ -1761,6 +1811,408 @@ QVariantMap FaceDatabase::getEventCovers()
     }
 
     return covers;
+}
+
+// === Memories ===
+
+namespace {
+
+// m.* plus the two things every caller needs and none should have to work
+// out: how many photos the clip would play, and what to put on the card
+// when the user has not pinned a cover.
+const char *kMemorySelect = R"(
+    SELECT m.*,
+           (SELECT COUNT(*) FROM memory_photos mp
+             WHERE mp.memory_id = m.id AND mp.included = 1) AS photo_count,
+           (SELECT p.file_path FROM memory_photos mp
+              JOIN photos p ON p.id = mp.photo_id
+             WHERE mp.memory_id = m.id AND mp.included = 1
+             ORDER BY mp.position LIMIT 1) AS first_photo
+    FROM memories m
+)";
+
+Memory readMemoryRow(const QSqlQuery &query)
+{
+    Memory memory;
+    memory.id = query.value("id").toInt();
+    memory.kind = query.value("kind").toString();
+    memory.sourceKey = query.value("source_key").toString();
+    memory.title = query.value("title").toString();
+    memory.subtitle = query.value("subtitle").toString();
+    memory.style = query.value("style").toString();
+    memory.trackId = query.value("track_id").toString();
+    memory.sortDate = QDateTime::fromString(query.value("sort_date").toString(), Qt::ISODate);
+    memory.score = query.value("score").toDouble();
+    memory.dismissed = query.value("dismissed").toBool();
+    memory.edited = query.value("edited").toBool();
+    memory.createdAt = QDateTime::fromString(query.value("created_at").toString(), Qt::ISODate);
+    memory.photoCount = query.value("photo_count").toInt();
+
+    memory.coverPhoto = query.value("cover_photo").toString();
+    if (memory.coverPhoto.isEmpty()) {
+        memory.coverPhoto = query.value("first_photo").toString();
+    }
+
+    return memory;
+}
+
+Photo readPhotoRow(const QSqlQuery &query)
+{
+    Photo photo;
+    photo.id = query.value("id").toInt();
+    photo.filePath = query.value("file_path").toString();
+    photo.dateTaken = QDateTime::fromString(query.value("date_taken").toString(), Qt::ISODate);
+    photo.width = query.value("width").toInt();
+    photo.height = query.value("height").toInt();
+    photo.processedAt = QDateTime::fromString(query.value("processed_at").toString(), Qt::ISODate);
+    photo.rotation = query.value("rotation").toInt();
+    photo.fileHash = query.value("file_hash").toString();
+
+    const QVariant lat = query.value("latitude");
+    const QVariant lon = query.value("longitude");
+    photo.hasLocation = !lat.isNull() && !lon.isNull();
+    photo.latitude = photo.hasLocation ? lat.toDouble() : 0.0;
+    photo.longitude = photo.hasLocation ? lon.toDouble() : 0.0;
+
+    return photo;
+}
+
+// Every edit the user makes takes the memory out of the recipes' hands
+bool markMemoryEdited(QSqlDatabase &db, int memoryId)
+{
+    QSqlQuery query(db);
+    query.prepare("UPDATE memories SET edited = 1 WHERE id = :id");
+    query.bindValue(":id", memoryId);
+    return query.exec();
+}
+
+}  // namespace
+
+int FaceDatabase::upsertMemory(const Memory &memory, const QVector<int> &photoIds)
+{
+    if (memory.kind.isEmpty() || memory.sourceKey.isEmpty()
+            || memory.title.trimmed().isEmpty()) {
+        return -1;
+    }
+
+    QSqlQuery existing(m_db);
+    existing.prepare("SELECT id, edited FROM memories WHERE kind = :kind AND source_key = :key");
+    existing.bindValue(":kind", memory.kind);
+    existing.bindValue(":key", memory.sourceKey);
+
+    if (!existing.exec()) {
+        emit error("Failed to look up memory: " + existing.lastError().text());
+        return -1;
+    }
+
+    int memoryId = -1;
+    if (existing.next()) {
+        memoryId = existing.value("id").toInt();
+        // The user has made this one theirs; a recipe has nothing left to
+        // say about it
+        if (existing.value("edited").toBool()) {
+            return memoryId;
+        }
+    }
+
+    m_db.transaction();
+
+    QSqlQuery query(m_db);
+    if (memoryId > 0) {
+        // Only the generated fields. Style, track, cover and dismissed are
+        // the user's, even on a memory they have not otherwise edited.
+        query.prepare(R"(
+            UPDATE memories
+               SET title = :title, subtitle = :subtitle,
+                   sort_date = :sort_date, score = :score
+             WHERE id = :id
+        )");
+        query.bindValue(":id", memoryId);
+    } else {
+        query.prepare(R"(
+            INSERT INTO memories (kind, source_key, title, subtitle, cover_photo,
+                                  style, track_id, sort_date, score)
+            VALUES (:kind, :key, :title, :subtitle, :cover, :style, :track,
+                    :sort_date, :score)
+        )");
+        query.bindValue(":kind", memory.kind);
+        query.bindValue(":key", memory.sourceKey);
+        query.bindValue(":cover", memory.coverPhoto);
+        query.bindValue(":style", memory.style.isEmpty() ? QStringLiteral("sentimental")
+                                                         : memory.style);
+        query.bindValue(":track", memory.trackId);
+    }
+    query.bindValue(":title", memory.title.trimmed());
+    query.bindValue(":subtitle", memory.subtitle);
+    query.bindValue(":sort_date", memory.sortDate.isValid()
+                    ? memory.sortDate.toString(Qt::ISODate) : QString());
+    query.bindValue(":score", memory.score);
+
+    if (!query.exec()) {
+        emit error("Failed to store memory: " + query.lastError().text());
+        m_db.rollback();
+        return -1;
+    }
+
+    if (memoryId <= 0) {
+        memoryId = query.lastInsertId().toInt();
+    }
+
+    // The photo set is generated as a whole, so it is replaced as a whole.
+    // Only ever reached on a memory the user has not edited.
+    QSqlQuery clearPhotos(m_db);
+    clearPhotos.prepare("DELETE FROM memory_photos WHERE memory_id = :id");
+    clearPhotos.bindValue(":id", memoryId);
+    if (!clearPhotos.exec()) {
+        emit error("Failed to clear memory photos: " + clearPhotos.lastError().text());
+        m_db.rollback();
+        return -1;
+    }
+
+    QSqlQuery insertPhoto(m_db);
+    insertPhoto.prepare(R"(
+        INSERT OR IGNORE INTO memory_photos (memory_id, photo_id, position)
+        VALUES (:memory_id, :photo_id, :position)
+    )");
+
+    for (int i = 0; i < photoIds.size(); ++i) {
+        insertPhoto.bindValue(":memory_id", memoryId);
+        insertPhoto.bindValue(":photo_id", photoIds.at(i));
+        insertPhoto.bindValue(":position", i);
+        if (!insertPhoto.exec()) {
+            emit error("Failed to store memory photos: " + insertPhoto.lastError().text());
+            m_db.rollback();
+            return -1;
+        }
+    }
+
+    m_db.commit();
+    return memoryId;
+}
+
+QVector<Memory> FaceDatabase::getMemories(bool includeDismissed)
+{
+    QVector<Memory> memories;
+
+    QString sql = QString::fromUtf8(kMemorySelect);
+    if (!includeDismissed) {
+        sql += " WHERE m.dismissed = 0";
+    }
+    sql += " ORDER BY m.score DESC, m.sort_date DESC";
+
+    QSqlQuery query(m_db);
+    if (!query.exec(sql)) {
+        emit error("Failed to read memories: " + query.lastError().text());
+        return memories;
+    }
+
+    while (query.next()) {
+        // Its photos were all excluded, or pruned along with the files they
+        // pointed at: there is no story left to tell
+        if (query.value("photo_count").toInt() == 0) {
+            continue;
+        }
+        memories.append(readMemoryRow(query));
+    }
+
+    return memories;
+}
+
+Memory FaceDatabase::getMemory(int memoryId)
+{
+    Memory memory;
+
+    QSqlQuery query(m_db);
+    query.prepare(QString::fromUtf8(kMemorySelect) + " WHERE m.id = :id");
+    query.bindValue(":id", memoryId);
+
+    if (query.exec() && query.next()) {
+        memory = readMemoryRow(query);
+    }
+
+    return memory;
+}
+
+QVector<MemoryPhoto> FaceDatabase::getMemoryPhotos(int memoryId, bool includedOnly)
+{
+    QVector<MemoryPhoto> photos;
+
+    QString sql = R"(
+        SELECT p.*, mp.position, mp.included
+        FROM memory_photos mp
+        JOIN photos p ON p.id = mp.photo_id
+        WHERE mp.memory_id = :id
+    )";
+    if (includedOnly) {
+        sql += " AND mp.included = 1";
+    }
+    sql += " ORDER BY mp.position";
+
+    QSqlQuery query(m_db);
+    query.prepare(sql);
+    query.bindValue(":id", memoryId);
+
+    if (!query.exec()) {
+        emit error("Failed to read memory photos: " + query.lastError().text());
+        return photos;
+    }
+
+    while (query.next()) {
+        MemoryPhoto entry;
+        entry.photo = readPhotoRow(query);
+        entry.position = query.value("position").toInt();
+        entry.included = query.value("included").toBool();
+        photos.append(entry);
+    }
+
+    return photos;
+}
+
+bool FaceDatabase::renameMemory(int memoryId, const QString &title)
+{
+    if (title.trimmed().isEmpty()) {
+        return false;
+    }
+
+    QSqlQuery query(m_db);
+    query.prepare("UPDATE memories SET title = :title, edited = 1 WHERE id = :id");
+    query.bindValue(":title", title.trimmed());
+    query.bindValue(":id", memoryId);
+
+    return query.exec() && query.numRowsAffected() > 0;
+}
+
+bool FaceDatabase::setMemoryStyle(int memoryId, const QString &style)
+{
+    if (style.trimmed().isEmpty()) {
+        return false;
+    }
+
+    QSqlQuery query(m_db);
+    query.prepare("UPDATE memories SET style = :style WHERE id = :id");
+    query.bindValue(":style", style.trimmed());
+    query.bindValue(":id", memoryId);
+
+    return query.exec() && query.numRowsAffected() > 0;
+}
+
+bool FaceDatabase::setMemoryTrack(int memoryId, const QString &trackId)
+{
+    QSqlQuery query(m_db);
+    query.prepare("UPDATE memories SET track_id = :track WHERE id = :id");
+    query.bindValue(":track", trackId);
+    query.bindValue(":id", memoryId);
+
+    return query.exec() && query.numRowsAffected() > 0;
+}
+
+bool FaceDatabase::setMemoryCover(int memoryId, const QString &photoPath)
+{
+    QSqlQuery query(m_db);
+    query.prepare("UPDATE memories SET cover_photo = :path WHERE id = :id");
+    query.bindValue(":path", photoPath);
+    query.bindValue(":id", memoryId);
+
+    return query.exec() && query.numRowsAffected() > 0;
+}
+
+bool FaceDatabase::reorderMemoryPhotos(int memoryId, const QVector<int> &photoIds)
+{
+    if (photoIds.isEmpty()) {
+        return false;
+    }
+
+    // Read the current order first, so photos the caller left out can be
+    // appended in the order they already had rather than by id
+    QSqlQuery current(m_db);
+    current.prepare("SELECT photo_id FROM memory_photos WHERE memory_id = :id ORDER BY position");
+    current.bindValue(":id", memoryId);
+
+    if (!current.exec()) {
+        emit error("Failed to read memory photos: " + current.lastError().text());
+        return false;
+    }
+
+    QVector<int> known;
+    while (current.next()) {
+        known.append(current.value(0).toInt());
+    }
+    if (known.isEmpty()) {
+        return false;
+    }
+
+    QVector<int> ordered;
+    for (int photoId : photoIds) {
+        if (known.contains(photoId) && !ordered.contains(photoId)) {
+            ordered.append(photoId);
+        }
+    }
+    for (int photoId : known) {
+        if (!ordered.contains(photoId)) {
+            ordered.append(photoId);
+        }
+    }
+
+    m_db.transaction();
+
+    QSqlQuery update(m_db);
+    update.prepare(R"(
+        UPDATE memory_photos SET position = :position
+         WHERE memory_id = :memory_id AND photo_id = :photo_id
+    )");
+
+    for (int i = 0; i < ordered.size(); ++i) {
+        update.bindValue(":position", i);
+        update.bindValue(":memory_id", memoryId);
+        update.bindValue(":photo_id", ordered.at(i));
+        if (!update.exec()) {
+            emit error("Failed to reorder memory photos: " + update.lastError().text());
+            m_db.rollback();
+            return false;
+        }
+    }
+
+    markMemoryEdited(m_db, memoryId);
+    m_db.commit();
+    return true;
+}
+
+bool FaceDatabase::setMemoryPhotoIncluded(int memoryId, int photoId, bool included)
+{
+    QSqlQuery query(m_db);
+    query.prepare(R"(
+        UPDATE memory_photos SET included = :included
+         WHERE memory_id = :memory_id AND photo_id = :photo_id
+    )");
+    query.bindValue(":included", included ? 1 : 0);
+    query.bindValue(":memory_id", memoryId);
+    query.bindValue(":photo_id", photoId);
+
+    if (!query.exec() || query.numRowsAffected() == 0) {
+        return false;
+    }
+
+    markMemoryEdited(m_db, memoryId);
+    return true;
+}
+
+bool FaceDatabase::setMemoryDismissed(int memoryId, bool dismissed)
+{
+    QSqlQuery query(m_db);
+    query.prepare("UPDATE memories SET dismissed = :dismissed WHERE id = :id");
+    query.bindValue(":dismissed", dismissed ? 1 : 0);
+    query.bindValue(":id", memoryId);
+
+    return query.exec() && query.numRowsAffected() > 0;
+}
+
+bool FaceDatabase::deleteMemory(int memoryId)
+{
+    QSqlQuery query(m_db);
+    query.prepare("DELETE FROM memories WHERE id = :id");
+    query.bindValue(":id", memoryId);
+
+    return query.exec() && query.numRowsAffected() > 0;
 }
 
 // === Recent photos ===

@@ -28,6 +28,16 @@ target_include_directories(tst_facedatabase PRIVATE ${NAMI_SRC})
 target_link_libraries(tst_facedatabase Qt5::Core Qt5::Sql Qt5::Test)
 add_test(NAME facedatabase COMMAND tst_facedatabase)
 
+# Memories storage: idempotent regeneration and what the user owns of it
+add_executable(tst_memories
+    ${CMAKE_CURRENT_LIST_DIR}/tst_memories.cpp
+    ${NAMI_SRC}/facedatabase.cpp
+    ${NAMI_SRC}/logging.cpp
+)
+target_include_directories(tst_memories PRIVATE ${NAMI_SRC})
+target_link_libraries(tst_memories Qt5::Core Qt5::Sql Qt5::Test)
+add_test(NAME memories COMMAND tst_memories)
+
 # Backup encryption: a bug here loses someone's whole library
 add_executable(tst_backupcrypto
     ${CMAKE_CURRENT_LIST_DIR}/tst_backupcrypto.cpp

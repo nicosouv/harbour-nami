@@ -491,6 +491,67 @@ public:
      */
     Q_INVOKABLE QVariantList getCoverPhotos(int limit = 30);
 
+    // === Memories (generated stories) ===
+
+    /**
+     * @brief All memories, best first
+     * @return List of maps with memory_id, kind, title, subtitle, cover_photo,
+     *         style, track_id, timestamp, photo_count, dismissed, edited
+     */
+    Q_INVOKABLE QVariantList getMemories(bool includeDismissed = false);
+
+    /**
+     * @brief A single memory; memory_id is -1 when there is no such row
+     */
+    Q_INVOKABLE QVariantMap getMemory(int memoryId);
+
+    /**
+     * @brief A memory's photos in playback order
+     * @param includedOnly Skip the ones the user excluded (what a clip plays);
+     *        pass false for the full set the editor shows
+     */
+    Q_INVOKABLE QVariantList getMemoryPhotos(int memoryId, bool includedOnly = true);
+
+    /**
+     * @brief Rename a memory; stops recipes from refreshing it
+     */
+    Q_INVOKABLE bool renameMemory(int memoryId, const QString &title);
+
+    /**
+     * @brief Choose the clip style (sentimental|energetic|polaroid|bauhaus)
+     */
+    Q_INVOKABLE bool setMemoryStyle(int memoryId, const QString &style);
+
+    /**
+     * @brief Choose the music track; empty reverts to the style's default
+     */
+    Q_INVOKABLE bool setMemoryTrack(int memoryId, const QString &trackId);
+
+    /**
+     * @brief Pin a cover photo; empty reverts to "the first photo"
+     */
+    Q_INVOKABLE bool setMemoryCover(int memoryId, const QString &photoPath);
+
+    /**
+     * @brief Reorder a memory's photos, listing their photo ids in order
+     */
+    Q_INVOKABLE bool reorderMemoryPhotos(int memoryId, const QVariantList &photoIds);
+
+    /**
+     * @brief Take a photo out of a memory's clip, or put it back
+     */
+    Q_INVOKABLE bool setMemoryPhotoIncluded(int memoryId, int photoId, bool included);
+
+    /**
+     * @brief Hide a memory from the lists; recipes will not resurrect it
+     */
+    Q_INVOKABLE bool setMemoryDismissed(int memoryId, bool dismissed);
+
+    /**
+     * @brief Drop a memory outright (its recipe may generate it again)
+     */
+    Q_INVOKABLE bool deleteMemory(int memoryId);
+
     // === Property getters ===
 
     bool isInitialized() const { return m_initialized; }

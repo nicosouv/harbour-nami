@@ -1,0 +1,25 @@
+# Local mirror of the CI Qt lane, so a failure here is a failure there.
+#
+#   docker compose run --rm tests    # build + ctest
+#   docker compose run --rm syntax   # compile-check all of src/
+#
+# The build tree lives at /build inside the container rather than in the
+# mounted source, so no root-owned artifacts land in the repository.
+
+services:
+  tests:
+    build: ./tests
+    volumes:
+      - .:/src
+    working_dir: /src
+    command: >
+      bash -c "cmake -S tests -B /build -G Ninja -DCMAKE_BUILD_TYPE=Debug
+      && cmake --build /build
+      && QT_QPA_PLATFORM=offscreen ctest --test-dir /build --output-on-failure"
+
+  syntax:
+    build: ./tests
+    volumes:
+      - .:/src
+    working_dir: /src
+    command: bash tests/syntax-check.sh

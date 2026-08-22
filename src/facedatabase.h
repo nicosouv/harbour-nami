@@ -56,6 +56,39 @@ struct Trip {
 };
 
 /**
+ * @brief A generated story: an ordered set of photos with a title, a cover
+ *        and a clip style
+ *
+ * Identified by (kind, sourceKey) rather than by id, so re-running a recipe
+ * updates its memory instead of piling up duplicates.
+ */
+struct Memory {
+    int id = -1;
+    QString kind;        // anniversary|trip|event|person|duo|month
+    QString sourceKey;   // what the recipe keyed on: "2023", a trip id, ...
+    QString title;
+    QString subtitle;
+    QString coverPhoto;  // resolved on read: the chosen cover, else the first photo
+    QString style;       // sentimental|energetic|polaroid|bauhaus
+    QString trackId;     // empty means "whatever the style defaults to"
+    QDateTime sortDate;  // what the memory is about, not when it was generated
+    double score = 0.0;  // recipe confidence; ranks which one leads the home
+    bool dismissed = false;
+    bool edited = false; // the user reordered, excluded or renamed: stop regenerating
+    QDateTime createdAt;
+    int photoCount = 0;  // included photos, filled in by the read queries
+};
+
+/**
+ * @brief A photo's place in a memory
+ */
+struct MemoryPhoto {
+    Photo photo;
+    int position;
+    bool included;
+};
+
+/**
  * @brief Person record
  */
 struct Person {
@@ -509,6 +542,92 @@ public:
      * @brief All stored covers, event key -> photo file path
      */
     QVariantMap getEventCovers();
+
+    // === Memories (generated stories) ===
+
+    /**
+     * @brief Create or refresh the memory identified by (kind, sourceKey)
+     *
+     * Idempotent, so a recipe can run every day without duplicating its
+     * output. On an existing row the user's own choices are preserved
+     * (style, track, cover, dismissed) while the generated fields (title,
+     * subtitle, sort date, score, photo set) are refreshed. A memory the
+     * user has edited is left completely alone.
+     *
+     * @param photoIds Photos in playback order
+     * @return Memory ID or -1 on error
+     */
+    int upsertMemory(const Memory &memory, const QVector<int> &photoIds);
+
+    /**
+     * @brief All memories, best first (score, then most recent subject)
+     *
+     * Memories whose photos have all been deleted from disk are left out:
+     * there is nothing left to show.
+     */
+    QVector<Memory> getMemories(bool includeDismissed = false);
+
+    /**
+     * @brief A single memory; its id is -1 when there is no such row
+     */
+    Memory getMemory(int memoryId);
+
+    /**
+     * @brief A memory's photos in playback order
+     * @param includedOnly Skip the ones the user excluded (what a clip plays);
+     *        pass false to get the full set the editor needs
+     */
+    QVector<MemoryPhoto> getMemoryPhotos(int memoryId, bool includedOnly = true);
+
+    /**
+     * @brief Rename a memory; marks it edited, so recipes stop refreshing it
+     */
+    bool renameMemory(int memoryId, const QString &title);
+
+    /**
+     * @brief Choose the clip style (sentimental|energetic|polaroid|bauhaus)
+     */
+    bool setMemoryStyle(int memoryId, const QString &style);
+
+    /**
+     * @brief Choose the music track; empty reverts to the style's default
+     */
+    bool setMemoryTrack(int memoryId, const QString &trackId);
+
+    /**
+     * @brief Pin a cover photo; empty reverts to "the first photo"
+     */
+    bool setMemoryCover(int memoryId, const QString &photoPath);
+
+    /**
+     * @brief Reorder a memory's photos
+     *
+     * Ids that are not part of the memory are ignored, the ones left out
+     * keep their relative order after the listed ones, and whether a photo
+     * is included is untouched. Marks the memory edited.
+     */
+    bool reorderMemoryPhotos(int memoryId, const QVector<int> &photoIds);
+
+    /**
+     * @brief Take a photo out of a memory's clip, or put it back
+     *
+     * The row is kept either way, so an exclusion can be undone. Marks the
+     * memory edited.
+     */
+    bool setMemoryPhotoIncluded(int memoryId, int photoId, bool included);
+
+    /**
+     * @brief Hide a memory from the lists without deleting it
+     *
+     * Recipes see the dismissed row and will not resurrect it, which is why
+     * this is what the UI should offer rather than deleteMemory().
+     */
+    bool setMemoryDismissed(int memoryId, bool dismissed);
+
+    /**
+     * @brief Drop a memory outright (its recipe may generate it again)
+     */
+    bool deleteMemory(int memoryId);
 
     // === Recent photos (cover page) ===
 
