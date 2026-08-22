@@ -1,3 +1,9 @@
+* Sat Aug 22 2026 Nicolas Souveton <souvetonnicolas@gmail.com> 0.8.7-1
+- Opening a person, a day or a trip is much quicker: their photos come back
+  in one database query instead of one per photo, and without dragging the
+  face recognition data along for a list that never looks at it
+- Removed two pages nothing could reach any more
+
 * Fri Aug 21 2026 Nicolas Souveton <souvetonnicolas@gmail.com> 0.8.6-1
 - A person's photos are laid out as a mosaic: each photo keeps its own shape
   instead of being squeezed into a square, so a group shot is readable again
