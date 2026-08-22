@@ -1398,6 +1398,154 @@ QVariantList FacePipeline::getCoverPhotos(int limit)
     return result;
 }
 
+// === Memories ===
+
+namespace {
+
+QVariantMap memoryToMap(const Memory &memory)
+{
+    QVariantMap map;
+    map["memory_id"] = memory.id;
+    map["kind"] = memory.kind;
+    map["source_key"] = memory.sourceKey;
+    map["title"] = memory.title;
+    map["subtitle"] = memory.subtitle;
+    map["cover_photo"] = memory.coverPhoto;
+    map["style"] = memory.style;
+    map["track_id"] = memory.trackId;
+    // Unix epoch seconds, like every other date QML gets from here
+    map["timestamp"] = memory.sortDate.isValid()
+        ? memory.sortDate.toMSecsSinceEpoch() / 1000 : 0;
+    map["photo_count"] = memory.photoCount;
+    map["dismissed"] = memory.dismissed;
+    map["edited"] = memory.edited;
+    return map;
+}
+
+}  // namespace
+
+QVariantList FacePipeline::getMemories(bool includeDismissed)
+{
+    QVariantList result;
+
+    if (!m_initialized || !m_database) {
+        return result;
+    }
+
+    for (const Memory &memory : m_database->getMemories(includeDismissed)) {
+        result.append(memoryToMap(memory));
+    }
+
+    return result;
+}
+
+QVariantMap FacePipeline::getMemory(int memoryId)
+{
+    if (!m_initialized || !m_database) {
+        return QVariantMap();
+    }
+
+    return memoryToMap(m_database->getMemory(memoryId));
+}
+
+QVariantList FacePipeline::getMemoryPhotos(int memoryId, bool includedOnly)
+{
+    QVariantList result;
+
+    if (!m_initialized || !m_database) {
+        return result;
+    }
+
+    for (const MemoryPhoto &entry : m_database->getMemoryPhotos(memoryId, includedOnly)) {
+        const Photo &photo = entry.photo;
+
+        QVariantMap photoMap;
+        photoMap["photo_id"] = photo.id;
+        photoMap["file_path"] = photo.filePath;
+        photoMap["timestamp"] = photo.dateTaken.isValid()
+            ? photo.dateTaken.toMSecsSinceEpoch() / 1000 : 0;
+        photoMap["rotation"] = photo.rotation;
+        photoMap["width"] = photo.width;
+        photoMap["height"] = photo.height;
+        photoMap["position"] = entry.position;
+        photoMap["included"] = entry.included;
+        result.append(photoMap);
+    }
+
+    return result;
+}
+
+bool FacePipeline::renameMemory(int memoryId, const QString &title)
+{
+    if (!m_initialized || !m_database) {
+        return false;
+    }
+    return m_database->renameMemory(memoryId, title);
+}
+
+bool FacePipeline::setMemoryStyle(int memoryId, const QString &style)
+{
+    if (!m_initialized || !m_database) {
+        return false;
+    }
+    return m_database->setMemoryStyle(memoryId, style);
+}
+
+bool FacePipeline::setMemoryTrack(int memoryId, const QString &trackId)
+{
+    if (!m_initialized || !m_database) {
+        return false;
+    }
+    return m_database->setMemoryTrack(memoryId, trackId);
+}
+
+bool FacePipeline::setMemoryCover(int memoryId, const QString &photoPath)
+{
+    if (!m_initialized || !m_database) {
+        return false;
+    }
+    return m_database->setMemoryCover(memoryId, photoPath);
+}
+
+bool FacePipeline::reorderMemoryPhotos(int memoryId, const QVariantList &photoIds)
+{
+    if (!m_initialized || !m_database) {
+        return false;
+    }
+
+    QVector<int> ids;
+    ids.reserve(photoIds.size());
+    for (const QVariant &value : photoIds) {
+        ids.append(value.toInt());
+    }
+
+    return m_database->reorderMemoryPhotos(memoryId, ids);
+}
+
+bool FacePipeline::setMemoryPhotoIncluded(int memoryId, int photoId, bool included)
+{
+    if (!m_initialized || !m_database) {
+        return false;
+    }
+    return m_database->setMemoryPhotoIncluded(memoryId, photoId, included);
+}
+
+bool FacePipeline::setMemoryDismissed(int memoryId, bool dismissed)
+{
+    if (!m_initialized || !m_database) {
+        return false;
+    }
+    return m_database->setMemoryDismissed(memoryId, dismissed);
+}
+
+bool FacePipeline::deleteMemory(int memoryId)
+{
+    if (!m_initialized || !m_database) {
+        return false;
+    }
+    return m_database->deleteMemory(memoryId);
+}
+
 QString FacePipeline::exportData()
 {
     if (!m_initialized || !m_database) {

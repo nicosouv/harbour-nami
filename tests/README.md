@@ -35,6 +35,12 @@ cmake --build build-tests
 QT_QPA_PLATFORM=offscreen ctest --test-dir build-tests --output-on-failure
 ```
 
+Or, without installing Qt on the host, in the same Ubuntu the CI lane uses:
+
+```
+docker compose run --rm tests
+```
+
 `tst_facedatabase` covers the schema, the backup format (including that
 contact links stay out of it), the import being additive and skipping photos
 that no longer exist, and the helpers behind identification suggestions.
@@ -44,9 +50,28 @@ passphrase round-trips a multi-megabyte payload, and a wrong passphrase,
 flipped ciphertext bit, tampered tag or truncated payload all fail instead of
 returning something that looks like data.
 
-Keeping these two layers free of OpenCV is deliberate - `FaceEmbedding` lives
-in its own `src/faceembedding.h` precisely so the storage layer can be tested
+`tst_memories` covers the memories storage: regeneration being idempotent,
+the fields a recipe may refresh versus the ones that belong to the user, the
+cover falling back to the first photo, exclusions being undoable, reordering,
+and a pruned photo dropping out of its memories.
+
+Keeping these layers free of OpenCV is deliberate - `FaceEmbedding` lives in
+its own `src/faceembedding.h` precisely so the storage layer can be tested
 without the vision stack.
+
+## `tests/syntax-check.sh` — compile gate for the rest of `src/`
+
+The consequence of that split is that nothing above ever compiles
+`facepipeline.cpp` or the vision classes. This does, against Ubuntu's OpenCV
+instead of the cross-compiled minimal build, so a signature error surfaces
+without the Sailfish SDK:
+
+```
+docker compose run --rm syntax
+```
+
+It stops at `-fsyntax-only`: no linking, no RPM. `src/harbour-nami.cpp` is
+skipped, since `sailfishapp.h` exists only inside the SDK.
 
 ## Not covered
 
