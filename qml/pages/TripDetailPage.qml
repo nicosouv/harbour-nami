@@ -1,6 +1,7 @@
 import QtQuick 2.6
 import Sailfish.Silica 1.0
 import "../components"
+import "../js/faceutils.js" as FaceUtils
 import "../js/geoutils.js" as GeoUtils
 import "../js/eventsettings.js" as EventSettings
 import "../js/mosaic.js" as Mosaic
@@ -482,8 +483,7 @@ Page {
                                         contentItem.children: [
                                             Image {
                                                 anchors.fill: parent
-                                                source: photoItem.photo.file_path
-                                                    ? "file://" + photoItem.photo.file_path : ""
+                                                source: FaceUtils.thumbUrl(photoItem.photo.file_path)
                                                 fillMode: Image.PreserveAspectCrop
                                                 autoTransform: true
                                                 rotation: photoItem.photo.rotation || 0

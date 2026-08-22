@@ -16,12 +16,114 @@
 FaceImageProvider::FaceImageProvider(const QString &cacheDir)
     : QQuickImageProvider(QQuickImageProvider::Image)
     , m_cacheDir(cacheDir + "/faces")
+    , m_thumbDir(cacheDir + "/thumbs")
 {
     QDir().mkpath(m_cacheDir);
+    QDir().mkpath(m_thumbDir);
+
+    // Thumbnails are cheap to regenerate and would otherwise grow with the
+    // gallery: a few hundred megabytes of cache on a phone is not acceptable
+    // just because someone scrolled through everything once.
+    trimCache(m_thumbDir, kThumbCacheBudget);
+}
+
+void FaceImageProvider::trimCache(const QString &dir, qint64 budgetBytes)
+{
+    QDir cache(dir);
+    // Oldest first, so the survivors are the ones most recently written
+    QFileInfoList files = cache.entryInfoList(QStringList() << "*.jpg",
+                                              QDir::Files, QDir::Time | QDir::Reversed);
+
+    qint64 total = 0;
+    for (const QFileInfo &file : files) {
+        total += file.size();
+    }
+    if (total <= budgetBytes) {
+        return;
+    }
+
+    for (const QFileInfo &file : files) {
+        if (total <= budgetBytes) {
+            break;
+        }
+        const qint64 size = file.size();
+        if (QFile::remove(file.absoluteFilePath())) {
+            total -= size;
+        }
+    }
+    qCDebug(lcNami) << "Trimmed the thumbnail cache to" << total << "bytes";
+}
+
+QImage FaceImageProvider::requestThumbnail(const QString &id, QSize *size,
+                                           const QSize &requestedSize)
+{
+    const int queryStart = id.indexOf('?');
+    QUrlQuery query(id.mid(queryStart + 1));
+    const QString path = query.queryItemValue("path", QUrl::FullyDecoded);
+
+    const QFileInfo fileInfo(path);
+    if (!fileInfo.exists()) {
+        return QImage();
+    }
+
+    // Keyed on the modification time as well, so an edited photo does not
+    // keep serving its old thumbnail
+    const QString cacheKey = QString("%1|%2")
+        .arg(path).arg(fileInfo.lastModified().toMSecsSinceEpoch());
+    const QString cacheFile = m_thumbDir + "/"
+        + QCryptographicHash::hash(cacheKey.toUtf8(), QCryptographicHash::Sha1).toHex()
+        + ".jpg";
+
+    QImage thumb;
+    if (QFile::exists(cacheFile)) {
+        thumb.load(cacheFile);
+    }
+
+    if (thumb.isNull()) {
+        QImageReader reader(path);
+        reader.setAutoTransform(true);
+
+        // Ask libjpeg for a reduced decode rather than reading 48 megapixels
+        // and throwing most of them away. This is the whole point: a grid of
+        // a couple of hundred photos otherwise decodes gigapixels to draw
+        // thumbnails a few hundred pixels wide.
+        const QSize full = reader.size();
+        if (full.isValid() && (full.width() > kThumbSize || full.height() > kThumbSize)) {
+            QSize scaled = full;
+            scaled.scale(kThumbSize, kThumbSize, Qt::KeepAspectRatioByExpanding);
+            reader.setScaledSize(scaled);
+        }
+
+        thumb = reader.read();
+        if (thumb.isNull()) {
+            qCDebug(lcNami) << "FaceImageProvider: failed to load" << path;
+            return QImage();
+        }
+
+        thumb.save(cacheFile, "JPG", 85);
+        QFile::setPermissions(cacheFile, QFileDevice::ReadOwner | QFileDevice::WriteOwner);
+    }
+
+    QImage result = thumb;
+    if (requestedSize.isValid() && requestedSize.width() > 0 && requestedSize.height() > 0
+            && (result.width() > requestedSize.width()
+                || result.height() > requestedSize.height())) {
+        result = result.scaled(requestedSize, Qt::KeepAspectRatioByExpanding,
+                               Qt::SmoothTransformation);
+    }
+
+    if (size) {
+        *size = result.size();
+    }
+    return result;
 }
 
 QImage FaceImageProvider::requestImage(const QString &id, QSize *size, const QSize &requestedSize)
 {
+    if (id.startsWith(QLatin1String("thumb?"))) {
+        return requestThumbnail(id, size, requestedSize);
+    }
+
     // id looks like "crop?path=...&x=...&y=...&w=...&h=...[&round=1]"
     int queryStart = id.indexOf('?');
     if (queryStart < 0) {
