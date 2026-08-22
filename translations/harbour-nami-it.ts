@@ -1628,6 +1628,14 @@
         <source>Share</source>
         <translation>Condividi</translation>
     </message>
+    <message>
+        <source>By day</source>
+        <translation>Per giorno</translation>
+    </message>
+    <message>
+        <source>By location</source>
+        <translation>Per luogo</translation>
+    </message>
 </context>
 <context>
     <name>PassphraseDialog</name>

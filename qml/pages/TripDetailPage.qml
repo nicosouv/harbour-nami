@@ -3,6 +3,7 @@ import Sailfish.Silica 1.0
 import "../components"
 import "../js/geoutils.js" as GeoUtils
 import "../js/eventsettings.js" as EventSettings
+import "../js/mosaic.js" as Mosaic
 
 // All photos of a trip (several days grouped together), with a choice of
 // browsing them by day or by geographic stop, plus a schematic route map.
@@ -17,6 +18,8 @@ Page {
 
     property string sortMode: "day"   // "day" or "location"
     property var groups: []
+    // groups laid out as mosaic rows: [{ title, rows }]
+    property var photoGroups: []
     property var routePoints: []
     property var mapStops: []
     property int totalPhotoCount: 0
@@ -63,6 +66,9 @@ Page {
                         file_path: photo.file_path,
                         timestamp: photo.timestamp,
                         dateKey: key,
+                        width: photo.width,
+                        height: photo.height,
+                        rotation: photo.rotation,
                         has_location: !!photo.has_location,
                         latitude: photo.latitude,
                         longitude: photo.longitude
@@ -84,6 +90,9 @@ Page {
                         file_path: extraPhoto.file_path,
                         timestamp: extraPhoto.timestamp,
                         dateKey: extraKey,
+                        width: extraPhoto.width,
+                        height: extraPhoto.height,
+                        rotation: extraPhoto.rotation,
                         has_location: !!extraPhoto.has_location,
                         latitude: extraPhoto.latitude,
                         longitude: extraPhoto.longitude
@@ -147,6 +156,25 @@ Page {
         })
 
         groups = sortMode === "location" ? groupByLocation(places, unlocated) : groupByDay(items)
+        rebuildRows()
+    }
+
+    function rebuildRows() {
+        var avail = photoArea.width - 2 * Theme.horizontalPageMargin
+        if (avail <= 0) {
+            photoGroups = []
+            return
+        }
+        var targetHeight = avail / 3
+        var out = []
+        for (var i = 0; i < groups.length; i++) {
+            out.push({
+                title: groups[i].title,
+                rows: Mosaic.layout(groups[i].photos, avail, targetHeight,
+                                    Theme.paddingSmall)
+            })
+        }
+        photoGroups = out
     }
 
     function groupByDay(items) {
@@ -284,14 +312,6 @@ Page {
                 onClicked: selection.begin("")
             }
             MenuItem {
-                text: sortMode === "day" ? qsTr("Sort by location") : qsTr("Sort by day")
-                enabled: hasLocationData
-                onClicked: {
-                    sortMode = sortMode === "day" ? "location" : "day"
-                    loadTrip()
-                }
-            }
-            MenuItem {
                 text: qsTr("Rename trip")
                 onClicked: {
                     var dialog = pageStack.push(Qt.resolvedUrl("../dialogs/TripNameDialog.qml"), {
@@ -346,140 +366,202 @@ Page {
                 font.pixelSize: Theme.fontSizeSmall
             }
 
-            Repeater {
-                model: groups
+            // Sorting sits where it acts, between the map it reorders by
+            // and the photos it reorders: a pulley menu hid which of the two
+            // orders was in force.
+            Item {
+                width: parent.width
+                height: sortRow.height + Theme.paddingMedium
+                visible: totalPhotoCount > 0 && !selection.active
 
-                delegate: Column {
-                    width: column.width
-                    spacing: Theme.paddingSmall
+                Row {
+                    id: sortRow
+                    x: Theme.horizontalPageMargin
+                    spacing: Theme.paddingMedium
 
-                    SectionHeader {
-                        text: modelData.title
+                    FilterChip {
+                        text: qsTr("By day")
+                        selected: sortMode === "day"
+                        onClicked: {
+                            if (sortMode === "day") return
+                            sortMode = "day"
+                            loadTrip()
+                        }
                     }
 
-                    Grid {
-                        id: photoGrid
-                        x: Theme.horizontalPageMargin
-                        width: parent.width - 2 * Theme.horizontalPageMargin
-                        columns: 3
-                        spacing: Theme.paddingSmall
+                    FilterChip {
+                        text: qsTr("By location")
+                        visible: hasLocationData
+                        selected: sortMode === "location"
+                        onClicked: {
+                            if (sortMode === "location") return
+                            sortMode = "location"
+                            loadTrip()
+                        }
+                    }
+                }
+            }
 
-                        // 3 cells plus 2 gaps have to fit the width; width/3
-                        // overflows by two gaps and clips the last column
-                        property real cellSize: (width - (columns - 1) * spacing) / columns
+            // Same mosaic as a person's page: photos keep their own shape
+            // rather than being squeezed into squares
+            Column {
+                id: photoArea
+                width: parent.width
+                spacing: Theme.paddingMedium
+
+                onWidthChanged: page.rebuildRows()
+
+                Repeater {
+                    model: photoGroups
+
+                    delegate: Column {
+                        id: photoSection
+                        width: photoArea.width
+                        spacing: Theme.paddingSmall
+                        property var group: modelData
+
+                        // Left-aligned, on the axis the photo rows use.
+                        // SectionHeader right-aligns, which clipped long titles.
+                        Label {
+                            x: Theme.horizontalPageMargin
+                            width: parent.width - 2 * Theme.horizontalPageMargin
+                            text: photoSection.group.title
+                            visible: photoSection.group.title.length > 0
+                            font.pixelSize: Theme.fontSizeSmall
+                            color: Theme.highlightColor
+                            truncationMode: TruncationMode.Fade
+                        }
 
                         Repeater {
-                            model: modelData.photos
+                            model: photoSection.group.rows
 
-                            delegate: ListItem {
-                                id: photoItem
-                                width: photoGrid.cellSize
-                                // No explicit height: the ListItem grows for
-                                // its context menu and this plain Grid reflows
-                                // the row, instead of the menu landing on the
-                                // neighbouring photos
-                                contentHeight: width
+                            delegate: Row {
+                                id: photoRow
+                                x: Theme.horizontalPageMargin
+                                spacing: Theme.paddingSmall
+                                property var cells: modelData
 
-                                // Wrap content in Item to fix ContextMenu positioning
-                                contentItem.children: [
-                                    Image {
-                                        anchors.fill: parent
-                                        source: modelData.file_path ? "file://" + modelData.file_path : ""
-                                        fillMode: Image.PreserveAspectCrop
-                                        autoTransform: true
-                                        clip: true
-                                        asynchronous: true
-                                        sourceSize.width: 400
-                                        sourceSize.height: 400
+                                Repeater {
+                                    model: photoRow.cells
 
-                                        BusyIndicator {
-                                            anchors.centerIn: parent
-                                            running: parent.status === Image.Loading
-                                            size: BusyIndicatorSize.Small
-                                        }
+                                    delegate: ListItem {
+                                        id: photoItem
 
-                                        // Selection state
-                                        Rectangle {
-                                            anchors.fill: parent
-                                            visible: selection.active
-                                            color: selection.isSelected(modelData.file_path)
-                                                   ? Theme.rgba(Theme.highlightBackgroundColor, 0.45)
-                                                   : Theme.rgba("black", 0.35)
-                                            z: 90
+                                        property var photo: modelData.photo
 
-                                            Icon {
-                                                anchors.centerIn: parent
-                                                source: "image://theme/icon-m-acknowledge"
-                                                opacity: selection.isSelected(modelData.file_path) ? 1 : 0.25
+                                        width: modelData.width
+                                        // No explicit height: the ListItem
+                                        // grows for its context menu, the Row
+                                        // grows with it and the Column pushes
+                                        // the following rows down
+                                        contentHeight: modelData.height
+
+                                        contentItem.children: [
+                                            Image {
+                                                anchors.fill: parent
+                                                source: photoItem.photo.file_path
+                                                    ? "file://" + photoItem.photo.file_path : ""
+                                                fillMode: Image.PreserveAspectCrop
+                                                autoTransform: true
+                                                rotation: photoItem.photo.rotation || 0
+                                                clip: true
+                                                asynchronous: true
+                                                sourceSize.width: 500
+                                                sourceSize.height: 500
+
+                                                Rectangle {
+                                                    anchors.fill: parent
+                                                    visible: parent.status !== Image.Ready
+                                                    color: Theme.rgba(Theme.highlightBackgroundColor, 0.12)
+                                                }
+
+                                                // Selection state
+                                                Rectangle {
+                                                    anchors.fill: parent
+                                                    visible: selection.active
+                                                    color: selection.isSelected(photoItem.photo.file_path)
+                                                           ? Theme.rgba(Theme.highlightBackgroundColor, 0.45)
+                                                           : Theme.rgba("black", 0.35)
+                                                    z: 90
+
+                                                    Icon {
+                                                        anchors.centerIn: parent
+                                                        source: "image://theme/icon-m-acknowledge"
+                                                        opacity: selection.isSelected(photoItem.photo.file_path)
+                                                                 ? 1 : 0.25
+                                                    }
+                                                }
+
+                                                // Marks the trip's cover photo
+                                                Rectangle {
+                                                    visible: photoItem.photo.file_path === coverPath
+                                                    anchors {
+                                                        top: parent.top
+                                                        right: parent.right
+                                                        margins: Theme.paddingSmall
+                                                    }
+                                                    width: Theme.iconSizeSmall
+                                                    height: width
+                                                    radius: width / 2
+                                                    color: Theme.rgba("#FFC107", 0.95)
+                                                    z: 100
+
+                                                    Label {
+                                                        anchors.centerIn: parent
+                                                        text: "\u2605"
+                                                        font.pixelSize: Theme.fontSizeExtraSmall
+                                                        color: "white"
+                                                    }
+                                                }
                                             }
-                                        }
+                                        ]
 
-                                        // Marks the photo currently used as the trip's cover
-                                        Rectangle {
-                                            visible: modelData.file_path === coverPath
-                                            anchors {
-                                                top: parent.top
-                                                right: parent.right
-                                                margins: Theme.paddingSmall
-                                            }
-                                            width: Theme.iconSizeSmall
-                                            height: width
-                                            radius: width / 2
-                                            color: Theme.rgba("#FFC107", 0.95)
-                                            border.color: "white"
-                                            border.width: 2
-                                            z: 100
-
-                                            Label {
-                                                anchors.centerIn: parent
-                                                text: "★"
-                                                font.pixelSize: Theme.fontSizeExtraSmall
-                                                color: "white"
-                                            }
-                                        }
-                                    }
-                                ]
-
-                                onClicked: {
-                                    if (selection.active) {
-                                        selection.toggle(modelData.file_path)
-                                        return
-                                    }
-                                    pageStack.push(Qt.resolvedUrl("PhotoViewerPage.qml"), {
-                                        photoPath: modelData.file_path
-                                    })
-                                }
-
-                                onPressAndHold: {
-                                    if (selection.active) selection.toggle(modelData.file_path)
-                                }
-
-                                menu: selection.active ? null : tripPhotoMenu
-
-                                Component {
-                                    id: tripPhotoMenu
-
-                                    ContextMenu {
-                                    MenuItem {
-                                        text: qsTr("Set as trip cover")
                                         onClicked: {
-                                            faceManager.setEventCover("trip:" + tripId, modelData.file_path)
-                                            coverPath = modelData.file_path
-                                        }
-                                    }
-                                    MenuItem {
-                                        text: qsTr("View full photo")
-                                        onClicked: {
+                                            if (selection.active) {
+                                                selection.toggle(photoItem.photo.file_path)
+                                                return
+                                            }
                                             pageStack.push(Qt.resolvedUrl("PhotoViewerPage.qml"), {
-                                                photoPath: modelData.file_path
+                                                photoPath: photoItem.photo.file_path
                                             })
                                         }
-                                    }
 
-                                    MenuItem {
-                                        text: qsTr("Share")
-                                        onClicked: shareAction.sharePhoto(modelData.file_path)
-                                    }
+                                        onPressAndHold: {
+                                            if (selection.active) {
+                                                selection.toggle(photoItem.photo.file_path)
+                                            }
+                                        }
+
+                                        menu: selection.active ? null : tripPhotoMenu
+
+                                        Component {
+                                            id: tripPhotoMenu
+
+                                            ContextMenu {
+                                                MenuItem {
+                                                    text: qsTr("Set as trip cover")
+                                                    onClicked: {
+                                                        faceManager.setEventCover(
+                                                            "trip:" + tripId,
+                                                            photoItem.photo.file_path)
+                                                        coverPath = photoItem.photo.file_path
+                                                    }
+                                                }
+                                                MenuItem {
+                                                    text: qsTr("View full photo")
+                                                    onClicked: {
+                                                        pageStack.push(Qt.resolvedUrl("PhotoViewerPage.qml"), {
+                                                            photoPath: photoItem.photo.file_path
+                                                        })
+                                                    }
+                                                }
+                                                MenuItem {
+                                                    text: qsTr("Share")
+                                                    onClicked: shareAction.sharePhoto(
+                                                        photoItem.photo.file_path)
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                             }

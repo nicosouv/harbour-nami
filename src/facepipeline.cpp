@@ -779,6 +779,9 @@ QVariantList FacePipeline::getAllPhotos()
         photoMap["timestamp"] = photo.dateTaken.isValid()
             ? photo.dateTaken.toMSecsSinceEpoch() / 1000 : 0;
         photoMap["rotation"] = photo.rotation;
+        // EXIF-corrected already, so an aspect-ratio layout can use them
+        photoMap["width"] = photo.width;
+        photoMap["height"] = photo.height;
         photoMap["has_location"] = photo.hasLocation;
         photoMap["latitude"] = photo.latitude;
         photoMap["longitude"] = photo.longitude;

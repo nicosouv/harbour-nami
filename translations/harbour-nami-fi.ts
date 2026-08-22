@@ -1628,6 +1628,14 @@
         <source>Share</source>
         <translation>Jaa</translation>
     </message>
+    <message>
+        <source>By day</source>
+        <translation>Päivän mukaan</translation>
+    </message>
+    <message>
+        <source>By location</source>
+        <translation>Sijainnin mukaan</translation>
+    </message>
 </context>
 <context>
     <name>PassphraseDialog</name>
