@@ -12,6 +12,14 @@
   longer carry a badge
 - What the app does is explained on the empty library rather than above the
   content on every launch
+- Days and trips get the same mosaic, so photos keep their shape there too
+- A trip's day/location switch moved out of the pulley menu, between the map
+  and the photos
+- Photos you deleted from your phone are forgotten instead of lingering as
+  empty tiles; this happens after every scan, and Settings has a button to do
+  it without rescanning
+- Fix long month headings being clipped against the right edge
+- More room between the people sort filters and the first row of faces
 
 * Fri Aug 21 2026 Nicolas Souveton <souvetonnicolas@gmail.com> 0.8.5-1
 - Share photos from the photo viewer, a person, a day, a trip or a memory
