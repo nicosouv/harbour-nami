@@ -71,6 +71,25 @@ Page {
         rebuildPhotoModel()
     }
 
+    // Built once per opening: the viewer browses the whole list, so the
+    // tapped photo is just where it starts.
+    function openViewer(path) {
+        var paths = browsePaths()
+        pageStack.push(Qt.resolvedUrl("PhotoViewerPage.qml"), {
+            photoPaths: paths,
+            photoIndex: Math.max(0, paths.indexOf(path))
+        })
+    }
+
+    // The order shown is the order to browse in
+    function browsePaths() {
+        var paths = []
+        for (var i = 0; i < visiblePhotos.length; i++) {
+            paths.push(visiblePhotos[i].file_path)
+        }
+        return paths
+    }
+
     function recountTotals() {
         var unconfirmed = 0
         for (var i = 0; i < allPhotos.length; i++) {
@@ -585,9 +604,7 @@ Page {
                                                 selection.toggle(photoItem.photo.file_path)
                                                 return
                                             }
-                                            pageStack.push(Qt.resolvedUrl("PhotoViewerPage.qml"), {
-                                                photoPath: photoItem.photo.file_path
-                                            })
+                                            page.openViewer(photoItem.photo.file_path)
                                         }
 
                                         // Built on first long press only, so a
@@ -629,9 +646,7 @@ Page {
                                                 MenuItem {
                                                     text: qsTr("View full photo")
                                                     onClicked: {
-                                                        pageStack.push(Qt.resolvedUrl("PhotoViewerPage.qml"), {
-                                                            photoPath: photoItem.photo.file_path
-                                                        })
+                                                        page.openViewer(photoItem.photo.file_path)
                                                     }
                                                 }
 

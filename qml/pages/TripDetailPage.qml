@@ -159,6 +159,29 @@ Page {
         rebuildRows()
     }
 
+    // Built once per opening: the viewer browses the whole list, so the
+    // tapped photo is just where it starts.
+    function openViewer(path) {
+        var paths = browsePaths()
+        pageStack.push(Qt.resolvedUrl("PhotoViewerPage.qml"), {
+            photoPaths: paths,
+            photoIndex: Math.max(0, paths.indexOf(path))
+        })
+    }
+
+    // Flattened in the order the groups are shown, so swiping follows
+    // what the eye just scrolled past
+    function browsePaths() {
+        var paths = []
+        for (var g = 0; g < groups.length; g++) {
+            var photos = groups[g].photos || []
+            for (var i = 0; i < photos.length; i++) {
+                paths.push(photos[i].file_path)
+            }
+        }
+        return paths
+    }
+
     function rebuildRows() {
         var avail = photoArea.width - 2 * Theme.horizontalPageMargin
         if (avail <= 0) {
@@ -521,9 +544,7 @@ Page {
                                                 selection.toggle(photoItem.photo.file_path)
                                                 return
                                             }
-                                            pageStack.push(Qt.resolvedUrl("PhotoViewerPage.qml"), {
-                                                photoPath: photoItem.photo.file_path
-                                            })
+                                            page.openViewer(photoItem.photo.file_path)
                                         }
 
                                         onPressAndHold: {
@@ -550,9 +571,7 @@ Page {
                                                 MenuItem {
                                                     text: qsTr("View full photo")
                                                     onClicked: {
-                                                        pageStack.push(Qt.resolvedUrl("PhotoViewerPage.qml"), {
-                                                            photoPath: photoItem.photo.file_path
-                                                        })
+                                                        page.openViewer(photoItem.photo.file_path)
                                                     }
                                                 }
                                                 MenuItem {

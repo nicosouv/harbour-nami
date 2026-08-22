@@ -1946,4 +1946,11 @@
         <translation>Sì</translation>
     </message>
 </context>
+<context>
+    <name>ZoomableImage</name>
+    <message>
+        <source>Failed to load image</source>
+        <translation>Impossibile caricare l'immagine</translation>
+    </message>
+</context>
 </TS>

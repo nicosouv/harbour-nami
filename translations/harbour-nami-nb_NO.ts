@@ -1926,4 +1926,11 @@
         <translation>Ja</translation>
     </message>
 </context>
+<context>
+    <name>ZoomableImage</name>
+    <message>
+        <source>Failed to load image</source>
+        <translation>Klarte ikke å laste inn bilde</translation>
+    </message>
+</context>
 </TS>
