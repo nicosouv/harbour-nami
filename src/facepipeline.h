@@ -251,6 +251,17 @@ public:
     Q_INVOKABLE qint64 fileSize(const QString &photoPath);
 
     /**
+     * @brief Forget photos that are no longer on disk
+     *
+     * Runs automatically at the end of every scan, which is free because the
+     * gallery has just been walked. Exposed so the user can also trigger it
+     * from Settings without waiting for a scan.
+     *
+     * @return Number of photos removed
+     */
+    Q_INVOKABLE int removeMissingPhotos();
+
+    /**
      * @brief Merge one person into another
      *
      * All faces of fromPersonId are reassigned to intoPersonId and

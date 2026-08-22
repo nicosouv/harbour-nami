@@ -356,6 +356,38 @@ Page {
                 text: qsTr("Data Management")
             }
 
+            Label {
+                x: Theme.horizontalPageMargin
+                width: parent.width - 2 * Theme.horizontalPageMargin
+                text: qsTr("Photos you deleted from your phone stay in Nami as empty tiles. This forgets them. It runs on its own after every scan, so you only need it to clean up without rescanning.")
+                font.pixelSize: Theme.fontSizeExtraSmall
+                color: Theme.secondaryColor
+                wrapMode: Text.Wrap
+            }
+
+            ButtonLayout {
+                Button {
+                    text: qsTr("Forget deleted photos")
+                    enabled: facePipeline && facePipeline.initialized
+                    onClicked: {
+                        var removed = facePipeline.removeMissingPhotos()
+                        pruneResultLabel.text = removed > 0
+                            ? qsTr("%n photo(s) forgotten", "", removed)
+                            : qsTr("Nothing to clean up")
+                    }
+                }
+            }
+
+            Label {
+                id: pruneResultLabel
+                x: Theme.horizontalPageMargin
+                width: parent.width - 2 * Theme.horizontalPageMargin
+                visible: text.length > 0
+                font.pixelSize: Theme.fontSizeExtraSmall
+                color: Theme.highlightColor
+                wrapMode: Text.Wrap
+            }
+
             ButtonLayout {
                 Button {
                     text: qsTr("Export data")

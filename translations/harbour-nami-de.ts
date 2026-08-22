@@ -1519,6 +1519,25 @@
         <source>Show every photo from a day or trip in Events, not just the ones where someone has been identified.</source>
         <translation>Alle Fotos eines Tages oder einer Reise in Ereignissen anzeigen, nicht nur die mit identifizierten Personen.</translation>
     </message>
+    <message numerus="yes">
+        <source>%n photo(s) forgotten</source>
+        <translation>
+            <numerusform>%n Foto vergessen</numerusform>
+            <numerusform>%n Fotos vergessen</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Forget deleted photos</source>
+        <translation>Gelöschte Fotos vergessen</translation>
+    </message>
+    <message>
+        <source>Nothing to clean up</source>
+        <translation>Nichts aufzuräumen</translation>
+    </message>
+    <message>
+        <source>Photos you deleted from your phone stay in Nami as empty tiles. This forgets them. It runs on its own after every scan, so you only need it to clean up without rescanning.</source>
+        <translation>Fotos, die Sie auf dem Telefon gelöscht haben, bleiben in Nami als leere Kacheln. Dies vergisst sie. Es geschieht nach jedem Scan von selbst; die Schaltfläche dient nur zum Aufräumen ohne erneuten Scan.</translation>
+    </message>
 </context>
 <context>
     <name>UnknownFacesPage</name>

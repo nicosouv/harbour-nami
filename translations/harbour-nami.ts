@@ -1518,6 +1518,25 @@
         <source>Show every photo from a day or trip in Events, not just the ones where someone has been identified.</source>
         <translation type="unfinished"></translation>
     </message>
+    <message numerus="yes">
+        <source>%n photo(s) forgotten</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Forget deleted photos</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing to clean up</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Photos you deleted from your phone stay in Nami as empty tiles. This forgets them. It runs on its own after every scan, so you only need it to clean up without rescanning.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>UnknownFacesPage</name>

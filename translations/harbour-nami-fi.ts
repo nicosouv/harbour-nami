@@ -1519,6 +1519,25 @@
         <source>Show every photo from a day or trip in Events, not just the ones where someone has been identified.</source>
         <translation>Näytä Tapahtumissa kaikki päivän tai matkan kuvat, ei vain niitä joissa joku on tunnistettu.</translation>
     </message>
+    <message numerus="yes">
+        <source>%n photo(s) forgotten</source>
+        <translation>
+            <numerusform>%n kuva unohdettu</numerusform>
+            <numerusform>%n kuvaa unohdettu</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Forget deleted photos</source>
+        <translation>Unohda poistetut kuvat</translation>
+    </message>
+    <message>
+        <source>Nothing to clean up</source>
+        <translation>Ei siivottavaa</translation>
+    </message>
+    <message>
+        <source>Photos you deleted from your phone stay in Nami as empty tiles. This forgets them. It runs on its own after every scan, so you only need it to clean up without rescanning.</source>
+        <translation>Puhelimesta poistamasi kuvat jäävät Namiin tyhjinä ruutuina. Tämä unohtaa ne. Se tehdään automaattisesti jokaisen skannauksen jälkeen, joten painiketta tarvitaan vain siivoamiseen ilman uutta skannausta.</translation>
+    </message>
 </context>
 <context>
     <name>UnknownFacesPage</name>

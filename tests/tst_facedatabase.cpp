@@ -30,6 +30,8 @@ private slots:
     void peopleAroundDateHonoursTheWindow();
     void exemplarsPreferVerifiedFaces();
     void photoLookupByPathMatchesLookupById();
+    void prunesPhotosDeletedFromDisk();
+    void keepsPhotosWhoseWholeFolderIsGone();
 
 private:
     // A photo file has to exist on disk for the import to accept it
@@ -278,6 +280,60 @@ void TstFaceDatabase::photoLookupByPathMatchesLookupById()
 
     // An unknown path is reported as "not found", not as a blank photo id 0
     QCOMPARE(m_db->getPhotoByPath(m_dir->filePath("nope.jpg")).id, -1);
+}
+
+// A photo deleted from the gallery leaves a row behind, which the UI shows
+// as an empty tile.
+void TstFaceDatabase::prunesPhotosDeletedFromDisk()
+{
+    const int alice = m_db->createPerson("Alice");
+    const QDateTime now = QDateTime::currentDateTime();
+
+    const QString keptName = "kept.jpg";
+    const QString goneName = "gone.jpg";
+    addPhotoWithFace(keptName, now, alice);
+    addPhotoWithFace(goneName, now, alice);
+    QCOMPARE(m_db->getFacesForPerson(alice).size(), 2);
+
+    // The user deletes one from their phone
+    QVERIFY(QFile::remove(m_dir->filePath(goneName)));
+
+    QCOMPARE(m_db->removeMissingPhotos(), 1);
+
+    // Row, and the face hanging off it, are both gone
+    QCOMPARE(m_db->getPhotoByPath(m_dir->filePath(goneName)).id, -1);
+    QCOMPARE(m_db->getFacesForPerson(alice).size(), 1);
+
+    // The photo still on disk is untouched
+    QVERIFY(m_db->getPhotoByPath(m_dir->filePath(keptName)).id > 0);
+
+    // Nothing left to do on a second pass
+    QCOMPARE(m_db->removeMissingPhotos(), 0);
+}
+
+// An unmounted SD card looks exactly like a deleted folder. Wiping the
+// library because a card was popped out would throw away identification work
+// that cannot be recovered.
+void TstFaceDatabase::keepsPhotosWhoseWholeFolderIsGone()
+{
+    const QDateTime now = QDateTime::currentDateTime();
+
+    QTemporaryDir card;
+    QVERIFY(card.isValid());
+    const QString onCard = card.filePath("holiday.jpg");
+    QFile file(onCard);
+    QVERIFY(file.open(QIODevice::WriteOnly));
+    file.write("jpeg");
+    file.close();
+
+    const int photoId = m_db->addPhoto(onCard, now, 400, 300);
+    QVERIFY(photoId > 0);
+
+    // Card removed: the file and its folder both vanish
+    QVERIFY(card.remove());
+
+    QCOMPARE(m_db->removeMissingPhotos(), 0);
+    QVERIFY(m_db->getPhotoByPath(onCard).id > 0);
 }
 
 QTEST_MAIN(TstFaceDatabase)

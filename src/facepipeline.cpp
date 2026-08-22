@@ -250,6 +250,14 @@ void FacePipeline::finishScan(bool cancelled)
         return;
     }
 
+    // A scan has just walked the whole gallery, so this is the cheapest
+    // moment to notice photos the user deleted from their phone: they would
+    // otherwise linger as empty tiles.
+    const int pruned = m_database->removeMissingPhotos();
+    if (pruned > 0) {
+        invalidatePersonPrototypes();
+    }
+
     // Stored embeddings now match the engine
     m_database->setSetting("embedding_version", QString::number(EMBEDDING_VERSION));
     if (m_needsRescan) {
@@ -872,6 +880,19 @@ bool FacePipeline::setPhotoRotation(const QString &photoPath, int rotation)
     }
 
     return m_database->setPhotoRotation(photoPath, rotation);
+}
+
+int FacePipeline::removeMissingPhotos()
+{
+    if (!m_initialized || !m_database) {
+        return 0;
+    }
+
+    const int removed = m_database->removeMissingPhotos();
+    if (removed > 0) {
+        invalidatePersonPrototypes();
+    }
+    return removed;
 }
 
 qint64 FacePipeline::fileSize(const QString &photoPath)

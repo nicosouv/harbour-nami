@@ -153,6 +153,21 @@ public:
     Photo getPhotoByPath(const QString &filePath);
 
     /**
+     * @brief Forget photos whose file is no longer on disk
+     *
+     * Deleting a photo from the gallery leaves its row behind, which shows up
+     * as an empty tile. This drops those rows along with their faces,
+     * rejections and any event cover pointing at them.
+     *
+     * A photo whose whole folder has disappeared is left alone: that is what
+     * an unmounted SD card looks like, and the identification work is not
+     * recoverable once thrown away.
+     *
+     * @return Number of photos removed
+     */
+    int removeMissingPhotos();
+
+    /**
      * @brief Get all photos
      */
     QVector<Photo> getAllPhotos();
