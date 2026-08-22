@@ -38,6 +38,24 @@ target_include_directories(tst_memories PRIVATE ${NAMI_SRC})
 target_link_libraries(tst_memories Qt5::Core Qt5::Sql Qt5::Test)
 add_test(NAME memories COMMAND tst_memories)
 
+# EXIF dates: they decide which day every photo belongs to
+add_executable(tst_exifreader
+    ${CMAKE_CURRENT_LIST_DIR}/tst_exifreader.cpp
+    ${NAMI_SRC}/exifreader.cpp
+)
+target_include_directories(tst_exifreader PRIVATE ${NAMI_SRC})
+target_link_libraries(tst_exifreader Qt5::Core Qt5::Test)
+add_test(NAME exifreader COMMAND tst_exifreader)
+
+# Content hashes: what relinks a moved photo when a backup is restored
+add_executable(tst_filehash
+    ${CMAKE_CURRENT_LIST_DIR}/tst_filehash.cpp
+    ${NAMI_SRC}/filehash.cpp
+)
+target_include_directories(tst_filehash PRIVATE ${NAMI_SRC})
+target_link_libraries(tst_filehash Qt5::Core Qt5::Test)
+add_test(NAME filehash COMMAND tst_filehash)
+
 # Backup encryption: a bug here loses someone's whole library
 add_executable(tst_backupcrypto
     ${CMAKE_CURRENT_LIST_DIR}/tst_backupcrypto.cpp
