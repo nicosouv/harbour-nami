@@ -34,7 +34,8 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
-            qtbase5-dev libqt5sql5-sqlite libssl-dev cmake ninja-build
+            qtbase5-dev qtdeclarative5-dev libqt5sql5-sqlite libssl-dev \
+            cmake ninja-build
 
       - name: Build tests
         run: |
