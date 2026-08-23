@@ -157,6 +157,26 @@
         <source>Select photos</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Edit photos</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hide this memory</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hiding %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rename</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rename memory</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>EventsPage</name>
@@ -1582,6 +1602,48 @@
     <name>ZoomableImage</name>
     <message>
         <source>Failed to load image</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>MemoryEditPage</name>
+    <message>
+        <source>Edit photos</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Leave out of the clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No photos</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Put back in the clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use as cover</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>StyleLabels</name>
+    <message>
+        <source>Sentimental</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Energetic</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Polaroid</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bauhaus</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
