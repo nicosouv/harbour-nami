@@ -132,10 +132,45 @@ def check_model_clear(path, lines):
     return findings
 
 
+# Properties every Item already has. Declaring one of these shadows the
+# built-in, and the shadow only reaches the component's own root scope.
+ITEM_PROPERTIES = {
+    "clip", "state", "states", "opacity", "visible", "enabled", "focus",
+    "rotation", "scale", "smooth", "antialiasing", "parent", "children",
+    "data", "transform", "x", "y", "z", "width", "height",
+    "implicitWidth", "implicitHeight", "baselineOffset", "activeFocus",
+}
+
+PROPERTY_DECL = re.compile(
+    r"^\s*(?:readonly\s+)?property\s+(?:var|int|real|double|bool|string|url|color|list<[^>]+>|[A-Z]\w*)\s+(\w+)\s*[:;]?")
+
+
+def check_shadowed_item_property(path, lines):
+    """A property named like one Item already has.
+
+    The declaration shadows the built-in, but only in the component's own
+    root scope. Inside any nested Item, a bare name resolves to that Item's
+    inherited property instead, silently and with a plausible type.
+
+    MemoryPlayer declared `property var edit` as `clip`. At the root it read
+    back as the edit; inside its Loader it read back as the Loader's own
+    boolean, which is false, so the Loader's `active` condition was never
+    true and every clip played silently. Nothing failed, nothing logged.
+    """
+    findings = []
+    for number, raw in enumerate(lines, start=1):
+        line = strip_comments(raw)
+        match = PROPERTY_DECL.search(line)
+        if match and match.group(1) in ITEM_PROPERTIES:
+            findings.append((number, line.strip()))
+    return findings
+
+
 CHECKS = [
     ("ListModel.get() inside a property binding", check_get_in_binding),
     ("unguarded Canvas dash API", check_unguarded_canvas_api),
     ("clear() on a shared people model", check_model_clear),
+    ("property shadows one Item already has", check_shadowed_item_property),
 ]
 
 

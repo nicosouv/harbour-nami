@@ -16,6 +16,15 @@ Runs anywhere, no Qt. Every rule comes from a bug that shipped:
   blank. Left the trip map an empty sheet of paper in 0.8.3.
 - **`clear()` on a model handed to another component** — destroys every
   delegate at once, including those of a dialog still bound to it.
+- **A property named like one `Item` already has** (`clip`, `state`,
+  `opacity`, `enabled`, ...). The declaration shadows the built-in, but only
+  in the component's own root scope; inside any nested Item a bare name
+  resolves to that Item's inherited property instead, silently and with a
+  plausible type. `MemoryPlayer` held its edit in a property called `clip`.
+  At the root it read back as the edit; inside its `Loader` it read back as
+  the Loader's own boolean `false`, so the `active` condition was never once
+  true and every clip played silently. Nothing failed and nothing logged;
+  it took a device, a working picture and no sound to find.
 
 ## `scripts/check_translations.py` — catalogues against the sources
 

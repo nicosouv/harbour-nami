@@ -16,22 +16,28 @@ import Sailfish.Silica 1.0
 Item {
     id: player
 
-    // The map FacePipeline.composeMemoryClip() returns
-    property var clip: null
+    // The map FacePipeline.composeMemoryClip() returns.
+    //
+    // Not called "clip": Item already has a clip property, and a declared
+    // one only shadows it at the component's own root. Inside any nested
+    // Item, a bare `clip` resolves to that Item's own inherited boolean,
+    // which is false. The Loader below read it as its condition and was
+    // never activated once, so every clip played silently.
+    property var edit: null
     property bool playing: false
     property int positionMs: 0
     property bool loop: false
 
-    readonly property int durationMs: clip ? clip.duration_ms : 0
-    readonly property int shotCount: clip && clip.shots ? clip.shots.length : 0
+    readonly property int durationMs: edit ? edit.duration_ms : 0
+    readonly property int shotCount: edit && edit.shots ? edit.shots.length : 0
     readonly property bool hasClip: shotCount > 0
 
     // Which shot covers the clock, and how far through it we are
     property int currentIndex: 0
     readonly property var currentShot: (hasClip && currentIndex < shotCount)
-                                       ? clip.shots[currentIndex] : null
+                                       ? edit.shots[currentIndex] : null
     readonly property var previousShot: (hasClip && currentIndex > 0)
-                                        ? clip.shots[currentIndex - 1] : null
+                                        ? edit.shots[currentIndex - 1] : null
 
     signal finished()
 
@@ -67,10 +73,10 @@ Item {
         if (!hasClip) return
 
         var index = currentIndex
-        if (index >= shotCount || clip.shots[index].start_ms > positionMs) {
+        if (index >= shotCount || edit.shots[index].start_ms > positionMs) {
             index = 0
         }
-        while (index + 1 < shotCount && clip.shots[index + 1].start_ms <= positionMs) {
+        while (index + 1 < shotCount && edit.shots[index + 1].start_ms <= positionMs) {
             index++
         }
         currentIndex = index
@@ -102,7 +108,7 @@ Item {
         return remaining >= fadeOutMs ? 1.0 : Math.max(0.0, remaining / fadeOutMs)
     }
 
-    onClipChanged: {
+    onEditChanged: {
         positionMs = 0
         currentIndex = 0
         playing = false
@@ -141,15 +147,15 @@ Item {
         id: audioLoader
         // Only when there is actually a file: with no track the player runs
         // on its own clock and the clip is silent
-        active: clip && clip.track_path && clip.track_path.length > 0
+        active: edit && edit.track_path && edit.track_path.length > 0
         // Resolved against this file rather than left relative: a Loader
         // resolves against its own component, and being explicit costs
         // nothing next to a silent failure
         source: Qt.resolvedUrl("ClipAudio.qml")
 
         onLoaded: {
-            item.source = "file://" + clip.track_path
-            item.startMs = clip.track_start_ms
+            item.source = "file://" + edit.track_path
+            item.startMs = edit.track_start_ms
             item.playing = Qt.binding(function () { return player.playing })
             item.level = Qt.binding(function () { return player.audioLevel })
         }
@@ -165,9 +171,9 @@ Item {
         }
 
         onActiveChanged: {
-            if (!active && player.clip) {
+            if (!active && player.edit) {
                 console.log("MemoryPlayer: no audio, track_path is empty for track",
-                            player.clip.track_id)
+                            player.edit.track_id)
             }
         }
     }
@@ -224,19 +230,19 @@ Item {
     // will do this properly; here it is enough to tell the four styles apart.
     Rectangle {
         anchors.fill: parent
-        visible: clip !== null && clip.grade !== undefined
-        color: clip && clip.grade.warmth > 0 ? "#ffb066" : "#66a0ff"
-        opacity: clip ? Math.abs(clip.grade.warmth) * 0.18 : 0
+        visible: edit !== null && edit.grade !== undefined
+        color: edit && edit.grade.warmth > 0 ? "#ffb066" : "#66a0ff"
+        opacity: edit ? Math.abs(edit.grade.warmth) * 0.18 : 0
     }
 
     Rectangle {
         anchors.fill: parent
-        visible: clip !== null && clip.grade !== undefined && clip.grade.vignette > 0
+        visible: edit !== null && edit.grade !== undefined && edit.grade.vignette > 0
         gradient: Gradient {
-            GradientStop { position: 0.0; color: Theme.rgba("black", clip ? clip.grade.vignette * 0.5 : 0) }
+            GradientStop { position: 0.0; color: Theme.rgba("black", edit ? edit.grade.vignette * 0.5 : 0) }
             GradientStop { position: 0.35; color: "transparent" }
             GradientStop { position: 0.65; color: "transparent" }
-            GradientStop { position: 1.0; color: Theme.rgba("black", clip ? clip.grade.vignette * 0.6 : 0) }
+            GradientStop { position: 1.0; color: Theme.rgba("black", edit ? edit.grade.vignette * 0.6 : 0) }
         }
     }
 }

@@ -73,7 +73,7 @@ Page {
     // The edit, composed on demand. Not stored: it is a pure function of the
     // photos, the style and the track, so keeping a copy would only give it
     // a chance to go stale.
-    property var clip: null
+    property var edit: null
     property string style: ""
 
     function loadClip() {
@@ -83,7 +83,7 @@ Page {
         style = memory.style || ""
 
         var composed = facePipeline.composeMemoryClip(memoryId)
-        clip = (composed && composed.shots && composed.shots.length > 0) ? composed : null
+        edit = (composed && composed.shots && composed.shots.length > 0) ? composed : null
     }
 
     // Written down straight away rather than on leaving the page: trying a
@@ -176,16 +176,16 @@ Page {
             id: stage
             anchors.top: header.bottom
             width: parent.width
-            height: page.clip
-                    ? width / page.clip.aspect + styleRow.height + Theme.paddingLarge
+            height: page.edit
+                    ? width / page.edit.aspect + styleRow.height + Theme.paddingLarge
                     : 0
-            visible: page.clip !== null
+            visible: page.edit !== null
 
             MemoryPlayer {
                 id: clipPlayer
                 width: parent.width
-                height: page.clip ? width / page.clip.aspect : 0
-                clip: page.clip
+                height: page.edit ? width / page.edit.aspect : 0
+                edit: page.edit
             }
 
             MouseArea {
