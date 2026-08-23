@@ -54,6 +54,9 @@ set(SOURCES
     src/facedatabase.cpp
     src/facepipeline.cpp
     src/memorygenerator.cpp
+    src/memorystyle.cpp
+    src/beatgrid.cpp
+    src/memorycomposer.cpp
     src/faceimageprovider.cpp
     src/exifreader.cpp
     src/filehash.cpp
@@ -67,6 +70,10 @@ set(HEADERS
     src/facerecognizer.h
     src/facedatabase.h
     src/facepipeline.h
+    src/memorygenerator.h
+    src/memorystyle.h
+    src/beatgrid.h
+    src/memorycomposer.h
     src/faceimageprovider.h
     src/exifreader.h
     src/filehash.h

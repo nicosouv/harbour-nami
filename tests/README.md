@@ -64,6 +64,19 @@ passphrase round-trips a multi-megabyte payload, and a wrong passphrase,
 flipped ciphertext bit, tampered tag or truncated payload all fail instead of
 returning something that looks like data.
 
+`tst_memorycomposer` covers the edit decision list: cuts landing on beats,
+the clip ending before the track, photos sampled across the whole memory
+rather than truncated, crops carrying the output aspect and staying inside
+the photo, the camera resolving onto the faces, and the same input always
+composing the same edit.
+
+Two of its assertions started out too weak to be worth having. Checking that
+a crop contains a face's *centre* passes even when the framing ignores faces
+completely, because a 4:3 photo cropped to 16:9 keeps 94% of its width and
+contains almost any centre. They now check the whole face box, and the
+two-face case uses a portrait photo, where a 16:9 crop keeps 42% of the
+height and the framing actually has a choice to get wrong.
+
 `tst_memorygenerator` covers the six recipes against small explicit
 galleries, with the date injected rather than read from the clock: an
 anniversary recipe tested against "today" would pass in August and fail in
