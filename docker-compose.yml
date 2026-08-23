@@ -24,6 +24,20 @@ services:
     working_dir: /src
     command: bash tests/syntax-check.sh
 
+  # Beat analysis: fetches the clip music and writes each track's grid beside
+  # it. Run once when a track changes, not as part of any build. The grids
+  # are committed, the audio is not.
+  beats:
+    build:
+      context: ./tests
+      dockerfile: Dockerfile.beats
+    volumes:
+      - .:/src
+    working_dir: /src
+    command: >
+      bash -c "bash media/download_tracks.sh
+      && python3 scripts/analyze_track.py"
+
   # The recognition engine end to end. Its own image (OpenCV >= 4.8) and its
   # own downloads: the ML models and the reference portraits, both checksum
   # pinned and skipped when already present.

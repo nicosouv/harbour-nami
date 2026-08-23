@@ -1,7 +1,13 @@
 # Clip music
 
-Empty on purpose: the tracks are supplied separately from the code, and the
-app runs without them. A style whose audio has not landed plays silently
+```
+docker compose run --rm beats
+```
+
+fetches the four tracks and writes each one's beat grid beside it. The audio
+is gitignored, the grids are committed.
+
+The app runs without any of it: a style whose audio is missing plays silently
 against an even grid at its own fallback tempo, which is enough to see the
 edit working.
 
@@ -11,8 +17,8 @@ Two files per track, named after the style that opens on it
 (`sentimental`, `energetic`, `polaroid`, `bauhaus`):
 
 ```
-sentimental.opus     the audio (.opus, .ogg, .mp3 or .m4a)
-sentimental.json     its beat grid
+sentimental.ogg      the audio (.opus, .ogg, .mp3 or .m4a), fetched
+sentimental.json     its beat grid, committed
 ```
 
 ## The beat grid
@@ -33,8 +39,16 @@ signal processing and the RPM carries no DSP library.
 
 - `beats` are milliseconds from the start of the file. Every cut lands on
   one of these, which is the whole point of shipping them.
-- `sections` mark where the track's energy changes, 0 quiet to 1 loudest.
-  The energetic style halves its shots above 0.6.
+- `sections` mark where the track's energy changes, as **where the track sits
+  between its own quietest and loudest moment**, not as an absolute loudness.
+  The energetic style halves its shots above 0.6, and that question only
+  means anything relative to the track being asked about. Measured
+  absolutely, the answer was never yes on any of the four tracks here: how
+  hot a recording was mastered decided it, rather than whether the music
+  lifts. A track with no dynamics reads as 0 throughout rather than having
+  its noise floor stretched into a false crescendo.
+- Sections stop at `safe_out_ms`. Past there is dead weight in a file that
+  gets committed.
 - `safe_out_ms` is where a clip has to have ended. Past it the track is
   fading out, and a shot still running looks like a mistake.
 
@@ -46,5 +60,23 @@ two beats is treated as absent.
 CC0 only. CC-BY would force an attribution into a clip the user posts
 publicly, which is friction and a risk they did not sign up for.
 
-Each track needs an entry in `MUSIC-LICENSES.md` at the repository root with
-its source, author, licence and sha256.
+Sources, authors, licences and checksums are in `MUSIC-LICENSES.md` at the
+repository root, along with what still needs doing to the current four.
+
+## What the tracks produce today
+
+40 photos, composed against the real grids:
+
+| Style | Tempo | Shots | Length | Per shot |
+| --- | --- | --- | --- | --- |
+| sentimental | 69.8 bpm | 25 | 86s | 3.4s |
+| energetic | 152.0 bpm | 40 | 32s | 0.8s |
+| polaroid | 89.1 bpm | 40 | 53s | 1.3s |
+| bauhaus | 129.2 bpm | 40 | 37s | 0.9s |
+
+One thing that measurement turned up: the energetic clip ends at 32 seconds,
+and its track's loud part starts at 36. The composer always opens on the
+first beat of the file, so a short clip against a long track plays the intro
+and stops before the music arrives. Choosing a start point by energy, the
+way the end already respects `safe_out_ms`, is the fix, and it is a decision
+about how clips should feel rather than a bug to patch in passing.
