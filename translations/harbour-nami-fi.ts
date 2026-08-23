@@ -536,28 +536,39 @@
 <context>
     <name>MemoriesPage</name>
     <message>
-        <source>Photos from around this time in previous years</source>
-        <translation>Kuvia tältä ajalta aiempina vuosina</translation>
-    </message>
-    <message>
-        <source> year ago</source>
-        <translation> vuosi sitten</translation>
-    </message>
-    <message>
-        <source> years ago</source>
-        <translation> vuotta sitten</translation>
-    </message>
-    <message>
         <source>Memories</source>
         <translation>Muistot</translation>
     </message>
     <message>
-        <source>No memories</source>
-        <translation>Ei muistoja</translation>
+        <source>Hide</source>
+        <translation>Piilota</translation>
     </message>
     <message>
-        <source>No photos found from this day in previous years</source>
-        <translation>Ei kuvia tältä päivältä aiemmilta vuosilta</translation>
+        <source>Hiding %1</source>
+        <translation>Piilotetaan %1</translation>
+    </message>
+    <message>
+        <source>Look for new memories</source>
+        <translation>Etsi uusia muistoja</translation>
+    </message>
+    <message>
+        <source>No memories yet</source>
+        <translation>Ei vielä muistoja</translation>
+    </message>
+    <message>
+        <source>They appear once your gallery has been scanned</source>
+        <translation>Ne ilmestyvät, kun galleria on käyty läpi</translation>
+    </message>
+</context>
+<context>
+    <name>MemoryLabels</name>
+    <message>
+        <source>A year ago</source>
+        <translation>Vuosi sitten</translation>
+    </message>
+    <message>
+        <source>%1 years ago</source>
+        <translation>%1 vuotta sitten</translation>
     </message>
     <message>
         <source>photo</source>
@@ -566,10 +577,6 @@
     <message>
         <source>photos</source>
         <translation>kuvaa</translation>
-    </message>
-    <message>
-        <source>Trip: %1</source>
-        <translation>Matka: %1</translation>
     </message>
 </context>
 <context>

@@ -217,6 +217,61 @@ check('mosaic: empty and degenerate inputs give no rows', () => {
            'zero width');
 });
 
+/* ---------------- memories ---------------- */
+
+const memories = loadQmlJs('qml/js/memories.js');
+
+check('memories: only the computed kinds need rewriting', () => {
+    // trip, person and duo carry a title that is already the user's own
+    // words, and translating those would be wrong in any language
+    assert(memories.hasComputedTitle('anniversary'));
+    assert(memories.hasComputedTitle('month'));
+    assert(memories.hasComputedTitle('event'));
+    assert(!memories.hasComputedTitle('trip'));
+    assert(!memories.hasComputedTitle('person'));
+    assert(!memories.hasComputedTitle('duo'));
+});
+
+check('memories: years ago counts from now, not from a stored value', () => {
+    const memory = { kind: 'anniversary', source_key: '2023' };
+    // The same row has to read differently once the year turns, which is
+    // exactly what a title rendered into the database could not do
+    assert(memories.yearsAgo(memory, new Date(2026, 5, 15)) === 3, '2026');
+    assert(memories.yearsAgo(memory, new Date(2027, 0, 2)) === 4, '2027');
+});
+
+check('memories: a month key becomes the first of that month', () => {
+    const date = memories.monthDate({ kind: 'month', source_key: '2026-05' });
+    assert(date.getFullYear() === 2026 && date.getMonth() === 4
+           && date.getDate() === 1, `got ${date}`);
+});
+
+check('memories: an event key becomes that day', () => {
+    const date = memories.eventDate({ kind: 'event', source_key: '2025-09-20' });
+    assert(date.getFullYear() === 2025 && date.getMonth() === 8
+           && date.getDate() === 20, `got ${date}`);
+});
+
+check('memories: a nonsense key yields no date rather than a wrong one', () => {
+    assert(memories.monthDate({ kind: 'month', source_key: '2026-13' }) === null, 'month 13');
+    assert(memories.monthDate({ kind: 'month', source_key: 'later' }) === null, 'not a date');
+    // Date would silently roll this over to 2 March
+    assert(memories.eventDate({ kind: 'event', source_key: '2025-02-30' }) === null, 'Feb 30');
+    assert(memories.eventDate({ kind: 'event', source_key: '2025-09' }) === null, 'no day');
+    assert(memories.monthDate({ kind: 'trip', source_key: '7' }) === null, 'wrong kind');
+});
+
+check('memories: the subject date falls back to sort_date', () => {
+    // A trip's source_key is an id, so the only date it has is the one the
+    // generator stored
+    const stamp = Math.floor(new Date(2025, 3, 10).getTime() / 1000);
+    const date = memories.subjectDate({ kind: 'trip', source_key: '7', timestamp: stamp });
+    assert(date.getFullYear() === 2025 && date.getMonth() === 3, `got ${date}`);
+
+    assert(memories.subjectDate({ kind: 'trip', source_key: '7' }) === null, 'no date at all');
+    assert(memories.subjectDate(null) === null, 'no memory');
+});
+
 /* ---------------- report ---------------- */
 
 for (const failure of failures) {

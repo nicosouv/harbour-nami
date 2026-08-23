@@ -498,24 +498,39 @@
 <context>
     <name>MemoriesPage</name>
     <message>
-        <source> year ago</source>
-        <translation> år siden</translation>
-    </message>
-    <message>
-        <source> years ago</source>
-        <translation> år siden</translation>
-    </message>
-    <message>
         <source>Memories</source>
         <translation>Minner</translation>
     </message>
     <message>
-        <source>No memories</source>
-        <translation>Ingen minner</translation>
+        <source>Hide</source>
+        <translation>Skjul</translation>
     </message>
     <message>
-        <source>No photos found from this day in previous years</source>
-        <translation>Ingen bilder funnet fra denne dagen i tidligere år</translation>
+        <source>Hiding %1</source>
+        <translation>Skjuler %1</translation>
+    </message>
+    <message>
+        <source>Look for new memories</source>
+        <translation>Se etter nye minner</translation>
+    </message>
+    <message>
+        <source>No memories yet</source>
+        <translation>Ingen minner ennå</translation>
+    </message>
+    <message>
+        <source>They appear once your gallery has been scanned</source>
+        <translation>De dukker opp når galleriet er skannet</translation>
+    </message>
+</context>
+<context>
+    <name>MemoryLabels</name>
+    <message>
+        <source>A year ago</source>
+        <translation>For ett år siden</translation>
+    </message>
+    <message>
+        <source>%1 years ago</source>
+        <translation>For %1 år siden</translation>
     </message>
     <message>
         <source>photo</source>
@@ -524,14 +539,6 @@
     <message>
         <source>photos</source>
         <translation>bilder</translation>
-    </message>
-    <message>
-        <source>Photos from around this time in previous years</source>
-        <translation>Bilder fra denne tiden i tidligere år</translation>
-    </message>
-    <message>
-        <source>Trip: %1</source>
-        <translation>Tur: %1</translation>
     </message>
 </context>
 <context>

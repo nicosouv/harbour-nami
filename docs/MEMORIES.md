@@ -241,6 +241,18 @@ Three known traps:
 - No `ContextMenu` inside a `GridView`: it cannot reflow and draws over the
   neighbouring cells (see the note in `PeoplePage.qml`). Use `ActionSheetPage`.
 
+### One feed, not two
+
+The home shows the best memory full width and the rest in a strip below.
+There is no separate "recent events" feed: trips and busy days are already
+memories, and a second path answering the same question would drift from the
+first. What the strip holds is simply everything the recipes found that is
+not the hero.
+
+The hero decodes its cover from the original file at display size rather
+than through `image://faces/thumb`, whose master is capped at 512px. It is
+the one image on the page big enough for that cap to show.
+
 ### Renaming a page rewrites its translations
 
 Qt keys translations by context, and for QML the context is the file's base
@@ -250,8 +262,12 @@ to English on that page with nothing failing to build.
 
 So the `MainPage` context was split in two, by hand, across all eight `.ts`
 files: the strings `HomePage.qml` uses moved to a `HomePage` context, the
-rest to `PeoplePage`, and only `People` was genuinely new. Worth remembering
-before the next page rename.
+rest to `PeoplePage`, and only `People` was genuinely new.
+
+`scripts/check_translations.py` now catches this, and runs in the static CI
+lane. It compares every `qsTr()` in the QML against the catalogues in both
+directions: strings with no entry, and entries no file asks for any more.
+Writing it turned up two drifts that predated this branch.
 
 ## Memory page and editing
 

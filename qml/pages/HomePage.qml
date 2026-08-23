@@ -1,5 +1,6 @@
 import QtQuick 2.6
 import Sailfish.Silica 1.0
+import "../components"
 import "../js/faceutils.js" as FaceUtils
 
 // The app's first screen: what there is to look at right now. The full
@@ -13,6 +14,20 @@ Page {
     property int totalPeople: 0
     property int totalPhotos: 0
 
+    // The best memory the recipes found, shown full width. One card rather
+    // than a carousel: if the app has something worth remembering today it
+    // should say so once and loudly, not offer ten equal thumbnails.
+    property var heroMemory: null
+
+    // The rest of the memories, which is where trips and busy days surface.
+    // A separate feed of "recent events" would be a second source of truth
+    // for the same question, and the two would drift.
+    property int stripCount: 8
+
+    MemoryLabels {
+        id: memoryLabels
+    }
+
     // pushAttached() must happen once and only once. Guarding on
     // pageStack.depth would depend on whether an attached page counts
     // towards it, which is not worth betting the navigation on.
@@ -24,6 +39,48 @@ Page {
 
     ListModel {
         id: recentPeopleModel
+    }
+
+    ListModel {
+        id: memoriesModel
+    }
+
+    function refreshMemories() {
+        if (!facePipeline || !facePipeline.initialized) return
+
+        // Best first, dismissed ones already left out
+        var all = facePipeline.getMemories()
+        heroMemory = all.length > 0 ? all[0] : null
+
+        // The phrasing is worked out here rather than in the delegates: the
+        // translator is installed once at startup, so a title cannot change
+        // language while the page is alive, and a delegate that formats
+        // dates on every rebind pays for it on every flick
+        var shown = Math.min(all.length - 1, stripCount)
+        for (var i = 0; i < shown; i++) {
+            var memory = all[i + 1]
+            var item = {
+                memory_id: memory.memory_id,
+                cover_photo: memory.cover_photo,
+                display_title: memoryLabels.title(memory),
+                display_subtitle: memoryLabels.subtitle(memory)
+            }
+            if (i < memoriesModel.count) {
+                memoriesModel.set(i, item)
+            } else {
+                memoriesModel.append(item)
+            }
+        }
+        while (memoriesModel.count > Math.max(0, shown)) {
+            memoriesModel.remove(memoriesModel.count - 1)
+        }
+    }
+
+    function openMemory(memoryId, title) {
+        pageStack.push(Qt.resolvedUrl("MemoryDetailPage.qml"), {
+            memoryId: memoryId,
+            title: title
+        })
     }
 
     function refresh() {
@@ -78,13 +135,38 @@ Page {
             pageStack.pushAttached(Qt.resolvedUrl("PeoplePage.qml"))
         }
         refresh()
+        refreshMemories()
     }
 
-    Component.onCompleted: refresh()
+    Component.onCompleted: {
+        refresh()
+        refreshMemories()
+        recipeTimer.start()
+    }
+
+    // The recipes run synchronously and walk a good part of the gallery, so
+    // they are not something to do before the first frame. Throttled to once
+    // a day inside, so this costs one settings lookup on every other launch.
+    Timer {
+        id: recipeTimer
+        interval: 600
+        onTriggered: {
+            if (!facePipeline || !facePipeline.initialized) return
+            if (facePipeline.generateMemories() > 0) {
+                refreshMemories()
+            }
+        }
+    }
 
     Connections {
         target: facePipeline
-        onScanCompleted: refresh()
+        onScanCompleted: {
+            refresh()
+            // A scan is the one moment new photos exist, so it is worth
+            // asking the recipes again rather than waiting for tomorrow
+            facePipeline.generateMemories(true)
+            refreshMemories()
+        }
     }
 
     SilicaFlickable {
@@ -158,6 +240,139 @@ Page {
                     color: Theme.secondaryHighlightColor
                     font.pixelSize: Theme.fontSizeSmall
                     wrapMode: Text.WordWrap
+                }
+            }
+
+            // The memory of the day. Full width, no frame, no rounded
+            // corners: the photograph is the card.
+            Item {
+                id: hero
+                width: parent.width
+                height: width * 0.5625
+                visible: heroMemory !== null
+
+                Image {
+                    id: heroImage
+                    anchors.fill: parent
+                    source: heroMemory ? "file://" + heroMemory.cover_photo : ""
+                    fillMode: Image.PreserveAspectCrop
+                    // The only image on the page large enough for the 512px
+                    // thumbnail cache to show, so it is decoded from the
+                    // original at the size it is drawn
+                    sourceSize.width: hero.width
+                    autoTransform: true
+                    asynchronous: true
+                    clip: true
+                    opacity: heroArea.pressed ? 0.6 : 1.0
+                    Behavior on opacity { FadeAnimation {} }
+                }
+
+                // The title has to stay readable over a photo nobody chose
+                // for its contrast
+                Rectangle {
+                    anchors {
+                        left: parent.left
+                        right: parent.right
+                        bottom: parent.bottom
+                    }
+                    height: parent.height * 0.6
+                    gradient: Gradient {
+                        GradientStop { position: 0.0; color: "transparent" }
+                        GradientStop { position: 1.0; color: Theme.rgba("black", 0.8) }
+                    }
+                }
+
+                Column {
+                    anchors {
+                        left: parent.left
+                        right: parent.right
+                        bottom: parent.bottom
+                        leftMargin: Theme.horizontalPageMargin
+                        rightMargin: Theme.horizontalPageMargin
+                        bottomMargin: Theme.paddingLarge
+                    }
+
+                    Label {
+                        width: parent.width
+                        text: memoryLabels.title(heroMemory)
+                        color: "white"
+                        font.pixelSize: Theme.fontSizeLarge
+                        truncationMode: TruncationMode.Fade
+                    }
+
+                    Label {
+                        width: parent.width
+                        text: memoryLabels.subtitle(heroMemory)
+                        color: Theme.rgba("white", 0.7)
+                        font.pixelSize: Theme.fontSizeExtraSmall
+                        truncationMode: TruncationMode.Fade
+                        visible: text.length > 0
+                    }
+                }
+
+                MouseArea {
+                    id: heroArea
+                    anchors.fill: parent
+                    onClicked: {
+                        if (heroMemory) {
+                            openMemory(heroMemory.memory_id,
+                                       memoryLabels.title(heroMemory))
+                        }
+                    }
+                }
+            }
+
+            // Everything else the recipes found: trips, busy days, people.
+            // No section heading, same reasoning as the people row below.
+            ListView {
+                id: memoryStrip
+
+                property real cardWidth: page.width * 0.44
+
+                width: parent.width
+                height: cardWidth * 0.66 + Theme.itemSizeExtraSmall
+                visible: count > 0
+
+                orientation: ListView.Horizontal
+                flickableDirection: Flickable.HorizontalFlick
+                boundsBehavior: Flickable.StopAtBounds
+                spacing: Theme.paddingMedium
+                clip: true
+                model: memoriesModel
+
+                header: Item { width: Theme.horizontalPageMargin; height: 1 }
+                footer: Item { width: Theme.horizontalPageMargin; height: 1 }
+
+                delegate: BackgroundItem {
+                    id: memoryCard
+                    width: memoryStrip.cardWidth
+                    height: memoryStrip.height
+
+                    Column {
+                        width: parent.width
+                        spacing: Theme.paddingSmall
+
+                        Image {
+                            width: parent.width
+                            height: memoryStrip.cardWidth * 0.66
+                            source: FaceUtils.thumbUrl(model.cover_photo)
+                            fillMode: Image.PreserveAspectCrop
+                            autoTransform: true
+                            clip: true
+                            asynchronous: true
+                        }
+
+                        Label {
+                            width: parent.width
+                            text: model.display_title
+                            color: memoryCard.highlighted ? Theme.highlightColor
+                                                          : Theme.primaryColor
+                            font.pixelSize: Theme.fontSizeExtraSmall
+                            truncationMode: TruncationMode.Fade
+                        }
+                    }
+
+                    onClicked: openMemory(model.memory_id, model.display_title)
                 }
             }
 
