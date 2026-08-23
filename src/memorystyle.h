@@ -63,6 +63,11 @@ struct MemoryStyle {
     // Which bundled track the style opens on, until the user picks another
     QString defaultTrackId;
 
+    // Tempo to fall back on when a track's analysis is not there. It exists
+    // so the whole feature works before the music does: the styles still cut
+    // at visibly different rates against an even grid.
+    double fallbackBpm = 100.0;
+
     bool isValid() const { return !id.isEmpty() && beatsPerShot > 0; }
 };
 

@@ -1557,6 +1557,165 @@ bool FacePipeline::deleteMemory(int memoryId)
     return m_database->deleteMemory(memoryId);
 }
 
+// === Clips ===
+
+namespace {
+
+QString transitionName(Transition transition)
+{
+    switch (transition) {
+    case Transition::Dissolve: return QStringLiteral("dissolve");
+    case Transition::Wipe:     return QStringLiteral("wipe");
+    case Transition::Drop:     return QStringLiteral("drop");
+    case Transition::Cut:      break;
+    }
+    return QStringLiteral("cut");
+}
+
+// Written into the map rather than merged in: QMap::unite() appends a second
+// value under an existing key instead of replacing it, which is not what
+// merging two maps looks like it does
+void addRect(QVariantMap &map, const QRectF &rect, const QString &prefix)
+{
+    map[prefix + "_x"] = rect.x();
+    map[prefix + "_y"] = rect.y();
+    map[prefix + "_w"] = rect.width();
+    map[prefix + "_h"] = rect.height();
+}
+
+}  // namespace
+
+QString FacePipeline::trackPath(const QString &trackId)
+{
+    if (m_mediaDir.isEmpty() || trackId.isEmpty()) {
+        return QString();
+    }
+
+    // The tracks are supplied separately from the code, so any of these may
+    // simply not be there yet
+    for (const QString &extension : { ".opus", ".ogg", ".mp3", ".m4a" }) {
+        const QString path = m_mediaDir + "/" + trackId + extension;
+        if (QFile::exists(path)) {
+            return path;
+        }
+    }
+    return QString();
+}
+
+QVariantList FacePipeline::memoryStyles()
+{
+    QVariantList result;
+    for (const MemoryStyle &style : MemoryStyles::all()) {
+        QVariantMap map;
+        map["id"] = style.id;
+        map["default_track_id"] = style.defaultTrackId;
+        result.append(map);
+    }
+    return result;
+}
+
+QVariantMap FacePipeline::composeMemoryClip(int memoryId, const QString &styleId)
+{
+    QVariantMap result;
+
+    if (!m_initialized || !m_database) {
+        return result;
+    }
+
+    const Memory memory = m_database->getMemory(memoryId);
+    if (memory.id <= 0) {
+        return result;
+    }
+
+    MemoryStyle style = MemoryStyles::byId(styleId.isEmpty() ? memory.style : styleId);
+    if (!style.isValid()) {
+        // A memory naming a style that no longer exists still has to play
+        style = MemoryStyles::byId(MemoryStyles::fallbackId());
+    }
+
+    const QHash<int, QVector<QRectF>> faces = m_database->faceBoxesForMemory(memoryId);
+
+    QVector<ComposerPhoto> photos;
+    for (const MemoryPhoto &entry : m_database->getMemoryPhotos(memoryId, true)) {
+        ComposerPhoto photo;
+        photo.filePath = entry.photo.filePath;
+        photo.size = QSize(entry.photo.width, entry.photo.height);
+        photo.faces = faces.value(entry.photo.id);
+
+        // A photo whose dimensions were never recorded cannot be framed, and
+        // guessing them would crop somebody in half
+        if (photo.size.width() > 0 && photo.size.height() > 0) {
+            photos.append(photo);
+        }
+    }
+
+    const QString trackId = memory.trackId.isEmpty() ? style.defaultTrackId
+                                                     : memory.trackId;
+    const BeatGrid grid = loadBeatGrid(trackId, style);
+
+    const Clip clip = MemoryComposer::compose(photos, style, grid);
+    if (clip.isEmpty()) {
+        return result;
+    }
+
+    QVariantList shots;
+    for (const Shot &shot : clip.shots) {
+        QVariantMap map;
+        map["file_path"] = shot.filePath;
+        map["start_ms"] = shot.startMs;
+        map["duration_ms"] = shot.durationMs;
+        map["transition"] = transitionName(shot.transitionIn);
+        map["transition_ms"] = shot.transitionMs;
+        addRect(map, shot.rectFrom, QStringLiteral("from"));
+        addRect(map, shot.rectTo, QStringLiteral("to"));
+        shots.append(map);
+    }
+
+    QVariantMap grade;
+    grade["warmth"] = clip.grade.warmth;
+    grade["contrast"] = clip.grade.contrast;
+    grade["saturation"] = clip.grade.saturation;
+    grade["vignette"] = clip.grade.vignette;
+    grade["grain"] = clip.grade.grain;
+
+    result["duration_ms"] = clip.durationMs;
+    result["track_start_ms"] = clip.trackStartMs;
+    result["style"] = clip.styleId;
+    result["track_id"] = clip.trackId;
+    result["track_path"] = trackPath(clip.trackId);
+    result["aspect"] = clip.aspect;
+    result["grade"] = grade;
+    result["shots"] = shots;
+    return result;
+}
+
+BeatGrid FacePipeline::loadBeatGrid(const QString &trackId, const MemoryStyle &style)
+{
+    // Computed off the device and shipped as JSON next to the audio, so
+    // nothing here does any signal processing
+    if (!m_mediaDir.isEmpty() && !trackId.isEmpty()) {
+        QFile file(m_mediaDir + "/" + trackId + ".json");
+        if (file.open(QIODevice::ReadOnly)) {
+            const QJsonDocument document = QJsonDocument::fromJson(file.readAll());
+            file.close();
+
+            BeatGrid grid = BeatGrid::fromJson(document.object());
+            if (grid.trackId.isEmpty()) {
+                grid.trackId = trackId;
+            }
+            if (grid.isValid()) {
+                return grid;
+            }
+            qCWarning(lcNami) << "Unusable beat grid for track" << trackId;
+        }
+    }
+
+    // No analysis: an even grid at the style's own tempo. The clip still
+    // cuts in time with itself, which is most of the effect, and the whole
+    // feature works before the music does.
+    return BeatGrid::even(trackId, style.fallbackBpm, 90000);
+}
+
 QString FacePipeline::exportData()
 {
     if (!m_initialized || !m_database) {

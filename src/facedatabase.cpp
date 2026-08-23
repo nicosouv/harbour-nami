@@ -2424,6 +2424,36 @@ QVector<MemoryCandidate> FaceDatabase::photosInMonth(int year, int month)
     return candidates;
 }
 
+QHash<int, QVector<QRectF>> FaceDatabase::faceBoxesForMemory(int memoryId)
+{
+    QHash<int, QVector<QRectF>> boxes;
+
+    QSqlQuery query(m_db);
+    query.prepare(R"(
+        SELECT f.photo_id, f.bbox_x, f.bbox_y, f.bbox_width, f.bbox_height
+        FROM faces f
+        JOIN memory_photos mp ON mp.photo_id = f.photo_id
+        WHERE mp.memory_id = :memory_id AND f.ignored = 0
+        ORDER BY f.photo_id
+    )");
+    query.bindValue(":memory_id", memoryId);
+
+    if (!query.exec()) {
+        emit error("Failed to read a memory's face boxes: " + query.lastError().text());
+        return boxes;
+    }
+
+    while (query.next()) {
+        boxes[query.value("photo_id").toInt()].append(
+            QRectF(query.value("bbox_x").toDouble(),
+                   query.value("bbox_y").toDouble(),
+                   query.value("bbox_width").toDouble(),
+                   query.value("bbox_height").toDouble()));
+    }
+
+    return boxes;
+}
+
 // === Recent photos ===
 
 QVector<Photo> FaceDatabase::getRecentPhotos(int limit)

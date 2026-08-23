@@ -27,6 +27,7 @@ private slots:
     void aMemoryWithNoPhotosIsNotListed();
     void dismissedMemoriesAreHiddenButStillRegenerated();
     void pruningAPhotoTakesItOutOfItsMemories();
+    void faceBoxesComeBackForTheWholeMemoryAtOnce();
 
 private:
     QString makePhotoFile(const QString &name);
@@ -231,6 +232,34 @@ void TstMemories::pruningAPhotoTakesItOutOfItsMemories()
     const QVector<MemoryPhoto> photos = m_db->getMemoryPhotos(id);
     QCOMPARE(photos.size(), 1);
     QCOMPARE(photos.first().photo.id, kept);
+}
+
+void TstMemories::faceBoxesComeBackForTheWholeMemoryAtOnce()
+{
+    const int withFaces = addPhoto("people.jpg", 1);
+    const int scenery = addPhoto("hills.jpg", 2);
+    const int outside = addPhoto("elsewhere.jpg", 3);
+
+    const FaceEmbedding embedding(1, 0.5f);
+    m_db->addFace(withFaces, QRectF(0.10, 0.20, 0.12, 0.16), 0.95f, embedding);
+    m_db->addFace(withFaces, QRectF(0.60, 0.22, 0.11, 0.15), 0.94f, embedding);
+    // A face the user marked as not a face has no say in how a shot is framed
+    const int ignored = m_db->addFace(withFaces, QRectF(0.9, 0.9, 0.05, 0.05),
+                                      0.81f, embedding);
+    m_db->setFaceIgnored(ignored, true);
+    // And this one belongs to a photo that is not part of the memory
+    m_db->addFace(outside, QRectF(0.4, 0.4, 0.1, 0.1), 0.93f, embedding);
+
+    const int id = m_db->upsertMemory(recipeMemory(), { withFaces, scenery });
+    QVERIFY(id > 0);
+
+    const QHash<int, QVector<QRectF>> boxes = m_db->faceBoxesForMemory(id);
+
+    QCOMPARE(boxes.value(withFaces).size(), 2);
+    // A photo of nobody is simply absent rather than present and empty
+    QVERIFY(!boxes.contains(scenery));
+    QVERIFY(!boxes.contains(outside));
+    QCOMPARE(boxes.value(withFaces).first(), QRectF(0.10, 0.20, 0.12, 0.16));
 }
 
 QTEST_MAIN(TstMemories)

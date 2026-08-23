@@ -45,6 +45,10 @@ Requires:
   - nemo-qml-plugin-contacts-qt5
   - nemo-qml-plugin-dbus-qt5
   - openssl-libs
+  # Clip soundtrack. Only qml/components/ClipAudio.qml imports it, and that
+  # file is loaded through a Loader, so a device without the plugin plays
+  # clips silently rather than failing to open the page.
+  - qt5-qtdeclarative-import-multimedia
 
 # All installed files
 Files:

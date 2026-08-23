@@ -10,6 +10,7 @@
 #include "facedetector.h"
 #include "facerecognizer.h"
 #include "facedatabase.h"
+#include "memorycomposer.h"
 
 /**
  * @brief Processing result for a single photo
@@ -563,6 +564,43 @@ public:
      */
     Q_INVOKABLE bool deleteMemory(int memoryId);
 
+    /**
+     * @brief Compose a memory into an edit the player can run
+     *
+     * The map holds duration_ms, track_start_ms, style, track_id, aspect, a
+     * grade, and a shots list of { file_path, start_ms, duration_ms,
+     * transition, transition_ms, from_x/y/w/h, to_x/y/w/h }. Rectangles are
+     * normalized crops in the source photo, and the shot moves from the
+     * first to the second.
+     *
+     * Empty when the memory has too few photos, or when the track cannot
+     * hold a single shot.
+     *
+     * @param styleId Composes with this style instead of the stored one, so
+     *        a picker can preview without writing anything down
+     */
+    Q_INVOKABLE QVariantMap composeMemoryClip(int memoryId,
+                                              const QString &styleId = QString());
+
+    /**
+     * @brief The clip styles, in the order a picker should offer them
+     * @return List of maps with id and default_track_id
+     */
+    Q_INVOKABLE QVariantList memoryStyles();
+
+    /**
+     * @brief Absolute path of a bundled track, empty when it is not there
+     *
+     * The tracks are supplied separately from the code, so a style whose
+     * audio has not landed yet must play silently rather than not at all.
+     */
+    Q_INVOKABLE QString trackPath(const QString &trackId);
+
+    /**
+     * @brief Where the bundled music and beat grids live
+     */
+    void setMediaDir(const QString &dir) { m_mediaDir = dir; }
+
     // === Property getters ===
 
     bool isInitialized() const { return m_initialized; }
@@ -594,9 +632,18 @@ signals:
     void hashBackfillCompleted(int count);
 
 private:
+    /**
+     * @brief The track's analysed beat grid, or an even one at the style's
+     *        tempo when there is none
+     */
+    BeatGrid loadBeatGrid(const QString &trackId, const MemoryStyle &style);
+
     FaceDetector *m_detector;
     FaceRecognizer *m_recognizer;
     FaceDatabase *m_database;
+
+    // Bundled music and beat grids; set by main.cpp, empty in tests
+    QString m_mediaDir;
 
     bool m_initialized;
     bool m_processing;

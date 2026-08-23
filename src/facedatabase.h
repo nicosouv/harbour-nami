@@ -698,6 +698,16 @@ public:
      */
     QVector<MemoryCandidate> photosInMonth(int year, int month);
 
+    /**
+     * @brief Every face box in a memory's photos, keyed by photo id
+     *
+     * One query for the whole memory rather than one per photo: composing a
+     * clip needs all forty at once, and the boxes are what let the camera
+     * move end on somebody's face instead of on the middle of the frame.
+     * Embeddings are deliberately not read; nothing here compares anyone.
+     */
+    QHash<int, QVector<QRectF>> faceBoxesForMemory(int memoryId);
+
     // === Recent photos (cover page) ===
 
     /**
