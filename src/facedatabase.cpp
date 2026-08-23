@@ -2184,6 +2184,246 @@ bool FaceDatabase::deleteMemory(int memoryId)
     return query.exec() && query.numRowsAffected() > 0;
 }
 
+// === Memory recipes ===
+
+namespace {
+
+// What every recipe selects. face_count makes photos of people outrank
+// scenery when a memory has more candidates than it can hold. Photos
+// without a usable date are excluded throughout: a memory is a moment, and
+// one that cannot be placed in time belongs to no recipe.
+const char *kCandidateSelect = R"(
+    SELECT p.id AS photo_id, p.date_taken,
+           (SELECT COUNT(*) FROM faces f
+             WHERE f.photo_id = p.id AND f.person_id > 0) AS face_count
+    FROM photos p
+    WHERE p.date_taken IS NOT NULL AND p.date_taken != ''
+)";
+
+MemoryCandidate readCandidateRow(const QSqlQuery &query)
+{
+    MemoryCandidate candidate;
+    candidate.photoId = query.value("photo_id").toInt();
+    candidate.dateTaken = QDateTime::fromString(query.value("date_taken").toString(),
+                                                Qt::ISODate);
+    candidate.faceCount = query.value("face_count").toInt();
+    return candidate;
+}
+
+// "?, ?, ?" for an IN list of n bound values
+QString placeholders(int count)
+{
+    QStringList marks;
+    for (int i = 0; i < count; i++) {
+        marks << QStringLiteral("?");
+    }
+    return marks.join(QStringLiteral(", "));
+}
+
+}  // namespace
+
+QVector<MemoryCandidate> FaceDatabase::photosOnMonthDays(const QStringList &monthDays,
+                                                         int beforeYear)
+{
+    QVector<MemoryCandidate> candidates;
+    if (monthDays.isEmpty()) {
+        return candidates;
+    }
+
+    // date_taken is ISO 8601, so the month and day sit at a fixed offset and
+    // the year compares correctly as text
+    QSqlQuery query(m_db);
+    query.prepare(QString::fromUtf8(kCandidateSelect)
+                  + " AND substr(p.date_taken, 6, 5) IN (" + placeholders(monthDays.size()) + ")"
+                  + " AND substr(p.date_taken, 1, 4) < ?"
+                  + " ORDER BY p.date_taken");
+
+    for (const QString &monthDay : monthDays) {
+        query.addBindValue(monthDay);
+    }
+    query.addBindValue(QString::number(beforeYear));
+
+    if (!query.exec()) {
+        emit error("Failed to read anniversary photos: " + query.lastError().text());
+        return candidates;
+    }
+
+    while (query.next()) {
+        candidates.append(readCandidateRow(query));
+    }
+    return candidates;
+}
+
+QVector<MemoryCandidate> FaceDatabase::photosOnDates(const QStringList &dateKeys)
+{
+    QVector<MemoryCandidate> candidates;
+    if (dateKeys.isEmpty()) {
+        return candidates;
+    }
+
+    QSqlQuery query(m_db);
+    query.prepare(QString::fromUtf8(kCandidateSelect)
+                  + " AND substr(p.date_taken, 1, 10) IN (" + placeholders(dateKeys.size()) + ")"
+                  + " ORDER BY p.date_taken");
+
+    for (const QString &dateKey : dateKeys) {
+        query.addBindValue(dateKey);
+    }
+
+    if (!query.exec()) {
+        emit error("Failed to read photos for dates: " + query.lastError().text());
+        return candidates;
+    }
+
+    while (query.next()) {
+        candidates.append(readCandidateRow(query));
+    }
+    return candidates;
+}
+
+QVector<QPair<QString, int>> FaceDatabase::busiestDays(int minPhotos, int limit)
+{
+    QVector<QPair<QString, int>> days;
+
+    QSqlQuery query(m_db);
+    query.prepare(R"(
+        SELECT substr(date_taken, 1, 10) AS day_key, COUNT(*) AS photo_count
+        FROM photos
+        WHERE date_taken IS NOT NULL AND date_taken != ''
+        GROUP BY day_key
+        HAVING photo_count >= :min_photos
+        ORDER BY day_key DESC
+        LIMIT :limit
+    )");
+    query.bindValue(":min_photos", minPhotos);
+    query.bindValue(":limit", limit);
+
+    if (!query.exec()) {
+        emit error("Failed to read busy days: " + query.lastError().text());
+        return days;
+    }
+
+    while (query.next()) {
+        days.append(qMakePair(query.value("day_key").toString(),
+                              query.value("photo_count").toInt()));
+    }
+    return days;
+}
+
+QVector<MemoryCandidate> FaceDatabase::photosOfPerson(int personId, const QDateTime &since)
+{
+    QVector<MemoryCandidate> candidates;
+
+    QString sql = QString::fromUtf8(kCandidateSelect)
+        + " AND p.id IN (SELECT f.photo_id FROM faces f"
+          " WHERE f.person_id = :person_id AND f.ignored = 0)";
+    if (since.isValid()) {
+        sql += " AND p.date_taken >= :since";
+    }
+    sql += " ORDER BY p.date_taken";
+
+    QSqlQuery query(m_db);
+    query.prepare(sql);
+    query.bindValue(":person_id", personId);
+    if (since.isValid()) {
+        query.bindValue(":since", since.toString(Qt::ISODate));
+    }
+
+    if (!query.exec()) {
+        emit error("Failed to read a person's photos: " + query.lastError().text());
+        return candidates;
+    }
+
+    while (query.next()) {
+        candidates.append(readCandidateRow(query));
+    }
+    return candidates;
+}
+
+QVector<PeoplePair> FaceDatabase::peopleSeenTogether(int minPhotos, int limit)
+{
+    QVector<PeoplePair> pairs;
+
+    // The self-join with person_id > person_id yields each pair once, in a
+    // stable order, instead of both (a,b) and (b,a)
+    QSqlQuery query(m_db);
+    query.prepare(R"(
+        SELECT fa.person_id AS person_a, fb.person_id AS person_b,
+               COUNT(DISTINCT fa.photo_id) AS shared_photos
+        FROM faces fa
+        JOIN faces fb ON fb.photo_id = fa.photo_id AND fb.person_id > fa.person_id
+        WHERE fa.person_id > 0 AND fa.ignored = 0 AND fb.ignored = 0
+        GROUP BY person_a, person_b
+        HAVING shared_photos >= :min_photos
+        ORDER BY shared_photos DESC
+        LIMIT :limit
+    )");
+    query.bindValue(":min_photos", minPhotos);
+    query.bindValue(":limit", limit);
+
+    if (!query.exec()) {
+        emit error("Failed to read people seen together: " + query.lastError().text());
+        return pairs;
+    }
+
+    while (query.next()) {
+        PeoplePair pair;
+        pair.personA = query.value("person_a").toInt();
+        pair.personB = query.value("person_b").toInt();
+        pair.sharedPhotos = query.value("shared_photos").toInt();
+        pairs.append(pair);
+    }
+    return pairs;
+}
+
+QVector<MemoryCandidate> FaceDatabase::photosOfPeoplePair(int personA, int personB)
+{
+    QVector<MemoryCandidate> candidates;
+
+    QSqlQuery query(m_db);
+    query.prepare(QString::fromUtf8(kCandidateSelect) + R"(
+          AND p.id IN (SELECT fa.photo_id FROM faces fa
+                       WHERE fa.person_id = :person_a AND fa.ignored = 0)
+          AND p.id IN (SELECT fb.photo_id FROM faces fb
+                       WHERE fb.person_id = :person_b AND fb.ignored = 0)
+        ORDER BY p.date_taken
+    )");
+    query.bindValue(":person_a", personA);
+    query.bindValue(":person_b", personB);
+
+    if (!query.exec()) {
+        emit error("Failed to read a pair's photos: " + query.lastError().text());
+        return candidates;
+    }
+
+    while (query.next()) {
+        candidates.append(readCandidateRow(query));
+    }
+    return candidates;
+}
+
+QVector<MemoryCandidate> FaceDatabase::photosInMonth(int year, int month)
+{
+    QVector<MemoryCandidate> candidates;
+
+    QSqlQuery query(m_db);
+    query.prepare(QString::fromUtf8(kCandidateSelect)
+                  + " AND substr(p.date_taken, 1, 7) = :month_key"
+                  + " ORDER BY p.date_taken");
+    query.bindValue(":month_key", QString("%1-%2").arg(year, 4, 10, QChar('0'))
+                                                  .arg(month, 2, 10, QChar('0')));
+
+    if (!query.exec()) {
+        emit error("Failed to read a month's photos: " + query.lastError().text());
+        return candidates;
+    }
+
+    while (query.next()) {
+        candidates.append(readCandidateRow(query));
+    }
+    return candidates;
+}
+
 // === Recent photos ===
 
 QVector<Photo> FaceDatabase::getRecentPhotos(int limit)

@@ -50,6 +50,13 @@ passphrase round-trips a multi-megabyte payload, and a wrong passphrase,
 flipped ciphertext bit, tampered tag or truncated payload all fail instead of
 returning something that looks like data.
 
+`tst_memorygenerator` covers the six recipes against small explicit
+galleries, with the date injected rather than read from the clock: an
+anniversary recipe tested against "today" would pass in August and fail in
+December. It also pins the two judgement calls, that titles are stored
+untranslated and that a long memory is spread across its whole range instead
+of collapsing onto its busiest day.
+
 `tst_memories` covers the memories storage: regeneration being idempotent,
 the fields a recipe may refresh versus the ones that belong to the user, the
 cover falling back to the first photo, exclusions being undoable, reordering,

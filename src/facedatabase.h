@@ -89,6 +89,28 @@ struct MemoryPhoto {
 };
 
 /**
+ * @brief A photo reduced to what the memory recipes rank and space out
+ *
+ * Deliberately not a Photo: a recipe looks at a few thousand candidates to
+ * keep forty, and it only needs when the photo was taken and whether anyone
+ * it knows is in it.
+ */
+struct MemoryCandidate {
+    int photoId;
+    QDateTime dateTaken;
+    int faceCount;  // identified faces, so photos of people outrank scenery
+};
+
+/**
+ * @brief Two people who keep turning up in the same photos
+ */
+struct PeoplePair {
+    int personA;
+    int personB;
+    int sharedPhotos;
+};
+
+/**
  * @brief Person record
  */
 struct Person {
@@ -628,6 +650,53 @@ public:
      * @brief Drop a memory outright (its recipe may generate it again)
      */
     bool deleteMemory(int memoryId);
+
+    // === Memory recipes (what MemoryGenerator asks for) ===
+    //
+    // Every one of these answers a whole question in SQL rather than handing
+    // back the gallery for C++ to sift: the pages that group photos in
+    // JavaScript already walk every person's every photo on each opening,
+    // and that is exactly what this must not become.
+
+    /**
+     * @brief Photos taken on any of the given "MM-dd" days, before a year
+     *
+     * The caller passes the days rather than a window because the window is
+     * circular: 30 December is three days from 2 January, which SQL date
+     * arithmetic on ISO strings will not tell you.
+     */
+    QVector<MemoryCandidate> photosOnMonthDays(const QStringList &monthDays, int beforeYear);
+
+    /**
+     * @brief Photos taken on any of the given "yyyy-MM-dd" dates
+     */
+    QVector<MemoryCandidate> photosOnDates(const QStringList &dateKeys);
+
+    /**
+     * @brief Day keys holding at least minPhotos photos, most recent first
+     */
+    QVector<QPair<QString, int>> busiestDays(int minPhotos, int limit);
+
+    /**
+     * @brief Photos a person appears in, optionally only since a date
+     */
+    QVector<MemoryCandidate> photosOfPerson(int personId, const QDateTime &since = QDateTime());
+
+    /**
+     * @brief People who appear together on at least minPhotos photos,
+     *        most shared photos first
+     */
+    QVector<PeoplePair> peopleSeenTogether(int minPhotos, int limit);
+
+    /**
+     * @brief Photos both of these people appear in
+     */
+    QVector<MemoryCandidate> photosOfPeoplePair(int personA, int personB);
+
+    /**
+     * @brief Photos taken in a calendar month
+     */
+    QVector<MemoryCandidate> photosInMonth(int year, int month);
 
     // === Recent photos (cover page) ===
 

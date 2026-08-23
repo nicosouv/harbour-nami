@@ -76,22 +76,67 @@ pinned, so no caller has to know about the fallback.
 
 ## Recipes
 
-A `MemoryGenerator` in C++ runs at most once a day (timestamp in `settings`,
-throttled at startup, off the UI thread). It materialises up to ~12 memories:
+`MemoryGenerator` (done in 0.9.0) runs at most once a day, keyed on
+`memories_generated_on` in `settings`. Six recipes:
 
-| kind | trigger | title |
-| --- | --- | --- |
-| `anniversary` | photos within `memories_window_days` of today, previous years | "Il y a 3 ans" |
-| `trip` | a row in `trips` with enough photos | the trip name |
-| `event` | a date key with an unusual photo count | the formatted date |
-| `person` | a person with enough photos in the last 12 months | the person's name |
-| `duo` | two people co-occurring on enough photos | "Marie & Paul" |
-| `month` | the month that just ended | "Juillet 2026" |
+| kind | source_key | trigger | stored title |
+| --- | --- | --- | --- |
+| `anniversary` | the year | photos within 10 days of today's date, in earlier years | `2023` |
+| `trip` | trip id | a row in `trips` with enough photos | the trip name |
+| `event` | `yyyy-MM-dd` | a day with 12+ photos, not in a trip, not hidden | `2025-09-20` |
+| `person` | person id | 12+ photos in the last 12 months | the person's name |
+| `duo` | `a-b` | two people on 8+ photos together | `Marie & Paul` |
+| `month` | `yyyy-MM` | the month that just ended | `2026-05` |
 
-Photo selection per memory: cap at ~40, prefer photos with verified faces,
-spread across the time range, drop near-duplicates by capture time proximity.
-The existing `trips` / `trip_dates` / `event_covers` tables feed the trip and
-event recipes directly.
+Each asks the database one question (`photosOnMonthDays`, `photosOnDates`,
+`busiestDays`, `photosOfPerson`, `peopleSeenTogether`, `photosOfPeoplePair`,
+`photosInMonth`). None of them walks the gallery in C++: the pages that group
+photos in JavaScript already loop over every person's every photo on each
+opening, and this must not become that.
+
+Guards: at least 5 photos or no memory; at most 3 memories per run for the
+recipes that scale with the gallery (event, person, duo); days already
+grouped into a trip belong to the trip, and days the user hid from the
+Events list stay hidden here.
+
+### Titles are stored untranslated
+
+A memory's title lands in the database as raw material, never as a rendered
+phrase: `2023`, `2026-05`, or the trip/person name where the title genuinely
+is user data. QML translates the computed ones at display time.
+
+Storing "Il y a 3 ans" instead would need translation machinery on the C++
+side that this project does not have, and would freeze the title in whatever
+language was active the day the recipe ran. The app has an in-app language
+override, so that is not hypothetical: switching it would leave every
+existing memory speaking the previous language.
+
+The same applies to dates, which is why `subtitle` stays empty for now.
+`kind`, `source_key`, `timestamp` and `photo_count` are enough for QML to
+build every line it shows.
+
+### Choosing which photos make the clip
+
+Capped at 40, and the selection is what makes a two-week trip feel like two
+weeks:
+
+1. **Bursts collapse.** Frames within 3 seconds of each other are one moment;
+   the one with the most known faces survives. Six near-identical frames make
+   a clip stutter in place.
+2. **The range is sliced into 40 buckets** and photos are taken one per
+   bucket, round after round, until the clip is full.
+
+Round-robin rather than proportional sampling is deliberate. A single day
+holding 100 photos out of 140 would otherwise fill three quarters of the
+clip: it has more to show than a quiet day, not thirty times more. Within a
+bucket, photos with identified faces come first.
+
+### Default styles
+
+Assigned by what the memory is about, and only a default (the user's choice
+is never overwritten): people-shaped recipes (anniversary, person, duo) open
+on `sentimental`, activity-shaped ones (trip, event) on `energetic`, and the
+monthly round-up is a survey rather than a story, so it gets `bauhaus`.
 
 ## The clip engine: one EDL, two consumers
 

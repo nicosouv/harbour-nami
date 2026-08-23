@@ -2,6 +2,7 @@
 #include "exifreader.h"
 #include "filehash.h"
 #include "backupcrypto.h"
+#include "memorygenerator.h"
 #include <QDebug>
 #include "logging.h"
 #include <QDir>
@@ -1423,6 +1424,16 @@ QVariantMap memoryToMap(const Memory &memory)
 }
 
 }  // namespace
+
+int FacePipeline::generateMemories(bool force)
+{
+    if (!m_initialized || !m_database) {
+        return 0;
+    }
+
+    MemoryGenerator generator(m_database);
+    return generator.generate(force);
+}
 
 QVariantList FacePipeline::getMemories(bool includeDismissed)
 {
