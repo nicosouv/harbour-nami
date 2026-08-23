@@ -364,7 +364,78 @@
     </message>
 </context>
 <context>
-    <name>MainPage</name>
+    <name>HomePage</name>
+    <message>
+        <source>About</source>
+        <translation>À propos</translation>
+    </message>
+    <message>
+        <source>Automatically organize your photos by faces. All processing happens on your device for complete privacy.</source>
+        <translation>Organisez automatiquement vos photos par visages. Tout le traitement se fait sur votre appareil pour une confidentialité totale.</translation>
+    </message>
+    <message>
+        <source>Events</source>
+        <translation>Événements</translation>
+    </message>
+    <message>
+        <source>Face Recognition Gallery</source>
+        <translation>Galerie à reconnaissance faciale</translation>
+    </message>
+    <message>
+        <source>Identify Faces</source>
+        <translation>Identifier les visages</translation>
+    </message>
+    <message>
+        <source>Memories</source>
+        <translation>Souvenirs</translation>
+    </message>
+    <message>
+        <source>Nami</source>
+        <translation>Nami</translation>
+    </message>
+    <message>
+        <source>No faces detected yet</source>
+        <translation>Aucun visage détecté pour l'instant</translation>
+    </message>
+    <message>
+        <source>Pull down to scan your gallery</source>
+        <translation>Tirez vers le bas pour scanner votre galerie</translation>
+    </message>
+    <message>
+        <source>Scan Gallery</source>
+        <translation>Scanner la galerie</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation>Paramètres</translation>
+    </message>
+    <message>
+        <source>Unknown</source>
+        <translation>Inconnu</translation>
+    </message>
+    <message>
+        <source>people</source>
+        <translation>personnes</translation>
+    </message>
+    <message>
+        <source>person</source>
+        <translation>personne</translation>
+    </message>
+    <message>
+        <source>photo</source>
+        <translation>photo</translation>
+    </message>
+    <message>
+        <source>photos</source>
+        <translation>photos</translation>
+    </message>
+</context>
+<context>
+    <name>PeoplePage</name>
+    <message>
+        <source>People</source>
+        <translation>Personnes</translation>
+    </message>
     <message>
         <source>Merge duplicates?</source>
         <translation>Fusionner les doublons ?</translation>
@@ -390,32 +461,12 @@
         <translation>Dissocier le contact</translation>
     </message>
     <message>
-        <source>About</source>
-        <translation>À propos</translation>
-    </message>
-    <message>
-        <source>Automatically organize your photos by faces. All processing happens on your device for complete privacy.</source>
-        <translation>Organisez automatiquement vos photos par visages. Tout le traitement se fait sur votre appareil pour une confidentialité totale.</translation>
-    </message>
-    <message>
         <source>Delete</source>
         <translation>Supprimer</translation>
     </message>
     <message>
-        <source>Events</source>
-        <translation>Événements</translation>
-    </message>
-    <message>
-        <source>Face Recognition Gallery</source>
-        <translation>Galerie à reconnaissance faciale</translation>
-    </message>
-    <message>
         <source>Identify Faces</source>
         <translation>Identifier les visages</translation>
-    </message>
-    <message>
-        <source>Memories</source>
-        <translation>Souvenirs</translation>
     </message>
     <message>
         <source>Merge</source>
@@ -428,10 +479,6 @@
     <message>
         <source>Merge into...</source>
         <translation>Fusionner avec...</translation>
-    </message>
-    <message>
-        <source>Nami</source>
-        <translation>Nami</translation>
     </message>
     <message>
         <source>No faces detected yet</source>
@@ -452,10 +499,6 @@
     <message>
         <source>Search people</source>
         <translation>Rechercher des personnes</translation>
-    </message>
-    <message>
-        <source>Settings</source>
-        <translation>Paramètres</translation>
     </message>
     <message>
         <source>Unknown</source>

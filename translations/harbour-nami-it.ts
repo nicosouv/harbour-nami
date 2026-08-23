@@ -364,7 +364,78 @@
     </message>
 </context>
 <context>
-    <name>MainPage</name>
+    <name>HomePage</name>
+    <message>
+        <source>About</source>
+        <translation>Informazioni</translation>
+    </message>
+    <message>
+        <source>Automatically organize your photos by faces. All processing happens on your device for complete privacy.</source>
+        <translation>Organizza automaticamente le tue foto per volti. Tutta l'elaborazione avviene sul tuo dispositivo per una privacy totale.</translation>
+    </message>
+    <message>
+        <source>Events</source>
+        <translation>Eventi</translation>
+    </message>
+    <message>
+        <source>Face Recognition Gallery</source>
+        <translation>Galleria con riconoscimento facciale</translation>
+    </message>
+    <message>
+        <source>Identify Faces</source>
+        <translation>Identifica i volti</translation>
+    </message>
+    <message>
+        <source>Memories</source>
+        <translation>Ricordi</translation>
+    </message>
+    <message>
+        <source>Nami</source>
+        <translation>Nami</translation>
+    </message>
+    <message>
+        <source>No faces detected yet</source>
+        <translation>Ancora nessun volto rilevato</translation>
+    </message>
+    <message>
+        <source>Pull down to scan your gallery</source>
+        <translation>Trascina verso il basso per scansionare la galleria</translation>
+    </message>
+    <message>
+        <source>Scan Gallery</source>
+        <translation>Scansiona la galleria</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation>Impostazioni</translation>
+    </message>
+    <message>
+        <source>Unknown</source>
+        <translation>Sconosciuto</translation>
+    </message>
+    <message>
+        <source>people</source>
+        <translation>persone</translation>
+    </message>
+    <message>
+        <source>person</source>
+        <translation>persona</translation>
+    </message>
+    <message>
+        <source>photo</source>
+        <translation>foto</translation>
+    </message>
+    <message>
+        <source>photos</source>
+        <translation>foto</translation>
+    </message>
+</context>
+<context>
+    <name>PeoplePage</name>
+    <message>
+        <source>People</source>
+        <translation>Persone</translation>
+    </message>
     <message>
         <source>Merge duplicates?</source>
         <translation>Unire i duplicati?</translation>
@@ -390,32 +461,12 @@
         <translation>Scollega contatto</translation>
     </message>
     <message>
-        <source>About</source>
-        <translation>Informazioni</translation>
-    </message>
-    <message>
-        <source>Automatically organize your photos by faces. All processing happens on your device for complete privacy.</source>
-        <translation>Organizza automaticamente le tue foto per volti. Tutta l'elaborazione avviene sul tuo dispositivo per una privacy totale.</translation>
-    </message>
-    <message>
         <source>Delete</source>
         <translation>Elimina</translation>
     </message>
     <message>
-        <source>Events</source>
-        <translation>Eventi</translation>
-    </message>
-    <message>
-        <source>Face Recognition Gallery</source>
-        <translation>Galleria con riconoscimento facciale</translation>
-    </message>
-    <message>
         <source>Identify Faces</source>
         <translation>Identifica i volti</translation>
-    </message>
-    <message>
-        <source>Memories</source>
-        <translation>Ricordi</translation>
     </message>
     <message>
         <source>Merge</source>
@@ -428,10 +479,6 @@
     <message>
         <source>Merge into...</source>
         <translation>Unisci a...</translation>
-    </message>
-    <message>
-        <source>Nami</source>
-        <translation>Nami</translation>
     </message>
     <message>
         <source>No faces detected yet</source>
@@ -452,10 +499,6 @@
     <message>
         <source>Search people</source>
         <translation>Cerca persone</translation>
-    </message>
-    <message>
-        <source>Settings</source>
-        <translation>Impostazioni</translation>
     </message>
     <message>
         <source>Unknown</source>

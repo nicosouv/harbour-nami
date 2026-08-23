@@ -326,7 +326,7 @@
     </message>
 </context>
 <context>
-    <name>MainPage</name>
+    <name>HomePage</name>
     <message>
         <source>About</source>
         <translation>Om</translation>
@@ -334,10 +334,6 @@
     <message>
         <source>Automatically organize your photos by faces. All processing happens on your device for complete privacy.</source>
         <translation>Organiser bildene dine automatisk etter ansikter. All behandling skjer på enheten din for fullt personvern.</translation>
-    </message>
-    <message>
-        <source>Delete</source>
-        <translation>Slett</translation>
     </message>
     <message>
         <source>Events</source>
@@ -356,6 +352,61 @@
         <translation>Minner</translation>
     </message>
     <message>
+        <source>Nami</source>
+        <translation>Nami</translation>
+    </message>
+    <message>
+        <source>No faces detected yet</source>
+        <translation>Ingen ansikter oppdaget ennå</translation>
+    </message>
+    <message>
+        <source>Pull down to scan your gallery</source>
+        <translation>Dra ned for å skanne galleriet ditt</translation>
+    </message>
+    <message>
+        <source>Scan Gallery</source>
+        <translation>Skann galleri</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation>Innstillinger</translation>
+    </message>
+    <message>
+        <source>Unknown</source>
+        <translation>Ukjent</translation>
+    </message>
+    <message>
+        <source>people</source>
+        <translation>personer</translation>
+    </message>
+    <message>
+        <source>person</source>
+        <translation>person</translation>
+    </message>
+    <message>
+        <source>photo</source>
+        <translation>bilde</translation>
+    </message>
+    <message>
+        <source>photos</source>
+        <translation>bilder</translation>
+    </message>
+</context>
+<context>
+    <name>PeoplePage</name>
+    <message>
+        <source>People</source>
+        <translation>Personer</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>Slett</translation>
+    </message>
+    <message>
+        <source>Identify Faces</source>
+        <translation>Identifiser ansikter</translation>
+    </message>
+    <message>
         <source>Merge</source>
         <translation>Slå sammen</translation>
     </message>
@@ -366,10 +417,6 @@
     <message>
         <source>Merge into...</source>
         <translation>Slå sammen med...</translation>
-    </message>
-    <message>
-        <source>Nami</source>
-        <translation>Nami</translation>
     </message>
     <message>
         <source>No faces detected yet</source>
@@ -390,10 +437,6 @@
     <message>
         <source>Search people</source>
         <translation>Søk etter personer</translation>
-    </message>
-    <message>
-        <source>Settings</source>
-        <translation>Innstillinger</translation>
     </message>
     <message>
         <source>Unknown</source>

@@ -117,7 +117,7 @@ def check_model_clear(path, lines):
     clear() destroys every delegate at once, including those of a dialog
     still on the page stack and bound to that model - and those handlers
     routinely run while the dialog is being torn down. Update in place with
-    set/append/remove, the way MainPage and IdentifyFacesPage do.
+    set/append/remove, the way PeoplePage and IdentifyFacesPage do.
     """
     shared = shared_models(lines)
     if not shared:

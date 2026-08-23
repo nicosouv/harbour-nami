@@ -136,7 +136,7 @@ Dialog {
                             // accepting this one: stacking a second stack
                             // transition on top of a running one is what the
                             // rest of the app avoids the same way (see
-                            // MainPage.linkContact)
+                            // PeoplePage.linkContact)
                             pageStack.completeAnimation()
                             dialog.accept()
                         }

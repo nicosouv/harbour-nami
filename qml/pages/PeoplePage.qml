@@ -263,10 +263,6 @@ Page {
 
     // === Navigation (shared by both layouts) ===
 
-    function openAbout() { pageStack.push(Qt.resolvedUrl("AboutPage.qml")) }
-    function openSettings() { pageStack.push(Qt.resolvedUrl("SettingsPage.qml")) }
-    function openMemories() { pageStack.push(Qt.resolvedUrl("MemoriesPage.qml")) }
-    function openEvents() { pageStack.push(Qt.resolvedUrl("EventsPage.qml")) }
     function openIdentify() { pageStack.push(Qt.resolvedUrl("IdentifyFacesPage.qml")) }
     function openScan() { pageStack.push(Qt.resolvedUrl("ScanningPage.qml")) }
 
@@ -303,7 +299,7 @@ Page {
             spacing: 0
 
             PageHeader {
-                title: qsTr("Nami")
+                title: qsTr("People")
                 // The counts as a quiet line under the title. A boxed panel
                 // is ornament: hierarchy comes from position and scale.
                 description: totalPeople > 0
@@ -312,35 +308,6 @@ Page {
                        + "  \u00b7  " + totalPhotos + " "
                        + (totalPhotos === 1 ? qsTr("photo") : qsTr("photos")))
                     : ""
-            }
-
-            // What the app is, said once, where it is actually needed: on the
-            // empty library. Kept permanently above the content it describes,
-            // it was store copy occupying the first third of every launch.
-            Column {
-                width: parent.width
-                spacing: Theme.paddingMedium
-                visible: totalPeople === 0
-
-                Item { width: 1; height: Theme.paddingLarge }
-
-                Label {
-                    x: Theme.horizontalPageMargin
-                    width: parent.width - 2 * Theme.horizontalPageMargin
-                    text: qsTr("Face Recognition Gallery")
-                    color: Theme.highlightColor
-                    font.pixelSize: Theme.fontSizeLarge
-                    wrapMode: Text.WordWrap
-                }
-
-                Label {
-                    x: Theme.horizontalPageMargin
-                    width: parent.width - 2 * Theme.horizontalPageMargin
-                    text: qsTr("Automatically organize your photos by faces. All processing happens on your device for complete privacy.")
-                    color: Theme.secondaryHighlightColor
-                    font.pixelSize: Theme.fontSizeSmall
-                    wrapMode: Text.WordWrap
-                }
             }
 
             // Search field
@@ -407,19 +374,10 @@ Page {
             // Keep the view from grabbing focus away from the search field
             currentIndex: -1
 
+            // Only what acts on people. About, Settings, Memories and Events
+            // are the app's own navigation and live on the home page, one
+            // swipe to the right, rather than being repeated on every page.
             PullDownMenu {
-                MenuItem { text: qsTr("About"); onClicked: openAbout() }
-                MenuItem { text: qsTr("Settings"); onClicked: openSettings() }
-                MenuItem {
-                    text: qsTr("Memories")
-                    enabled: facePipeline && facePipeline.initialized
-                    onClicked: openMemories()
-                }
-                MenuItem {
-                    text: qsTr("Events")
-                    enabled: facePipeline && facePipeline.initialized
-                    onClicked: openEvents()
-                }
                 MenuItem {
                     text: qsTr("Identify Faces")
                     enabled: facePipeline && facePipeline.initialized
@@ -570,19 +528,10 @@ Page {
             cellWidth: width / columns
             cellHeight: cellWidth + (dense ? Theme.itemSizeExtraSmall : Theme.itemSizeSmall)
 
+            // Only what acts on people. About, Settings, Memories and Events
+            // are the app's own navigation and live on the home page, one
+            // swipe to the right, rather than being repeated on every page.
             PullDownMenu {
-                MenuItem { text: qsTr("About"); onClicked: openAbout() }
-                MenuItem { text: qsTr("Settings"); onClicked: openSettings() }
-                MenuItem {
-                    text: qsTr("Memories")
-                    enabled: facePipeline && facePipeline.initialized
-                    onClicked: openMemories()
-                }
-                MenuItem {
-                    text: qsTr("Events")
-                    enabled: facePipeline && facePipeline.initialized
-                    onClicked: openEvents()
-                }
                 MenuItem {
                     text: qsTr("Identify Faces")
                     enabled: facePipeline && facePipeline.initialized
