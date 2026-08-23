@@ -114,7 +114,7 @@ Page {
     onCurrentFaceChanged: refreshTimer.restart()
 
     // Updated in place rather than cleared and refilled, the same way
-    // MainPage does it: clear() destroys every delegate at once, including
+    // PeoplePage does it: clear() destroys every delegate at once, including
     // those of a dialog that may still be bound to this model
     function loadPeople() {
         if (!facePipeline || !facePipeline.initialized) return

@@ -16,7 +16,7 @@ recognition quality problem, then performance, security, UI/UX.
    (`image://faces/crop?...`) crops the face bbox with 45% margin from the
    EXIF-oriented photo, disk-cached under `~/.cache/harbour-nami/faces/`
    (owner-only files, wiped by "Clear all data"), optional circular mask.
-   Used on MainPage, ScanResultsPage, SelectPersonDialog and
+   Used on PeoplePage, ScanResultsPage, SelectPersonDialog and
    IdentifyFaceDialog (best face = verified first, then highest similarity,
    via `getPersonBestFace()`).
 4. ~~**Face framing and highlighting in the identify flow**~~ Done: all

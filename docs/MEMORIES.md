@@ -210,26 +210,48 @@ manifest, install rules) is independent of which files land there.
 
 The home becomes a "Today" feed and the people list moves to its own page,
 reached with `pageStack.pushAttached()` (the native Sailfish idiom: swipe left
-from the home).
+from the home). Done in 0.9.0, except the two strips.
 
 ```
-HomePage.qml            (new, becomes the initial page)
+HomePage.qml            (new, the initial page)
   hero memory card      full-bleed 16:9, title, one date line; absent if none
   events strip          horizontal, edge-to-edge, no section title, hidden < 2
-  people row            top N by recency, "All people" leads to PeoplePage
+  people row            top N by recency, most recently photographed first
   pulldown              About, Settings, Memories, Events, Identify, Scan
 
-PeoplePage.qml          (the current MainPage, near verbatim)
+PeoplePage.qml          (the old MainPage, renamed)
   search, sort chips, list/grid layouts, context menus
+  pulldown              Identify, Scan only
 ```
 
-Two known traps:
+The pulldown split is the rule for the whole app: the home carries the app's
+own navigation, and a page carries only what acts on what it shows. Repeating
+About and Settings on every page is how a menu grows to eight items nobody
+reads.
 
-- A horizontal `ListView` inside a vertical `SilicaListView` fights for the
-  flick. Set `flickableDirection: Flickable.HorizontalFlick` and
-  `preventStealing` on the strip.
+The empty-library blurb moved to the home with it. It explains what the app
+is, and the home is where a first launch lands.
+
+Three known traps:
+
+- A horizontal `ListView` inside a vertical `SilicaFlickable` fights for the
+  flick. Set `flickableDirection: Flickable.HorizontalFlick`.
+- `ListView.leftMargin` does not exist on every Qt version this ships
+  against; use `header`/`footer` spacer items for the page margins.
 - No `ContextMenu` inside a `GridView`: it cannot reflow and draws over the
-  neighbouring cells (see the note in `MainPage.qml`). Use `ActionSheetPage`.
+  neighbouring cells (see the note in `PeoplePage.qml`). Use `ActionSheetPage`.
+
+### Renaming a page rewrites its translations
+
+Qt keys translations by context, and for QML the context is the file's base
+name. `MainPage.qml` becoming `PeoplePage.qml` orphaned all 31 of its
+messages in seven locales at once, silently: the app would have fallen back
+to English on that page with nothing failing to build.
+
+So the `MainPage` context was split in two, by hand, across all eight `.ts`
+files: the strings `HomePage.qml` uses moved to a `HomePage` context, the
+rest to `PeoplePage`, and only `People` was genuinely new. Worth remembering
+before the next page rename.
 
 ## Memory page and editing
 

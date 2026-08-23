@@ -364,7 +364,78 @@
     </message>
 </context>
 <context>
-    <name>MainPage</name>
+    <name>HomePage</name>
+    <message>
+        <source>About</source>
+        <translation>Tietoja</translation>
+    </message>
+    <message>
+        <source>Automatically organize your photos by faces. All processing happens on your device for complete privacy.</source>
+        <translation>Järjestä kuvasi automaattisesti kasvojen mukaan. Kaikki käsittely tapahtuu laitteellasi.</translation>
+    </message>
+    <message>
+        <source>Events</source>
+        <translation>Tapahtumat</translation>
+    </message>
+    <message>
+        <source>Face Recognition Gallery</source>
+        <translation>Kasvontunnistusgalleria</translation>
+    </message>
+    <message>
+        <source>Identify Faces</source>
+        <translation>Tunnista kasvot</translation>
+    </message>
+    <message>
+        <source>Memories</source>
+        <translation>Muistot</translation>
+    </message>
+    <message>
+        <source>Nami</source>
+        <translation>Nami</translation>
+    </message>
+    <message>
+        <source>No faces detected yet</source>
+        <translation>Kasvoja ei ole vielä havaittu</translation>
+    </message>
+    <message>
+        <source>Pull down to scan your gallery</source>
+        <translation>Skannaa galleria vetämällä alas</translation>
+    </message>
+    <message>
+        <source>Scan Gallery</source>
+        <translation>Skannaa galleria</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation>Asetukset</translation>
+    </message>
+    <message>
+        <source>Unknown</source>
+        <translation>Tuntematon</translation>
+    </message>
+    <message>
+        <source>people</source>
+        <translation>henkilöä</translation>
+    </message>
+    <message>
+        <source>person</source>
+        <translation>henkilö</translation>
+    </message>
+    <message>
+        <source>photo</source>
+        <translation>kuva</translation>
+    </message>
+    <message>
+        <source>photos</source>
+        <translation>kuvaa</translation>
+    </message>
+</context>
+<context>
+    <name>PeoplePage</name>
+    <message>
+        <source>People</source>
+        <translation>Henkilöt</translation>
+    </message>
     <message>
         <source>Merge duplicates?</source>
         <translation>Yhdistetäänkö kaksoiskappaleet?</translation>
@@ -390,32 +461,12 @@
         <translation>Poista yhteystiedon linkitys</translation>
     </message>
     <message>
-        <source>About</source>
-        <translation>Tietoja</translation>
-    </message>
-    <message>
-        <source>Automatically organize your photos by faces. All processing happens on your device for complete privacy.</source>
-        <translation>Järjestä kuvasi automaattisesti kasvojen mukaan. Kaikki käsittely tapahtuu laitteellasi.</translation>
-    </message>
-    <message>
         <source>Delete</source>
         <translation>Poista</translation>
     </message>
     <message>
-        <source>Events</source>
-        <translation>Tapahtumat</translation>
-    </message>
-    <message>
-        <source>Face Recognition Gallery</source>
-        <translation>Kasvontunnistusgalleria</translation>
-    </message>
-    <message>
         <source>Identify Faces</source>
         <translation>Tunnista kasvot</translation>
-    </message>
-    <message>
-        <source>Memories</source>
-        <translation>Muistot</translation>
     </message>
     <message>
         <source>Merge</source>
@@ -428,10 +479,6 @@
     <message>
         <source>Merge into...</source>
         <translation>Yhdistä...</translation>
-    </message>
-    <message>
-        <source>Nami</source>
-        <translation>Nami</translation>
     </message>
     <message>
         <source>No faces detected yet</source>
@@ -452,10 +499,6 @@
     <message>
         <source>Search people</source>
         <translation>Etsi henkilöitä</translation>
-    </message>
-    <message>
-        <source>Settings</source>
-        <translation>Asetukset</translation>
     </message>
     <message>
         <source>Unknown</source>

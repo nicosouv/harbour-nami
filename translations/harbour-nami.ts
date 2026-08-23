@@ -363,7 +363,78 @@
     </message>
 </context>
 <context>
-    <name>MainPage</name>
+    <name>HomePage</name>
+    <message>
+        <source>About</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Automatically organize your photos by faces. All processing happens on your device for complete privacy.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Events</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Face Recognition Gallery</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Identify Faces</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Memories</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nami</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No faces detected yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pull down to scan your gallery</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scan Gallery</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unknown</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>people</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>person</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>photo</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>photos</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>PeoplePage</name>
+    <message>
+        <source>People</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message>
         <source>Merge duplicates?</source>
         <translation type="unfinished"></translation>
@@ -389,31 +460,11 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>About</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Automatically organize your photos by faces. All processing happens on your device for complete privacy.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Delete</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Events</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Face Recognition Gallery</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Identify Faces</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Memories</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -426,10 +477,6 @@
     </message>
     <message>
         <source>Merge into...</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Nami</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -450,10 +497,6 @@
     </message>
     <message>
         <source>Search people</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Settings</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
