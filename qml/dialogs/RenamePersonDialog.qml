@@ -9,6 +9,11 @@ Dialog {
     // Result read by the caller on accepted
     property string newName: ""
 
+    // Overridable, so the same dialog can rename anything else with a name.
+    // The defaults are what the people list has always shown.
+    property string titleText: qsTr("Rename Person")
+    property string fieldPlaceholder: qsTr("Enter person name")
+
     canAccept: nameField.text.trim().length > 0
 
     onAccepted: newName = nameField.text.trim()
@@ -30,7 +35,7 @@ Dialog {
             Label {
                 x: Theme.horizontalPageMargin
                 width: parent.width - 2 * Theme.horizontalPageMargin
-                text: qsTr("Rename Person")
+                text: dialog.titleText
                 color: Theme.highlightColor
                 font.pixelSize: Theme.fontSizeLarge
                 wrapMode: Text.WordWrap
@@ -40,7 +45,7 @@ Dialog {
                 id: nameField
                 width: parent.width
                 label: qsTr("Name")
-                placeholderText: qsTr("Enter person name")
+                placeholderText: dialog.fieldPlaceholder
                 text: currentName
                 focus: true
 

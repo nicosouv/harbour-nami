@@ -157,6 +157,26 @@
         <source>Select photos</source>
         <translation>Fotos auswählen</translation>
     </message>
+    <message>
+        <source>Edit photos</source>
+        <translation>Fotos bearbeiten</translation>
+    </message>
+    <message>
+        <source>Hide this memory</source>
+        <translation>Diese Erinnerung ausblenden</translation>
+    </message>
+    <message>
+        <source>Hiding %1</source>
+        <translation>%1 wird ausgeblendet</translation>
+    </message>
+    <message>
+        <source>Rename</source>
+        <translation>Umbenennen</translation>
+    </message>
+    <message>
+        <source>Rename memory</source>
+        <translation>Erinnerung umbenennen</translation>
+    </message>
 </context>
 <context>
     <name>EventsPage</name>
@@ -1584,6 +1604,48 @@
     <message>
         <source>Failed to load image</source>
         <translation>Bild konnte nicht geladen werden</translation>
+    </message>
+</context>
+<context>
+    <name>MemoryEditPage</name>
+    <message>
+        <source>Edit photos</source>
+        <translation>Fotos bearbeiten</translation>
+    </message>
+    <message>
+        <source>Leave out of the clip</source>
+        <translation>Aus dem Clip nehmen</translation>
+    </message>
+    <message>
+        <source>No photos</source>
+        <translation>Keine Fotos</translation>
+    </message>
+    <message>
+        <source>Put back in the clip</source>
+        <translation>Wieder in den Clip</translation>
+    </message>
+    <message>
+        <source>Use as cover</source>
+        <translation>Als Titelbild verwenden</translation>
+    </message>
+</context>
+<context>
+    <name>StyleLabels</name>
+    <message>
+        <source>Sentimental</source>
+        <translation>Sentimental</translation>
+    </message>
+    <message>
+        <source>Energetic</source>
+        <translation>Energisch</translation>
+    </message>
+    <message>
+        <source>Polaroid</source>
+        <translation>Polaroid</translation>
+    </message>
+    <message>
+        <source>Bauhaus</source>
+        <translation>Bauhaus</translation>
     </message>
 </context>
 </TS>

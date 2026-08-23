@@ -22,6 +22,7 @@ Page {
 
     PhotoShareAction { id: shareAction }
     PhotoSelection { id: selection }
+    StyleLabels { id: styleLabels }
 
     // Deterministic pseudo-random in [0,1) so the scatter looks organic but
     // stays stable across relayouts
@@ -73,11 +74,56 @@ Page {
     // photos, the style and the track, so keeping a copy would only give it
     // a chance to go stale.
     property var clip: null
+    property string style: ""
 
     function loadClip() {
         if (!facePipeline || !facePipeline.initialized || memoryId <= 0) return
+
+        var memory = facePipeline.getMemory(memoryId)
+        style = memory.style || ""
+
         var composed = facePipeline.composeMemoryClip(memoryId)
         clip = (composed && composed.shots && composed.shots.length > 0) ? composed : null
+    }
+
+    // Written down straight away rather than on leaving the page: trying a
+    // style is a choice, and a choice that survives only until you navigate
+    // away is one the user has to make again every time
+    function chooseStyle(styleId) {
+        if (styleId === style) return
+        facePipeline.setMemoryStyle(memoryId, styleId)
+        clipPlayer.pause()
+        loadClip()
+    }
+
+    function renameMemory() {
+        var dialog = pageStack.push(Qt.resolvedUrl("../dialogs/RenamePersonDialog.qml"), {
+            currentName: page.title,
+            titleText: qsTr("Rename memory")
+        })
+        dialog.accepted.connect(function () {
+            if (facePipeline.renameMemory(memoryId, dialog.newName)) {
+                page.title = dialog.newName
+            }
+        })
+    }
+
+    function editPhotos() {
+        var editor = pageStack.push(Qt.resolvedUrl("MemoryEditPage.qml"), {
+            memoryId: memoryId,
+            memoryTitle: page.title
+        })
+        editor.changed.connect(function () {
+            loadPhotos()
+            loadClip()
+        })
+    }
+
+    function hideMemory() {
+        Remorse.popupAction(page, qsTr("Hiding %1").arg(page.title), function () {
+            facePipeline.setMemoryDismissed(memoryId, true)
+            pageStack.pop()
+        })
     }
 
     Component.onCompleted: {
@@ -100,6 +146,19 @@ Page {
 
         PullDownMenu {
             MenuItem {
+                text: qsTr("Hide this memory")
+                onClicked: hideMemory()
+            }
+            MenuItem {
+                text: qsTr("Edit photos")
+                enabled: photosModel.count > 0
+                onClicked: editPhotos()
+            }
+            MenuItem {
+                text: qsTr("Rename")
+                onClicked: renameMemory()
+            }
+            MenuItem {
                 text: qsTr("Select photos")
                 enabled: photosModel.count > 0 && !selection.active
                 onClicked: selection.begin("")
@@ -117,7 +176,9 @@ Page {
             id: stage
             anchors.top: header.bottom
             width: parent.width
-            height: page.clip ? width / page.clip.aspect + Theme.itemSizeSmall : 0
+            height: page.clip
+                    ? width / page.clip.aspect + styleRow.height + Theme.paddingLarge
+                    : 0
             visible: page.clip !== null
 
             MemoryPlayer {
@@ -155,11 +216,11 @@ Page {
             // A plain line rather than a slider: this is a preview, and the
             // clip is a minute long
             Rectangle {
+                id: progressLine
                 anchors {
                     left: parent.left
                     right: parent.right
                     top: clipPlayer.bottom
-                    topMargin: Theme.paddingMedium
                 }
                 height: 2
                 color: Theme.rgba(Theme.secondaryColor, 0.3)
@@ -170,6 +231,31 @@ Page {
                     width: clipPlayer.durationMs > 0
                            ? parent.width * clipPlayer.positionMs / clipPlayer.durationMs
                            : 0
+                }
+            }
+
+            // The styles, under the thing they change. Picking one recomposes
+            // and plays it: a style is a decision you make by watching it,
+            // not by reading its name.
+            Row {
+                id: styleRow
+                anchors {
+                    left: parent.left
+                    leftMargin: Theme.horizontalPageMargin
+                    top: progressLine.bottom
+                    topMargin: Theme.paddingSmall
+                }
+                spacing: Theme.paddingMedium
+
+                Repeater {
+                    model: facePipeline && facePipeline.initialized
+                           ? facePipeline.memoryStyles() : []
+
+                    FilterChip {
+                        text: styleLabels.name(modelData.id)
+                        selected: page.style === modelData.id
+                        onClicked: page.chooseStyle(modelData.id)
+                    }
                 }
             }
         }

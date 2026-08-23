@@ -1186,6 +1186,26 @@
         <source>Select photos</source>
         <translation>Velg bilder</translation>
     </message>
+    <message>
+        <source>Edit photos</source>
+        <translation>Rediger bildene</translation>
+    </message>
+    <message>
+        <source>Hide this memory</source>
+        <translation>Skjul dette minnet</translation>
+    </message>
+    <message>
+        <source>Hiding %1</source>
+        <translation>Skjuler %1</translation>
+    </message>
+    <message>
+        <source>Rename</source>
+        <translation>Gi nytt navn</translation>
+    </message>
+    <message>
+        <source>Rename memory</source>
+        <translation>Gi minnet nytt navn</translation>
+    </message>
 </context>
 <context>
     <name>PassphraseDialog</name>
@@ -1584,6 +1604,48 @@
     <message>
         <source>Failed to load image</source>
         <translation>Klarte ikke å laste inn bilde</translation>
+    </message>
+</context>
+<context>
+    <name>MemoryEditPage</name>
+    <message>
+        <source>Edit photos</source>
+        <translation>Rediger bildene</translation>
+    </message>
+    <message>
+        <source>Leave out of the clip</source>
+        <translation>Ta ut av klippet</translation>
+    </message>
+    <message>
+        <source>No photos</source>
+        <translation>Ingen bilder</translation>
+    </message>
+    <message>
+        <source>Put back in the clip</source>
+        <translation>Legg tilbake i klippet</translation>
+    </message>
+    <message>
+        <source>Use as cover</source>
+        <translation>Bruk som forside</translation>
+    </message>
+</context>
+<context>
+    <name>StyleLabels</name>
+    <message>
+        <source>Sentimental</source>
+        <translation>Sentimental</translation>
+    </message>
+    <message>
+        <source>Energetic</source>
+        <translation>Energisk</translation>
+    </message>
+    <message>
+        <source>Polaroid</source>
+        <translation>Polaroid</translation>
+    </message>
+    <message>
+        <source>Bauhaus</source>
+        <translation>Bauhaus</translation>
     </message>
 </context>
 </TS>
