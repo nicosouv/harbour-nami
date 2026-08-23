@@ -15,6 +15,8 @@
 #include <QRectF>
 #include <QSize>
 #include <QSet>
+#include <QJsonDocument>
+#include <QJsonObject>
 
 #include "memorycomposer.h"
 #include "memorystyle.h"
@@ -25,6 +27,13 @@ class TstMemoryComposer : public QObject
     Q_OBJECT
 
 private slots:
+    void anEvenGridLandsOnTheTempo();
+    void aGridNeedsTwoBeatsToBeUsable();
+    void theLastUsableBeatStopsAtTheSafeOut();
+    void energyIsWhicheverSectionIsRunning();
+    void aGridReadsBackFromItsJson();
+    void aGridOutOfOrderIsSortedRatherThanTrusted();
+
     void everyStyleIsWellFormed();
 
     void shotsRunBackToBackWithNoGaps();
@@ -70,6 +79,104 @@ QVector<ComposerPhoto> TstMemoryComposer::photos(int count, const QVector<QRectF
 BeatGrid TstMemoryComposer::grid(qint64 durationMs, double bpm)
 {
     return BeatGrid::even(QStringLiteral("test-track"), bpm, durationMs);
+}
+
+void TstMemoryComposer::anEvenGridLandsOnTheTempo()
+{
+    // 120 bpm is a beat every 500ms
+    const BeatGrid beats = BeatGrid::even("track", 120.0, 10000);
+
+    QVERIFY(beats.isValid());
+    QCOMPARE(beats.beats.first(), qint64(0));
+    QCOMPARE(beats.beats.at(1), qint64(500));
+    QCOMPARE(beats.beats.last(), qint64(10000));
+    QCOMPARE(beats.safeOutMs, qint64(10000));
+
+    // Accumulated from the index, so a fractional interval does not drift.
+    // 91 bpm is 659.34ms, which adding up would put the hundredth beat a
+    // third of a second out.
+    const BeatGrid odd = BeatGrid::even("track", 91.0, 120000);
+    QVERIFY(odd.beats.size() > 100);
+    QCOMPARE(odd.beats.at(100), qint64(100 * 60000.0 / 91.0));
+}
+
+void TstMemoryComposer::aGridNeedsTwoBeatsToBeUsable()
+{
+    QVERIFY(!BeatGrid().isValid());
+    QVERIFY(!BeatGrid::even("track", 0.0, 10000).isValid());
+    QVERIFY(!BeatGrid::even("track", 120.0, 0).isValid());
+    // One beat defines no interval to cut on
+    QVERIFY(!BeatGrid::even("track", 120.0, 100).isValid());
+}
+
+void TstMemoryComposer::theLastUsableBeatStopsAtTheSafeOut()
+{
+    BeatGrid beats = BeatGrid::even("track", 120.0, 10000);
+    QCOMPARE(beats.lastUsableBeat(), beats.beats.size() - 1);
+
+    // A track that fades out early: the beats past the fade are still beats,
+    // but a shot must not still be running over them
+    beats.safeOutMs = 2200;
+    QCOMPARE(beats.beats.at(beats.lastUsableBeat()), qint64(2000));
+}
+
+void TstMemoryComposer::energyIsWhicheverSectionIsRunning()
+{
+    BeatGrid beats = BeatGrid::even("track", 120.0, 60000);
+    beats.sections.append(BeatSection{ 1000, 0.2 });
+    beats.sections.append(BeatSection{ 20000, 0.9 });
+    beats.sections.append(BeatSection{ 40000, 0.4 });
+
+    // Before anything is stated there is nothing to go on
+    QCOMPARE(beats.energyAt(0), 0.0);
+    QCOMPARE(beats.energyAt(1000), 0.2);
+    QCOMPARE(beats.energyAt(19999), 0.2);
+    QCOMPARE(beats.energyAt(20000), 0.9);
+    QCOMPARE(beats.energyAt(50000), 0.4);
+}
+
+void TstMemoryComposer::aGridReadsBackFromItsJson()
+{
+    const QByteArray json = R"({
+        "track_id": "sentimental",
+        "bpm": 92.0,
+        "beats": [340, 992, 1644, 2296],
+        "sections": [{"t": 340, "energy": 0.2}, {"t": 1644, "energy": 0.8}],
+        "safe_out_ms": 2296
+    })";
+
+    const BeatGrid beats = BeatGrid::fromJson(
+        QJsonDocument::fromJson(json).object());
+
+    QVERIFY(beats.isValid());
+    QCOMPARE(beats.trackId, QStringLiteral("sentimental"));
+    QCOMPARE(beats.bpm, 92.0);
+    QCOMPARE(beats.beats.size(), 4);
+    QCOMPARE(beats.beats.first(), qint64(340));
+    QCOMPARE(beats.sections.size(), 2);
+    QCOMPARE(beats.energyAt(2000), 0.8);
+    QCOMPARE(beats.safeOutMs, qint64(2296));
+
+    // The grid is written by a script nobody runs by hand, so a malformed
+    // one has to be unusable rather than half-read
+    QVERIFY(!BeatGrid::fromJson(QJsonObject()).isValid());
+}
+
+void TstMemoryComposer::aGridOutOfOrderIsSortedRatherThanTrusted()
+{
+    const QByteArray json = R"({
+        "track_id": "t", "bpm": 120,
+        "beats": [1500, 0, 1000, 500],
+        "sections": [{"t": 1000, "energy": 0.9}, {"t": 0, "energy": 0.1}],
+        "safe_out_ms": 1500
+    })";
+
+    const BeatGrid beats = BeatGrid::fromJson(QJsonDocument::fromJson(json).object());
+
+    // Out of order, the composer would produce shots of negative length
+    QCOMPARE(beats.beats, QVector<qint64>({ 0, 500, 1000, 1500 }));
+    QCOMPARE(beats.energyAt(0), 0.1);
+    QCOMPARE(beats.energyAt(1200), 0.9);
 }
 
 void TstMemoryComposer::everyStyleIsWellFormed()

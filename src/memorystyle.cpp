@@ -17,6 +17,7 @@ MemoryStyle sentimental()
     style.grade.contrast = -0.05;
     style.grade.vignette = 0.20;
     style.defaultTrackId = QStringLiteral("sentimental");
+    style.fallbackBpm = 88.0;
     return style;
 }
 
@@ -35,6 +36,7 @@ MemoryStyle energetic()
     style.grade.contrast = 0.20;
     style.grade.saturation = 0.15;
     style.defaultTrackId = QStringLiteral("energetic");
+    style.fallbackBpm = 128.0;
     return style;
 }
 
@@ -56,6 +58,7 @@ MemoryStyle polaroid()
     style.grade.vignette = 0.15;
     style.grade.grain = 0.35;
     style.defaultTrackId = QStringLiteral("polaroid");
+    style.fallbackBpm = 96.0;
     return style;
 }
 
@@ -74,6 +77,7 @@ MemoryStyle bauhaus()
     style.zoomFrom = 1.0;
     style.zoomTo = 1.0;
     style.defaultTrackId = QStringLiteral("bauhaus");
+    style.fallbackBpm = 112.0;
     return style;
 }
 
@@ -91,8 +95,7 @@ MemoryStyle MemoryStyles::byId(const QString &id)
             return style;
         }
     }
-    return MemoryStyle{ QString(), 0, false, Transition::Cut, 0, 1.0, 1.0, 1.0,
-                        Grade(), QString() };
+    return MemoryStyle();  // id empty, so isValid() is false
 }
 
 QString MemoryStyles::fallbackId()

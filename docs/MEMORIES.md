@@ -151,9 +151,22 @@ maps
 
 Two consumers read the same list:
 
-1. **Preview**: a QML `MemoryPlayer` component. `Image` elements driven by
-   `NumberAnimation` on a source rect, audio through QtMultimedia. Real time,
-   no encoding, and it is most of the perceived value.
+1. **Preview**: the QML `MemoryPlayer` component (done in 0.9.0). Everything
+   on screen derives from one number, `positionMs`: which shot is up, how far
+   its camera move has travelled, how far a transition has got. None of it is
+   state that can drift out of step with the music, and it is the same thing
+   the renderer will do frame by frame.
+
+   The crop is done by oversizing the image behind a clip and sliding it,
+   not by scaling the item: the composer's rectangles are normalized
+   coordinates in the source photo and this maps them straight across. A
+   rectangle half the width means an image drawn at twice the viewport width.
+
+   `QtMultimedia` is imported in `components/ClipAudio.qml` and nowhere else,
+   and that file is reached through a `Loader`. An import that cannot resolve
+   takes down the component declaring it, so keeping it in a leaf means a
+   device without the multimedia plugin plays clips silently instead of
+   failing to open the page.
 2. **Renderer** (0.9.1): the same shots rendered frame by frame with OpenCV,
    which is already linked, then encoded.
 
@@ -171,8 +184,13 @@ next to the audio:
   "safe_out_ms": 62000 }
 ```
 
-The composer cuts on beat multiples and lands the last shot on a section
-boundary, so a clip never ends mid-phrase. Zero DSP dependency in the RPM.
+The composer cuts on beat multiples and stops before `safe_out_ms`, so a clip
+never runs past the fade. Zero DSP dependency in the RPM.
+
+Until the tracks land, `BeatGrid::even()` produces a regular grid at the
+style's own fallback tempo (88, 128, 96 and 112 bpm). The whole feature
+therefore works before the music does, and the four styles still cut at
+visibly different rates. See `media/README.md` for the file layout.
 
 ### Face-aware framing
 

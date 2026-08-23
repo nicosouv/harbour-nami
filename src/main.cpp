@@ -103,6 +103,9 @@ int main(int argc, char *argv[])
     // Create face pipeline
     FacePipeline *pipeline = new FacePipeline(app.data());
 
+    // Bundled clip music and the beat grids computed for it at build time
+    pipeline->setMediaDir(appDir + "/media");
+
     // Initialize pipeline
     bool initialized = pipeline->initialize(
         detectorModelPath,

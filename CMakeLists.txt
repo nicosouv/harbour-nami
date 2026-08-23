@@ -140,6 +140,12 @@ install(DIRECTORY python/models
     FILES_MATCHING PATTERN "*.onnx"
 )
 
+# Clip music and the beat grids computed for it at build time. Empty until
+# the tracks are supplied; the app plays silently without them.
+install(DIRECTORY media
+    DESTINATION share/${PROJECT_NAME}
+)
+
 install(FILES harbour-nami.desktop
     DESTINATION share/applications
 )

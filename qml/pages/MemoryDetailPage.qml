@@ -69,14 +69,34 @@ Page {
         return paths
     }
 
+    // The edit, composed on demand. Not stored: it is a pure function of the
+    // photos, the style and the track, so keeping a copy would only give it
+    // a chance to go stale.
+    property var clip: null
+
+    function loadClip() {
+        if (!facePipeline || !facePipeline.initialized || memoryId <= 0) return
+        var composed = facePipeline.composeMemoryClip(memoryId)
+        clip = (composed && composed.shots && composed.shots.length > 0) ? composed : null
+    }
+
     Component.onCompleted: {
         loadPhotos()
+        loadClip()
+    }
+
+    // Leaving the page must stop the music, or it plays on under whatever
+    // comes next
+    onStatusChanged: {
+        if (status === PageStatus.Deactivating) {
+            clipPlayer.pause()
+        }
     }
 
     SilicaFlickable {
         id: flickable
         anchors.fill: parent
-        contentHeight: header.height + table.height + Theme.paddingLarge * 2
+        contentHeight: header.height + stage.height + table.height + Theme.paddingLarge * 2
 
         PullDownMenu {
             MenuItem {
@@ -92,10 +112,72 @@ Page {
             description: photosModel.count + " " + (photosModel.count === 1 ? qsTr("photo") : qsTr("photos"))
         }
 
+        // The clip, above the photos it was made from
+        Item {
+            id: stage
+            anchors.top: header.bottom
+            width: parent.width
+            height: page.clip ? width / page.clip.aspect + Theme.itemSizeSmall : 0
+            visible: page.clip !== null
+
+            MemoryPlayer {
+                id: clipPlayer
+                width: parent.width
+                height: page.clip ? width / page.clip.aspect : 0
+                clip: page.clip
+            }
+
+            MouseArea {
+                anchors.fill: clipPlayer
+                onClicked: clipPlayer.playing ? clipPlayer.pause() : clipPlayer.play()
+            }
+
+            // Only shown while stopped: a control sitting over a playing clip
+            // is a control sitting over the thing you asked to look at
+            Rectangle {
+                anchors.centerIn: clipPlayer
+                width: Theme.itemSizeLarge
+                height: width
+                radius: width / 2
+                color: Theme.rgba("black", 0.45)
+                visible: !clipPlayer.playing
+
+                Image {
+                    anchors.centerIn: parent
+                    source: "image://theme/icon-l-play?#ffffff"
+                    width: Theme.iconSizeLarge
+                    height: width
+                    sourceSize.width: width
+                    sourceSize.height: height
+                }
+            }
+
+            // A plain line rather than a slider: this is a preview, and the
+            // clip is a minute long
+            Rectangle {
+                anchors {
+                    left: parent.left
+                    right: parent.right
+                    top: clipPlayer.bottom
+                    topMargin: Theme.paddingMedium
+                }
+                height: 2
+                color: Theme.rgba(Theme.secondaryColor, 0.3)
+
+                Rectangle {
+                    height: parent.height
+                    color: Theme.highlightColor
+                    width: clipPlayer.durationMs > 0
+                           ? parent.width * clipPlayer.positionMs / clipPlayer.durationMs
+                           : 0
+                }
+            }
+        }
+
         // The "table" the polaroids land on
         Item {
             id: table
-            anchors.top: header.bottom
+            anchors.top: stage.visible ? stage.bottom : header.bottom
             width: parent.width
             // Two loose columns; each row eats ~55% of a polaroid height so
             // they overlap a little like a real pile
