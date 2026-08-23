@@ -494,6 +494,17 @@ public:
     // === Memories (generated stories) ===
 
     /**
+     * @brief Run the memory recipes
+     *
+     * Throttled to once a day internally, so QML can call it on every
+     * launch. Cheap when it has already run: one settings lookup.
+     *
+     * @param force Skip the throttle (a manual refresh)
+     * @return How many memories were created or refreshed
+     */
+    Q_INVOKABLE int generateMemories(bool force = false);
+
+    /**
      * @brief All memories, best first
      * @return List of maps with memory_id, kind, title, subtitle, cover_photo,
      *         style, track_id, timestamp, photo_count, dismissed, edited

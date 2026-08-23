@@ -38,6 +38,17 @@ target_include_directories(tst_memories PRIVATE ${NAMI_SRC})
 target_link_libraries(tst_memories Qt5::Core Qt5::Sql Qt5::Test)
 add_test(NAME memories COMMAND tst_memories)
 
+# The six recipes that decide what the app offers to remember
+add_executable(tst_memorygenerator
+    ${CMAKE_CURRENT_LIST_DIR}/tst_memorygenerator.cpp
+    ${NAMI_SRC}/memorygenerator.cpp
+    ${NAMI_SRC}/facedatabase.cpp
+    ${NAMI_SRC}/logging.cpp
+)
+target_include_directories(tst_memorygenerator PRIVATE ${NAMI_SRC})
+target_link_libraries(tst_memorygenerator Qt5::Core Qt5::Sql Qt5::Test)
+add_test(NAME memorygenerator COMMAND tst_memorygenerator)
+
 # EXIF dates: they decide which day every photo belongs to
 add_executable(tst_exifreader
     ${CMAKE_CURRENT_LIST_DIR}/tst_exifreader.cpp

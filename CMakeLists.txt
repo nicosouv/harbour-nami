@@ -53,6 +53,7 @@ set(SOURCES
     src/facerecognizer.cpp
     src/facedatabase.cpp
     src/facepipeline.cpp
+    src/memorygenerator.cpp
     src/faceimageprovider.cpp
     src/exifreader.cpp
     src/filehash.cpp
