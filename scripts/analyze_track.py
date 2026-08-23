@@ -117,14 +117,21 @@ def analyse(path):
 
 
 def main():
-    tracks = sorted(p for p in MEDIA.iterdir() if p.suffix in AUDIO_SUFFIXES)
+    # The untranscoded originals when they are there: soundfile reads them
+    # directly, where Opus sends librosa down a deprecated audioread path,
+    # and the beats are in the same places either way
+    sources = MEDIA / ".sources"
+    directory = sources if sources.is_dir() and any(sources.iterdir()) else MEDIA
+
+    tracks = sorted(p for p in directory.iterdir() if p.suffix in AUDIO_SUFFIXES)
     if not tracks:
-        print(f"no audio in {MEDIA}; nothing to analyse")
+        print(f"no audio in {directory}; nothing to analyse")
         return 0
 
     for path in tracks:
         grid = analyse(path)
-        target = path.with_suffix(".json")
+        # Always beside the audio the app ships, whichever file was read
+        target = MEDIA / (path.stem + ".json")
         target.write_text(json.dumps(grid, indent=2) + "\n", encoding="utf-8")
         print(f"{path.name}: {grid['bpm']} bpm, {len(grid['beats'])} beats, "
               f"{len(grid['sections'])} sections, safe to {grid['safe_out_ms']}ms")

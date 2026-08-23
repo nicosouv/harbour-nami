@@ -35,7 +35,7 @@ services:
       - .:/src
     working_dir: /src
     command: >
-      bash -c "bash media/download_tracks.sh
+      bash -c "bash media/prepare_tracks.sh
       && python3 scripts/analyze_track.py"
 
   # The recognition engine end to end. Its own image (OpenCV >= 4.8) and its
