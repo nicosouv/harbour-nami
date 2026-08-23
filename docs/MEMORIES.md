@@ -140,7 +140,8 @@ monthly round-up is a survey rather than a story, so it gets `bauhaus`.
 
 ## The clip engine: one EDL, two consumers
 
-`MemoryComposer` (C++, pure, unit-testable, no pixels touched) maps
+Done in 0.9.0. `MemoryComposer` (C++, pure, unit-testable, no pixels touched)
+maps
 
 ```
 (photos, style, track beat grid) -> [ Shot { photo_path, t_start_ms, t_dur_ms,
@@ -179,6 +180,29 @@ The `faces` table already stores bounding boxes, and `FaceImageProvider`
 already crops from them. The Ken Burns move therefore never crops a head, and
 can aim: wide start, resolve onto the face of the memory's person. This is the
 differentiator, and the data for it already exists.
+
+How much freedom there is depends entirely on the shapes involved, and it is
+worth knowing which way round. A 4:3 photo into a 16:9 clip keeps 94% of the
+width and 75% of the height, so the framing decision is almost purely
+vertical: whether the crop takes the top of someone's head. A portrait photo
+into the same clip keeps only 42% of the height, and there the choice of
+which 42% is the entire shot.
+
+### What the composer guarantees
+
+The tests are the specification, and these are the parts worth stating:
+
+- Shots run back to back with no gap and no overlap, and every cut, in and
+  out, lands on a beat.
+- The clip ends before the track does.
+- More photos than the track can hold are sampled evenly across the memory,
+  never truncated. The generator already spread them over the whole time
+  range and truncating here would undo that.
+- The first shot cuts in rather than dissolving from nothing.
+- Crops carry the output aspect and never leave the photo.
+- The same input always composes the same edit. The player and the renderer
+  each compose their own copy; if those could differ, the preview would be a
+  promise the export does not keep and nothing in either would notice.
 
 ## Styles
 

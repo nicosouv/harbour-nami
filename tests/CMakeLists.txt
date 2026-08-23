@@ -38,6 +38,18 @@ target_include_directories(tst_memories PRIVATE ${NAMI_SRC})
 target_link_libraries(tst_memories Qt5::Core Qt5::Sql Qt5::Test)
 add_test(NAME memories COMMAND tst_memories)
 
+# The edit decision list: where the cuts fall and where the camera looks.
+# No pixels, no files, no database, which is the point of it.
+add_executable(tst_memorycomposer
+    ${CMAKE_CURRENT_LIST_DIR}/tst_memorycomposer.cpp
+    ${NAMI_SRC}/memorycomposer.cpp
+    ${NAMI_SRC}/memorystyle.cpp
+    ${NAMI_SRC}/beatgrid.cpp
+)
+target_include_directories(tst_memorycomposer PRIVATE ${NAMI_SRC})
+target_link_libraries(tst_memorycomposer Qt5::Core Qt5::Gui Qt5::Test)
+add_test(NAME memorycomposer COMMAND tst_memorycomposer)
+
 # The six recipes that decide what the app offers to remember
 add_executable(tst_memorygenerator
     ${CMAKE_CURRENT_LIST_DIR}/tst_memorygenerator.cpp
