@@ -18,6 +18,9 @@ jobs:
       - name: QML anti-pattern checks
         run: python3 scripts/check_qml.py
 
+      - name: Translation catalogues match the QML
+        run: python3 scripts/check_translations.py
+
       - name: JavaScript unit tests
         run: node tests/js/run.js
 

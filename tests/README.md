@@ -17,6 +17,20 @@ Runs anywhere, no Qt. Every rule comes from a bug that shipped:
 - **`clear()` on a model handed to another component** — destroys every
   delegate at once, including those of a dialog still bound to it.
 
+## `scripts/check_translations.py` — catalogues against the sources
+
+`lupdate` is not run locally (the `.ts` files are hand-edited), so nothing
+otherwise notices when the two drift, and the drift is silent: a string with
+no entry, or an entry under a context no file uses any more, builds and ships
+perfectly and simply comes out in English.
+
+Renaming a page is the sharp edge. Qt keys translations by context, and for
+QML the context is the file's base name, so `MainPage.qml` becoming
+`PeoplePage.qml` orphaned all 31 of its messages in seven locales at once.
+
+It compares both directions, and skips `harbour-nami-en.ts`, which carries
+only the handful of strings that read differently in the UI than in the code.
+
 ## `tests/js/run.js` — JavaScript unit tests
 
 `node tests/js/run.js`. The QML JS libraries are plain modules behind a

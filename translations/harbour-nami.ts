@@ -535,27 +535,38 @@
 <context>
     <name>MemoriesPage</name>
     <message>
-        <source>Photos from around this time in previous years</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source> year ago</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source> years ago</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Memories</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>No memories</source>
+        <source>Hide</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>No photos found from this day in previous years</source>
+        <source>Hiding %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Look for new memories</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No memories yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>They appear once your gallery has been scanned</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>MemoryLabels</name>
+    <message>
+        <source>A year ago</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 years ago</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -564,10 +575,6 @@
     </message>
     <message>
         <source>photos</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Trip: %1</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

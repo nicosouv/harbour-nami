@@ -536,28 +536,39 @@
 <context>
     <name>MemoriesPage</name>
     <message>
-        <source>Photos from around this time in previous years</source>
-        <translation>Foto di questo periodo negli anni passati</translation>
-    </message>
-    <message>
-        <source> year ago</source>
-        <translation> anno fa</translation>
-    </message>
-    <message>
-        <source> years ago</source>
-        <translation> anni fa</translation>
-    </message>
-    <message>
         <source>Memories</source>
         <translation>Ricordi</translation>
     </message>
     <message>
-        <source>No memories</source>
-        <translation>Nessun ricordo</translation>
+        <source>Hide</source>
+        <translation>Nascondi</translation>
     </message>
     <message>
-        <source>No photos found from this day in previous years</source>
-        <translation>Nessuna foto di questo giorno negli anni precedenti</translation>
+        <source>Hiding %1</source>
+        <translation>Nascondendo %1</translation>
+    </message>
+    <message>
+        <source>Look for new memories</source>
+        <translation>Cerca nuovi ricordi</translation>
+    </message>
+    <message>
+        <source>No memories yet</source>
+        <translation>Ancora nessun ricordo</translation>
+    </message>
+    <message>
+        <source>They appear once your gallery has been scanned</source>
+        <translation>Compaiono dopo la scansione della galleria</translation>
+    </message>
+</context>
+<context>
+    <name>MemoryLabels</name>
+    <message>
+        <source>A year ago</source>
+        <translation>Un anno fa</translation>
+    </message>
+    <message>
+        <source>%1 years ago</source>
+        <translation>%1 anni fa</translation>
     </message>
     <message>
         <source>photo</source>
@@ -566,10 +577,6 @@
     <message>
         <source>photos</source>
         <translation>foto</translation>
-    </message>
-    <message>
-        <source>Trip: %1</source>
-        <translation>Viaggio: %1</translation>
     </message>
 </context>
 <context>

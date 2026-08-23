@@ -7,8 +7,11 @@ import "../js/faceutils.js" as FaceUtils
 Page {
     id: page
 
-    property int year: 0
-    property int windowDays: 20
+    // The stored memory this page shows. Its photo set was chosen by the
+    // recipes and can be edited, so it is read back rather than recomputed:
+    // a page that worked out its own list would show something different
+    // from the card that led here.
+    property int memoryId: 0
     property string title: ""
 
     allowedOrientations: Orientation.All
@@ -27,42 +30,23 @@ Page {
         return x - Math.floor(x)
     }
 
-    function dayDistance(photoDate, today) {
-        var a = new Date(2001, photoDate.getMonth(), photoDate.getDate())
-        var b = new Date(2001, today.getMonth(), today.getDate())
-        var d = Math.abs(Math.round((a.getTime() - b.getTime()) / 86400000))
-        return Math.min(d, 365 - d)
-    }
-
     function loadPhotos() {
-        if (!facePipeline || !facePipeline.initialized || year === 0) return
+        if (!facePipeline || !facePipeline.initialized || memoryId <= 0) return
 
         photosModel.clear()
 
-        var today = new Date()
-        var seen = {}
-        var items = []
-        var people = facePipeline.getAllPeople()
-        for (var i = 0; i < people.length; i++) {
-            var photos = facePipeline.getPersonPhotos(people[i].person_id)
-            for (var j = 0; j < photos.length; j++) {
-                var photo = photos[j]
-                if (!photo.timestamp || seen[photo.file_path]) continue
-                var photoDate = new Date(photo.timestamp * 1000)
-                if (photoDate.getFullYear() !== year) continue
-                if (dayDistance(photoDate, today) > windowDays) continue
-                seen[photo.file_path] = true
-                items.push({
-                    file_path: photo.file_path,
-                    timestamp: photo.timestamp,
-                    caption: Qt.formatDate(photoDate, "d MMM yyyy")
-                })
-            }
-        }
-
-        items.sort(function(a, b) { return a.timestamp - b.timestamp })
-        for (var n = 0; n < items.length; n++) {
-            photosModel.append(items[n])
+        // Already in playback order, and already without the photos the user
+        // took out of the clip
+        var photos = facePipeline.getMemoryPhotos(memoryId, true)
+        for (var i = 0; i < photos.length; i++) {
+            var photo = photos[i]
+            photosModel.append({
+                file_path: photo.file_path,
+                timestamp: photo.timestamp,
+                caption: photo.timestamp
+                    ? Qt.formatDate(new Date(photo.timestamp * 1000), "d MMM yyyy")
+                    : ""
+            })
         }
     }
 

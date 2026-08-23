@@ -536,28 +536,39 @@
 <context>
     <name>MemoriesPage</name>
     <message>
-        <source>Photos from around this time in previous years</source>
-        <translation>Fotos de esta época en años anteriores</translation>
-    </message>
-    <message>
-        <source> year ago</source>
-        <translation> año atrás</translation>
-    </message>
-    <message>
-        <source> years ago</source>
-        <translation> años atrás</translation>
-    </message>
-    <message>
         <source>Memories</source>
         <translation>Recuerdos</translation>
     </message>
     <message>
-        <source>No memories</source>
-        <translation>No hay recuerdos</translation>
+        <source>Hide</source>
+        <translation>Ocultar</translation>
     </message>
     <message>
-        <source>No photos found from this day in previous years</source>
-        <translation>No hay fotos de este día en años anteriores</translation>
+        <source>Hiding %1</source>
+        <translation>Ocultando %1</translation>
+    </message>
+    <message>
+        <source>Look for new memories</source>
+        <translation>Buscar nuevos recuerdos</translation>
+    </message>
+    <message>
+        <source>No memories yet</source>
+        <translation>Aún no hay recuerdos</translation>
+    </message>
+    <message>
+        <source>They appear once your gallery has been scanned</source>
+        <translation>Aparecen cuando se haya analizado tu galería</translation>
+    </message>
+</context>
+<context>
+    <name>MemoryLabels</name>
+    <message>
+        <source>A year ago</source>
+        <translation>Hace un año</translation>
+    </message>
+    <message>
+        <source>%1 years ago</source>
+        <translation>Hace %1 años</translation>
     </message>
     <message>
         <source>photo</source>
@@ -566,10 +577,6 @@
     <message>
         <source>photos</source>
         <translation>fotos</translation>
-    </message>
-    <message>
-        <source>Trip: %1</source>
-        <translation>Viaje: %1</translation>
     </message>
 </context>
 <context>
