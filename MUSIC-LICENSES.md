@@ -4,9 +4,11 @@ Four tracks, one per clip style. **CC0 only.** Never CC-BY: an attribution
 obligation would follow every clip a user posts publicly, which is friction
 and a legal exposure they did not sign up for when they tapped play.
 
-The audio is not committed. `media/download_tracks.sh` fetches it, pinned by
-checksum, and `media/<track>.json` (the beat grid, committed) records what the
-composer actually cuts on, so that part stays reviewable in a diff.
+`media/prepare_tracks.sh` fetches each original, pinned by checksum, and
+transcodes it to 64 kbps mono Opus trimmed to the 92 seconds a clip can
+reach. The originals are thrown away; the transcodes and their beat grids are
+committed, which is what keeps a release build from depending on a third
+party still hosting a file. About 3.2 MB across the four.
 
 ## Status: a first pass, chosen to have something to test against
 
@@ -31,12 +33,17 @@ style on the slowest of the four.
 | polaroid.ogg | `52594ef5f66dcf85a61f8068d2094a0de70925105eee14eaf213ca8a4ac89052` |
 | bauhaus.ogg | `13ec2e23828b9ff3399ed9cd2f580382a3d77debce3c615dadedee04fb49b2a8` |
 
-Swapping one is a URL and a checksum in `media/download_tracks.sh`, then
+| Track | Ships as |
+| --- | --- |
+| sentimental.opus | 822 KB |
+| energetic.opus | 698 KB |
+| polaroid.opus | 944 KB |
+| bauhaus.opus | 741 KB |
+
+Swapping one is a URL and a checksum in `media/prepare_tracks.sh`, then
 `docker compose run --rm beats`.
 
 ## Before release
 
-- **Listen to them.** Nothing above involved hearing a note.
-- **Transcode.** These are 2.8 to 4.3 MB Vorbis, 14 MB across four, on a
-  45 MB package. At 64 kbps mono Opus, and trimmed to the 90 seconds a clip
-  can use, each would be a few hundred kilobytes.
+**Listen to them.** Nothing above involved hearing a note. Everything that
+could be decided from measurement has been; the rest is ears.

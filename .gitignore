@@ -59,13 +59,11 @@ rpm/harbour-nami.spec
 python/models/*.onnx
 tests/fixtures/faces/
 
-# Clip music: fetched by media/download_tracks.sh, pinned by checksum. The
-# beat grids beside it (media/*.json) are committed, so what the composer
-# cuts on stays reviewable even though the audio is not.
-media/*.ogg
-media/*.opus
-media/*.mp3
-media/*.m4a
+# Clip music originals: downloaded by media/prepare_tracks.sh, pinned by
+# checksum, and thrown away after transcoding. What ships is the 64 kbps
+# Opus beside them, small enough to commit, which is what keeps a release
+# build from depending on a third party still hosting the file.
+media/.sources/
 
 # Build directories
 .obj/

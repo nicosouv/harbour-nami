@@ -16,6 +16,10 @@ Item {
     // Where in the track the clip begins, so the first cut lands on a beat
     // rather than on the silence before it
     property int startMs: 0
+    // 0 to 1. The player winds this down over the last moment of the clip:
+    // a clip stops where the edit ends, which is almost never where the
+    // track ends, and cutting the music dead there sounds like a failure.
+    property real level: 1.0
 
     // What the player uses as its clock while the music is running
     readonly property int positionMs: audio.position - startMs
@@ -45,5 +49,6 @@ Item {
         id: audio
         source: root.source
         autoLoad: root.source.length > 0
+        volume: Math.max(0.0, Math.min(1.0, root.level))
     }
 }

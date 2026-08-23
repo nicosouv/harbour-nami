@@ -44,11 +44,6 @@ jobs:
           # Download ML Models (checksum-verified)
           bash scripts/download_models_for_build.sh
 
-          # Clip music. Not committed (large, binary), so the package would
-          # otherwise ship with silent clips. The beat grids beside it are
-          # committed and need nothing here.
-          bash media/download_tracks.sh
-
       - name: Build OpenCV Minimal
         if: steps.cache-opencv.outputs.cache-hit != 'true'
         run: |

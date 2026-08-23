@@ -4,8 +4,9 @@
 docker compose run --rm beats
 ```
 
-fetches the four tracks and writes each one's beat grid beside it. The audio
-is gitignored, the grids are committed.
+fetches the four originals, transcodes them to 64 kbps mono Opus trimmed to
+92 seconds, and writes each one's beat grid beside it. The transcodes and the
+grids are committed; the originals, under `.sources/`, are not.
 
 The app runs without any of it: a style whose audio is missing plays silently
 against an even grid at its own fallback tempo, which is enough to see the
@@ -17,14 +18,17 @@ Two files per track, named after the style that opens on it
 (`sentimental`, `energetic`, `polaroid`, `bauhaus`):
 
 ```
-sentimental.ogg      the audio (.opus, .ogg, .mp3 or .m4a), fetched
-sentimental.json     its beat grid, committed
+sentimental.opus     the audio (.opus, .ogg, .mp3 or .m4a)
+sentimental.json     its beat grid
 ```
 
 ## The beat grid
 
-Computed off the device, at build time, because the tracks ship with the app
-and their rhythm is therefore known in advance. Nothing on the phone does any
+Computed off the device, once, because the tracks ship with the app and
+their rhythm is therefore known in advance. Read from the untranscoded
+original when it is there: soundfile handles Vorbis directly, where Opus
+sends librosa down a deprecated path, and the beats are in the same places
+either way. Nothing on the phone does any
 signal processing and the RPM carries no DSP library.
 
 ```json

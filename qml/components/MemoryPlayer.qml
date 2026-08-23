@@ -92,6 +92,16 @@ Item {
     readonly property string transition: currentShot ? currentShot.transition : "cut"
     readonly property bool inTransition: previousShot !== null && transitionProgress < 1
 
+    // The clip ends where the edit ends, which is almost never where the
+    // track ends. Winding the music down over the last moment is the
+    // difference between an ending and a power cut.
+    property int fadeOutMs: 1200
+    readonly property real audioLevel: {
+        if (durationMs <= 0 || fadeOutMs <= 0) return 1.0
+        var remaining = durationMs - positionMs
+        return remaining >= fadeOutMs ? 1.0 : Math.max(0.0, remaining / fadeOutMs)
+    }
+
     onClipChanged: {
         positionMs = 0
         currentIndex = 0
@@ -138,6 +148,7 @@ Item {
             item.source = "file://" + clip.track_path
             item.startMs = clip.track_start_ms
             item.playing = Qt.binding(function () { return player.playing })
+            item.level = Qt.binding(function () { return player.audioLevel })
         }
     }
 

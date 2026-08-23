@@ -1,0 +1,89 @@
+#!/usr/bin/env bash
+# Fetches the clip music and transcodes it into what the app ships.
+#
+#   docker compose run --rm beats
+#
+# The originals are 2.8 to 4.3 MB of Vorbis and are not kept. What lands in
+# media/ is 64 kbps mono Opus trimmed to the 92 seconds a clip can reach,
+# which is a couple of hundred kilobytes each and small enough to commit.
+#
+# Committing them matters more than the disk space: a release build that
+# fetches its own assets from a third party fails the day that third party
+# moves a file, and it fails at tag time.
+#
+# All four are CC0 by Loyalty Freak Music, via Wikimedia Commons. CC0 only,
+# never CC-BY: an attribution obligation would follow every clip a user
+# posts. See MUSIC-LICENSES.md.
+#
+# Swapping one is a URL and a checksum here, then re-running the above.
+set -euo pipefail
+
+MEDIA_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Originals, gitignored: only the transcode is worth keeping
+SOURCE_DIR="$MEDIA_DIR/.sources"
+mkdir -p "$SOURCE_DIR"
+
+# Slightly past the 90s a clip may use, so the last shot never runs onto the
+# end of the file
+CLIP_SECONDS=92
+
+sha256_of() {
+    if command -v sha256sum >/dev/null 2>&1; then
+        sha256sum "$1" | cut -d' ' -f1
+    else
+        shasum -a 256 "$1" | cut -d' ' -f1
+    fi
+}
+
+prepare() {
+    local id="$1" url="$2" expected="$3"
+    local source="$SOURCE_DIR/$id.ogg"
+    local target="$MEDIA_DIR/$id.opus"
+
+    if [ ! -f "$source" ] || [ "$(sha256_of "$source")" != "$expected" ]; then
+        curl -fsSL -A "harbour-nami/1.0" "$url" -o "$source"
+
+        local actual
+        actual="$(sha256_of "$source")"
+        if [ "$actual" != "$expected" ]; then
+            echo "checksum mismatch for $id" >&2
+            echo "  expected: $expected" >&2
+            echo "  actual:   $actual" >&2
+            rm -f "$source"
+            exit 1
+        fi
+    fi
+
+    # Mono, because a phone speaker is mono and the file halves. The fade is
+    # a safety net for a track that has no ending of its own at 92 seconds;
+    # the player fades out at the clip's end regardless.
+    ffmpeg -y -loglevel error -i "$source" \
+        -t "$CLIP_SECONDS" -ac 1 \
+        -af "afade=t=out:st=$((CLIP_SECONDS - 3)):d=3" \
+        -c:a libopus -b:a 64k -vbr on -application audio \
+        "$target"
+
+    echo "$(printf '%-12s' "$id") $(du -h "$target" | cut -f1)"
+}
+
+# Softly, 69.8 bpm
+prepare "sentimental" \
+    "https://upload.wikimedia.org/wikipedia/commons/0/0b/Loyalty_Freak_Music_-_06_-_Softly.ogg" \
+    "6fea22d33d59b8e27f13d19e2b2a8069275e1784b8e989cedc79cb952937e5d9"
+
+# Old Key, the fastest of the four at 152 bpm
+prepare "energetic" \
+    "https://upload.wikimedia.org/wikipedia/commons/a/ad/Loyalty_Freak_Music_-_03_-_Old_Key.ogg" \
+    "5182735c55982476007b468a9ffea7173ea724335a1d6de2cb90470a8e80197f"
+
+# Yippee!, 89 bpm
+prepare "polaroid" \
+    "https://upload.wikimedia.org/wikipedia/commons/1/17/Loyalty_Freak_Music_-_08_-_Yippee_.ogg" \
+    "52594ef5f66dcf85a61f8068d2094a0de70925105eee14eaf213ca8a4ac89052"
+
+# Roller Fever, 129 bpm
+prepare "bauhaus" \
+    "https://upload.wikimedia.org/wikipedia/commons/7/7c/Loyalty_Freak_Music_-_01_-_Roller_Fever.ogg" \
+    "13ec2e23828b9ff3399ed9cd2f580382a3d77debce3c615dadedee04fb49b2a8"
+
+echo "clip music ready in $MEDIA_DIR"
