@@ -142,13 +142,33 @@ Item {
         // Only when there is actually a file: with no track the player runs
         // on its own clock and the clip is silent
         active: clip && clip.track_path && clip.track_path.length > 0
-        source: "ClipAudio.qml"
+        // Resolved against this file rather than left relative: a Loader
+        // resolves against its own component, and being explicit costs
+        // nothing next to a silent failure
+        source: Qt.resolvedUrl("ClipAudio.qml")
 
         onLoaded: {
             item.source = "file://" + clip.track_path
             item.startMs = clip.track_start_ms
             item.playing = Qt.binding(function () { return player.playing })
             item.level = Qt.binding(function () { return player.audioLevel })
+        }
+
+        // The two ways a clip ends up silent, told apart in the log rather
+        // than by guesswork: either no track was found for it, or the
+        // multimedia plugin is not on this device
+        onStatusChanged: {
+            if (status === Loader.Error) {
+                console.warn("MemoryPlayer: no audio, ClipAudio.qml failed to load."
+                             + " QtMultimedia is probably missing on this device.")
+            }
+        }
+
+        onActiveChanged: {
+            if (!active && player.clip) {
+                console.log("MemoryPlayer: no audio, track_path is empty for track",
+                            player.clip.track_id)
+            }
         }
     }
 

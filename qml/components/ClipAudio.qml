@@ -1,5 +1,8 @@
 import QtQuick 2.6
-import QtMultimedia 5.6
+// 5.0, not a later one: every property used here (source, autoLoad, volume,
+// position, status, play, pause, seek) has been on Audio since then, and an
+// import version the device does not have fails the whole component
+import QtMultimedia 5.0
 
 // The clip's music, kept in a file of its own so that the QtMultimedia
 // import lives here and nowhere else.
@@ -50,5 +53,15 @@ Item {
         source: root.source
         autoLoad: root.source.length > 0
         volume: Math.max(0.0, Math.min(1.0, root.level))
+
+        // Silence has too many possible causes to guess at from a phone:
+        // a missing codec, an unreadable path and a blocked audio device all
+        // look identical from the outside
+        onErrorChanged: {
+            if (error !== Audio.NoError) {
+                console.warn("ClipAudio: error", error, errorString, "for", source)
+            }
+        }
+        onStatusChanged: console.log("ClipAudio: status", status, "for", source)
     }
 }
