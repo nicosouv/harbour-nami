@@ -2402,6 +2402,46 @@ QVector<MemoryCandidate> FaceDatabase::photosOfPeoplePair(int personA, int perso
     return candidates;
 }
 
+QVector<MemoryCandidate> FaceDatabase::photosOfPeople(const QVector<int> &personIds,
+                                                      bool together)
+{
+    QVector<MemoryCandidate> candidates;
+    if (personIds.isEmpty()) {
+        return candidates;
+    }
+
+    QString sql = QString::fromUtf8(kCandidateSelect);
+    if (together) {
+        // One subquery per person, all of which have to match: the photos
+        // where the whole group is in the frame at the same time
+        for (int i = 0; i < personIds.size(); i++) {
+            sql += " AND p.id IN (SELECT f.photo_id FROM faces f"
+                   " WHERE f.person_id = ? AND f.ignored = 0)";
+        }
+    } else {
+        sql += " AND p.id IN (SELECT f.photo_id FROM faces f"
+               " WHERE f.ignored = 0 AND f.person_id IN ("
+               + placeholders(personIds.size()) + "))";
+    }
+    sql += " ORDER BY p.date_taken";
+
+    QSqlQuery query(m_db);
+    query.prepare(sql);
+    for (int personId : personIds) {
+        query.addBindValue(personId);
+    }
+
+    if (!query.exec()) {
+        emit error("Failed to read photos of a group: " + query.lastError().text());
+        return candidates;
+    }
+
+    while (query.next()) {
+        candidates.append(readCandidateRow(query));
+    }
+    return candidates;
+}
+
 QVector<MemoryCandidate> FaceDatabase::photosInMonth(int year, int month)
 {
     QVector<MemoryCandidate> candidates;

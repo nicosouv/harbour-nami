@@ -529,6 +529,10 @@
         <source>They appear once your gallery has been scanned</source>
         <translation>De dukker opp når galleriet er skannet</translation>
     </message>
+    <message>
+        <source>Memory of chosen people</source>
+        <translation>Minne av valgte personer</translation>
+    </message>
 </context>
 <context>
     <name>MemoryLabels</name>
@@ -1654,6 +1658,45 @@
     <message>
         <source>Bauhaus</source>
         <translation>Bauhaus</translation>
+    </message>
+</context>
+<context>
+    <name>CreateMemoryPage</name>
+    <message>
+        <source>New memory</source>
+        <translation>Nytt minne</translation>
+    </message>
+    <message>
+        <source>Together</source>
+        <translation>Sammen</translation>
+    </message>
+    <message>
+        <source>Any of them</source>
+        <translation>Hvem som helst av dem</translation>
+    </message>
+    <message>
+        <source>1 photo</source>
+        <translation>1 bilde</translation>
+    </message>
+    <message>
+        <source>%1 photos</source>
+        <translation>%1 bilder</translation>
+    </message>
+    <message>
+        <source>Unknown</source>
+        <translation>Ukjent</translation>
+    </message>
+    <message>
+        <source>No people yet</source>
+        <translation>Ingen personer ennå</translation>
+    </message>
+    <message>
+        <source>They appear once your gallery has been scanned</source>
+        <translation>De dukker opp når galleriet er skannet</translation>
+    </message>
+    <message>
+        <source>Create</source>
+        <translation>Opprett</translation>
     </message>
 </context>
 </TS>

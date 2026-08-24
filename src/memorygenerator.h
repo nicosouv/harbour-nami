@@ -76,11 +76,19 @@ public:
     // make a clip stutter.
     static const int kBurstSeconds = 3;
 
-private:
-    // Trims candidates down to kMaxPhotos: drops bursts, then keeps the
-    // best photo from each of kMaxPhotos equal slices of the time range, so
-    // the result spans the whole memory instead of its busiest hour
+    /**
+     * @brief Trims candidates down to kMaxPhotos
+     *
+     * Drops bursts, then takes one photo from each of kMaxPhotos equal
+     * slices of the time range, round after round, so the result spans the
+     * whole memory instead of its busiest hour.
+     *
+     * Public because a memory somebody asked for by hand deserves the same
+     * selection as one a recipe found.
+     */
     static QVector<int> selectPhotos(QVector<MemoryCandidate> candidates);
+
+private:
 
     // Shared tail of every recipe: bail out when there is too little, pick
     // the photos, write the row

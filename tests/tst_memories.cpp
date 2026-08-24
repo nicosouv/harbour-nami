@@ -28,6 +28,7 @@ private slots:
     void dismissedMemoriesAreHiddenButStillRegenerated();
     void pruningAPhotoTakesItOutOfItsMemories();
     void faceBoxesComeBackForTheWholeMemoryAtOnce();
+    void photosOfPeopleTellTogetherFromAnyOfThem();
 
 private:
     QString makePhotoFile(const QString &name);
@@ -260,6 +261,42 @@ void TstMemories::faceBoxesComeBackForTheWholeMemoryAtOnce()
     QVERIFY(!boxes.contains(scenery));
     QVERIFY(!boxes.contains(outside));
     QCOMPARE(boxes.value(withFaces).first(), QRectF(0.10, 0.20, 0.12, 0.16));
+}
+
+void TstMemories::photosOfPeopleTellTogetherFromAnyOfThem()
+{
+    const int marie = m_db->createPerson("Marie");
+    const int paul = m_db->createPerson("Paul");
+    const int lea = m_db->createPerson("Lea");
+
+    const FaceEmbedding embedding(1, 0.5f);
+    auto photoWith = [&](const QString &name, const QVector<int> &people) {
+        const int photoId = addPhoto(name, 1);
+        for (int i = 0; i < people.size(); i++) {
+            m_db->addFace(photoId, QRectF(0.1 * (i + 1), 0.2, 0.1, 0.14),
+                          0.95f, embedding, people.at(i));
+        }
+        return photoId;
+    };
+
+    photoWith("all-1.jpg", { marie, paul, lea });
+    photoWith("all-2.jpg", { marie, paul, lea });
+    photoWith("pair.jpg", { marie, paul });
+    photoWith("lea.jpg", { lea });
+    photoWith("nobody.jpg", {});
+
+    const QVector<int> three = { marie, paul, lea };
+
+    // Together: only the frames the whole group is actually in
+    QCOMPARE(m_db->photosOfPeople(three, true).size(), 2);
+    // Any of them: every photo one of them appears in, and none of the rest
+    QCOMPARE(m_db->photosOfPeople(three, false).size(), 4);
+
+    // With three or four people the two answers are worlds apart, which is
+    // the whole reason the caller has to say which one it means
+    QCOMPARE(m_db->photosOfPeople({ marie, paul }, true).size(), 3);
+    QCOMPARE(m_db->photosOfPeople({ lea }, true).size(), 3);
+    QCOMPARE(m_db->photosOfPeople({}, true).size(), 0);
 }
 
 QTEST_MAIN(TstMemories)

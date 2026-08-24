@@ -1557,6 +1557,88 @@ bool FacePipeline::deleteMemory(int memoryId)
     return m_database->deleteMemory(memoryId);
 }
 
+namespace {
+
+// Sorted, deduplicated, and dropped if empty. Sorted because the id is what
+// identifies the memory: picking Marie then Paul must land on the same
+// memory as picking Paul then Marie, not create a second one.
+QVector<int> personIdsFrom(const QVariantList &values)
+{
+    QVector<int> ids;
+    for (const QVariant &value : values) {
+        const int id = value.toInt();
+        if (id > 0 && !ids.contains(id)) {
+            ids.append(id);
+        }
+    }
+    std::sort(ids.begin(), ids.end());
+    return ids;
+}
+
+}  // namespace
+
+int FacePipeline::countPhotosOfPeople(const QVariantList &personIds, bool together)
+{
+    if (!m_initialized || !m_database) {
+        return 0;
+    }
+
+    const QVector<int> ids = personIdsFrom(personIds);
+    if (ids.isEmpty()) {
+        return 0;
+    }
+    return m_database->photosOfPeople(ids, together).size();
+}
+
+int FacePipeline::createPeopleMemory(const QVariantList &personIds, bool together)
+{
+    if (!m_initialized || !m_database) {
+        return -1;
+    }
+
+    const QVector<int> ids = personIdsFrom(personIds);
+    if (ids.isEmpty()) {
+        return -1;
+    }
+
+    const QVector<MemoryCandidate> photos = m_database->photosOfPeople(ids, together);
+    if (photos.size() < MemoryGenerator::kMinPhotos) {
+        return -1;
+    }
+
+    QStringList names;
+    QStringList keyParts;
+    for (int id : ids) {
+        const Person person = m_database->getPerson(id);
+        if (!person.name.trimmed().isEmpty()) {
+            names << person.name;
+        }
+        keyParts << QString::number(id);
+    }
+    if (names.isEmpty()) {
+        return -1;
+    }
+
+    Memory memory;
+    memory.kind = QStringLiteral("people");
+    // "together" is part of the identity: the same faces asked about two
+    // different ways are two different memories, and both are worth keeping
+    memory.sourceKey = keyParts.join('-') + (together ? "+all" : "+any");
+    // Names joined by an ampersand read the same in every locale this ships
+    memory.title = names.join(QStringLiteral(" & "));
+    memory.style = QStringLiteral("sentimental");
+    memory.sortDate = photos.last().dateTaken;
+    memory.score = 0.5;
+
+    const int memoryId = m_database->upsertMemory(memory,
+                                                  MemoryGenerator::selectPhotos(photos));
+    if (memoryId > 0) {
+        // Somebody asked for this one, so no recipe gets to rewrite it
+        m_database->renameMemory(memoryId, memory.title);
+    }
+    return memoryId;
+}
+
 // === Clips ===
 
 namespace {
