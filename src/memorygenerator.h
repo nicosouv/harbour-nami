@@ -53,8 +53,11 @@ public:
     // Below this a memory is a handful of photos and not a story
     static const int kMinPhotos = 5;
 
-    // A day has to stand out from ordinary days to become an event
-    static const int kEventMinPhotos = 12;
+    // A day has to stand out from ordinary days to become an event. Eight
+    // rather than twelve: on a gallery of a few thousand photos, twelve left
+    // the home with a hero and almost nothing under it, and the emptiness
+    // was a shortage of memories rather than a layout that failed to fill.
+    static const int kEventMinPhotos = 8;
 
     // Someone has to be a regular presence before they get their own memory
     static const int kPersonMinPhotos = 12;
@@ -65,8 +68,9 @@ public:
     static const int kMaxPhotos = 40;
 
     // Per run, for the recipes that would otherwise scale with the gallery:
-    // fifty people means fifty person memories and a home nobody can read
-    static const int kMaxPerKind = 3;
+    // fifty people means fifty person memories and a home nobody can read.
+    // Six is what fills the strip without becoming that.
+    static const int kMaxPerKind = 6;
 
     // Burst shots: keep one, drop the rest. Six frames of the same instant
     // make a clip stutter.
