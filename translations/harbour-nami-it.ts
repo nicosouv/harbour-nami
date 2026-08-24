@@ -449,6 +449,14 @@
         <source>photos</source>
         <translation>foto</translation>
     </message>
+    <message>
+        <source>1 face to identify</source>
+        <translation>1 volto da identificare</translation>
+    </message>
+    <message>
+        <source>%1 faces to identify</source>
+        <translation>%1 volti da identificare</translation>
+    </message>
 </context>
 <context>
     <name>PeoplePage</name>

@@ -448,6 +448,14 @@
         <source>photos</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>1 face to identify</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 faces to identify</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>PeoplePage</name>

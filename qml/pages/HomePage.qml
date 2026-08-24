@@ -14,6 +14,11 @@ Page {
     property int totalPeople: 0
     property int totalPhotos: 0
 
+    // Faces the app has found and nobody has named. The one thing the home
+    // ever asks of you, and only when there is something to ask: every
+    // identification makes the next scan better at guessing.
+    property int facesToIdentify: 0
+
     // The best memory the recipes found, shown full width. One card rather
     // than a carousel: if the app has something worth remembering today it
     // should say so once and loudly, not offer ten equal thumbnails.
@@ -93,6 +98,10 @@ Page {
         for (var i = 0; i < people.length; i++) {
             totalPhotos += people[i].photo_count
         }
+
+        // One COUNT, already computed by the statistics query
+        var stats = facePipeline.getStatistics()
+        facesToIdentify = stats.unmapped_faces || 0
 
         // Most recently photographed first: a home page is about now, and
         // the person with the biggest back catalogue is not necessarily
@@ -245,10 +254,15 @@ Page {
 
             // The memory of the day. Full width, no frame, no rounded
             // corners: the photograph is the card.
+            //
+            // Portrait rather than 16:9, and deliberately more than half the
+            // screen. One image with presence beats three blocks that each
+            // half-fill their row, and it makes the space below it read as
+            // chosen rather than left over.
             Item {
                 id: hero
                 width: parent.width
-                height: width * 0.5625
+                height: width * 1.25
                 visible: heroMemory !== null
 
                 Image {
@@ -296,7 +310,7 @@ Page {
                         width: parent.width
                         text: memoryLabels.title(heroMemory)
                         color: "white"
-                        font.pixelSize: Theme.fontSizeLarge
+                        font.pixelSize: Theme.fontSizeExtraLarge
                         truncationMode: TruncationMode.Fade
                     }
 
@@ -450,6 +464,34 @@ Page {
 
                     onClicked: openPerson(model.person_id, model.name)
                 }
+            }
+
+            // The one thing the home ever asks of you, and only while there
+            // is something to ask. A row that is always there is a row
+            // nobody reads; this one appearing means there is work waiting,
+            // and it going away means there is none.
+            BackgroundItem {
+                width: parent.width
+                height: Theme.itemSizeSmall
+                visible: facesToIdentify > 0
+
+                Label {
+                    anchors {
+                        left: parent.left
+                        leftMargin: Theme.horizontalPageMargin
+                        right: parent.right
+                        rightMargin: Theme.horizontalPageMargin
+                        verticalCenter: parent.verticalCenter
+                    }
+                    text: facesToIdentify === 1
+                          ? qsTr("1 face to identify")
+                          : qsTr("%1 faces to identify").arg(facesToIdentify)
+                    color: Theme.highlightColor
+                    font.pixelSize: Theme.fontSizeSmall
+                    truncationMode: TruncationMode.Fade
+                }
+
+                onClicked: pageStack.push(Qt.resolvedUrl("IdentifyFacesPage.qml"))
             }
         }
 

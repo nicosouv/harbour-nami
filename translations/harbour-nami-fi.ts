@@ -449,6 +449,14 @@
         <source>photos</source>
         <translation>kuvaa</translation>
     </message>
+    <message>
+        <source>1 face to identify</source>
+        <translation>1 tunnistamaton kasvo</translation>
+    </message>
+    <message>
+        <source>%1 faces to identify</source>
+        <translation>%1 tunnistamatonta kasvoa</translation>
+    </message>
 </context>
 <context>
     <name>PeoplePage</name>
