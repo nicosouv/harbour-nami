@@ -48,6 +48,12 @@ Item {
         }
     }
 
+    // Changing a memory's style changes its track. Without this the element
+    // keeps playing whatever it loaded first: a new source on a running
+    // player is not a new track, it is the old one with a different file
+    // name attached.
+    onSourceChanged: audio.stop()
+
     Audio {
         id: audio
         source: root.source

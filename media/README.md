@@ -4,8 +4,8 @@
 docker compose run --rm beats
 ```
 
-fetches the four originals, transcodes them to 64 kbps mono Opus trimmed to
-92 seconds, and writes each one's beat grid beside it. The transcodes and the
+fetches the four originals, transcodes them to mono 44.1 kHz Vorbis trimmed
+to 92 seconds, and writes each one's beat grid beside it. The transcodes and the
 grids are committed; the originals, under `.sources/`, are not.
 
 The app runs without any of it: a style whose audio is missing plays silently
@@ -18,7 +18,7 @@ Two files per track, named after the style that opens on it
 (`sentimental`, `energetic`, `polaroid`, `bauhaus`):
 
 ```
-sentimental.opus     the audio (.opus, .ogg, .mp3 or .m4a)
+sentimental.ogg      the audio (.opus, .ogg, .mp3 or .m4a)
 sentimental.json     its beat grid
 ```
 
@@ -58,6 +58,15 @@ signal processing and the RPM carries no DSP library.
 
 Beats out of order are sorted rather than trusted, and a grid with fewer than
 two beats is treated as absent.
+
+## Why Vorbis and not Opus
+
+Opus always decodes at 48 kHz; it has no other mode. These sources are
+44.1 kHz, and on a device whose PulseAudio sink is sitting at 44.1 the
+mismatch plays back 8.8% slow, so the track sounds stretched. Intermittently,
+because the sink's rate depends on whatever opened audio first. Encoding at
+the source's own rate removes the negotiation, and `libgstvorbis` has been on
+every Sailfish device there has ever been.
 
 ## Licensing
 
