@@ -79,7 +79,8 @@ Page {
             }
         }
 
-        header: PageHeader {
+        header: SectionHeader {
+            section: "memories"
             title: qsTr("Memories")
         }
 

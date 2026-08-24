@@ -339,7 +339,8 @@ Page {
             width: parent.width
             spacing: Theme.paddingLarge
 
-            PageHeader {
+            SectionHeader {
+                section: "people"
                 id: header
                 title: personName
 

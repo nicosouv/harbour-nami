@@ -1715,4 +1715,19 @@
         <translation>Opprett</translation>
     </message>
 </context>
+<context>
+    <name>SectionHeader</name>
+    <message>
+        <source>People</source>
+        <translation>Personer</translation>
+    </message>
+    <message>
+        <source>Events</source>
+        <translation>Hendelser</translation>
+    </message>
+    <message>
+        <source>Memories</source>
+        <translation>Minner</translation>
+    </message>
+</context>
 </TS>

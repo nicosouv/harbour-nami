@@ -1,5 +1,6 @@
 import QtQuick 2.6
 import Sailfish.Silica 1.0
+import "../components"
 import "../js/faceutils.js" as FaceUtils
 import "../js/eventsettings.js" as EventSettings
 import "../js/eventsmodel.js" as EventsModel
@@ -138,7 +139,8 @@ Page {
             width: parent.width
             spacing: Theme.paddingLarge
 
-            PageHeader {
+            SectionHeader {
+                section: "events"
                 title: String(year)
                 description: qsTr("%1 · %2")
                     .arg(yearTrips.length === 1 ? qsTr("1 trip") : qsTr("%1 trips").arg(yearTrips.length))

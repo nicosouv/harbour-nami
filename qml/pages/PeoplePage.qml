@@ -298,7 +298,8 @@ Page {
             width: parent.width
             spacing: 0
 
-            PageHeader {
+            SectionHeader {
+                section: "people"
                 title: qsTr("People")
                 // The counts as a quiet line under the title. A boxed panel
                 // is ornament: hierarchy comes from position and scale.

@@ -1,5 +1,6 @@
 import QtQuick 2.6
 import Sailfish.Silica 1.0
+import "../components"
 import "../js/eventsettings.js" as EventSettings
 import "../js/eventsmodel.js" as EventsModel
 
@@ -106,7 +107,8 @@ Page {
             width: parent.width
             spacing: Theme.paddingLarge
 
-            PageHeader {
+            SectionHeader {
+                section: "events"
                 title: qsTr("Year in review")
             }
 

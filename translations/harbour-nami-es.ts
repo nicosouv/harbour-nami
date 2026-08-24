@@ -1715,4 +1715,19 @@
         <translation>Crear</translation>
     </message>
 </context>
+<context>
+    <name>SectionHeader</name>
+    <message>
+        <source>People</source>
+        <translation>Personas</translation>
+    </message>
+    <message>
+        <source>Events</source>
+        <translation>Eventos</translation>
+    </message>
+    <message>
+        <source>Memories</source>
+        <translation>Recuerdos</translation>
+    </message>
+</context>
 </TS>

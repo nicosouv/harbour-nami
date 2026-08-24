@@ -1714,4 +1714,19 @@
         <translation type="unfinished"></translation>
     </message>
 </context>
+<context>
+    <name>SectionHeader</name>
+    <message>
+        <source>People</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Events</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Memories</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
 </TS>

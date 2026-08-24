@@ -1,5 +1,6 @@
 import QtQuick 2.6
 import Sailfish.Silica 1.0
+import "../components"
 import "../js/faceutils.js" as FaceUtils
 
 // Reordering and excluding a memory's photos.
@@ -95,7 +96,8 @@ Page {
         anchors.fill: parent
         model: photosModel
 
-        header: PageHeader {
+        header: SectionHeader {
+            section: "memories"
             title: qsTr("Edit photos")
             description: page.memoryTitle
         }
