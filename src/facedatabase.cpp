@@ -2464,6 +2464,22 @@ QVector<MemoryCandidate> FaceDatabase::photosInMonth(int year, int month)
     return candidates;
 }
 
+QSet<QString> FaceDatabase::knownPhotoPaths()
+{
+    QSet<QString> paths;
+
+    QSqlQuery query(m_db);
+    if (!query.exec("SELECT file_path FROM photos")) {
+        emit error("Failed to read photo paths: " + query.lastError().text());
+        return paths;
+    }
+
+    while (query.next()) {
+        paths.insert(query.value(0).toString());
+    }
+    return paths;
+}
+
 QHash<int, QVector<QRectF>> FaceDatabase::faceBoxesForMemory(int memoryId)
 {
     QHash<int, QVector<QRectF>> boxes;

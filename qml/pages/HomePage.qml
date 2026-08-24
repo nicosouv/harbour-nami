@@ -19,6 +19,27 @@ Page {
     // identification makes the next scan better at guessing.
     property int facesToIdentify: 0
 
+    // Photos on the card that have never been through the pipeline. Counted
+    // off the first frame, never in a binding: it is a walk over the whole
+    // gallery, names only, but a walk all the same.
+    property int photosToScan: 0
+
+    // Nothing has ever been scanned, as opposed to scanned and holding
+    // nobody. Two different empty pages: one needs telling what the app is,
+    // the other needs telling why it found no one.
+    property bool neverScanned: true
+
+    function scanFolders() {
+        var raw = facePipeline.getSetting("scan_folders", "")
+        return raw.length > 0
+            ? raw.split("\n").filter(function (f) { return f.length > 0 })
+            : [facePipeline.getSetting("gallery_path", defaultGalleryPath)]
+    }
+
+    function startScan() {
+        pageStack.push(Qt.resolvedUrl("ScanningPage.qml"))
+    }
+
     // The best memory the recipes found, shown full width. One card rather
     // than a carousel: if the app has something worth remembering today it
     // should say so once and loudly, not offer ten equal thumbnails.
@@ -99,9 +120,10 @@ Page {
             totalPhotos += people[i].photo_count
         }
 
-        // One COUNT, already computed by the statistics query
+        // Two COUNTs, already computed by the statistics query
         var stats = facePipeline.getStatistics()
         facesToIdentify = stats.unmapped_faces || 0
+        neverScanned = (stats.total_photos || 0) === 0
 
         // Most recently photographed first: a home page is about now, and
         // the person with the biggest back catalogue is not necessarily
@@ -164,6 +186,9 @@ Page {
             if (facePipeline.generateMemories() > 0) {
                 refreshMemories()
             }
+            // Same reason as above: a walk over the gallery has no business
+            // happening before the page has drawn
+            photosToScan = facePipeline.unscannedPhotoCount(scanFolders())
         }
     }
 
@@ -175,6 +200,7 @@ Page {
             // asking the recipes again rather than waiting for tomorrow
             facePipeline.generateMemories(true)
             refreshMemories()
+            photosToScan = 0
         }
     }
 
@@ -228,10 +254,14 @@ Page {
             // What the app is, said once, on the empty library. This used to
             // sit above the people list; the home page is where a first
             // launch actually lands.
+            // Only on a first launch, and with the one action it needs. A
+            // gallery that has been scanned and simply holds nobody is a
+            // different page: it does not want the pitch again, it wants to
+            // know why nothing was found.
             Column {
                 width: parent.width
                 spacing: Theme.paddingMedium
-                visible: totalPeople === 0
+                visible: totalPeople === 0 && neverScanned
 
                 Label {
                     x: Theme.horizontalPageMargin
@@ -249,6 +279,22 @@ Page {
                     color: Theme.secondaryHighlightColor
                     font.pixelSize: Theme.fontSizeSmall
                     wrapMode: Text.WordWrap
+                }
+
+                Item { width: 1; height: Theme.paddingMedium }
+
+                // The one screen where a button earns its frame: on a first
+                // launch there is exactly one thing to do, and burying it in
+                // a pull-down menu asks someone to discover the app before
+                // they can start it.
+                Button {
+                    x: Theme.horizontalPageMargin
+                    text: photosToScan > 0
+                          ? qsTr("Scan %1 photos").arg(photosToScan)
+                          : qsTr("Scan gallery")
+                    enabled: facePipeline && facePipeline.initialized
+                             && !facePipeline.processing
+                    onClicked: startScan()
                 }
             }
 
@@ -466,39 +512,47 @@ Page {
                 }
             }
 
-            // The one thing the home ever asks of you, and only while there
-            // is something to ask. A row that is always there is a row
-            // nobody reads; this one appearing means there is work waiting,
-            // and it going away means there is none.
-            BackgroundItem {
+            // What the home asks of you, and only while there is something
+            // to ask. A row that is always there is a row nobody reads;
+            // these appearing mean there is work waiting, and them going
+            // away means there is none.
+            //
+            // The icon rather than an emoji: it is drawn in the theme's own
+            // colour and at the theme's own size, so it belongs to the page
+            // instead of being pasted onto it.
+            Column {
                 width: parent.width
-                height: Theme.itemSizeSmall
-                visible: facesToIdentify > 0
+                spacing: 0
 
-                Label {
-                    anchors {
-                        left: parent.left
-                        leftMargin: Theme.horizontalPageMargin
-                        right: parent.right
-                        rightMargin: Theme.horizontalPageMargin
-                        verticalCenter: parent.verticalCenter
-                    }
+                ActionLine {
+                    width: parent.width
+                    visible: photosToScan > 0 && !neverScanned
+                    icon: "image://theme/icon-m-image"
+                    text: photosToScan === 1
+                          ? qsTr("1 new photo to scan")
+                          : qsTr("%1 new photos to scan").arg(photosToScan)
+                    onClicked: startScan()
+                }
+
+                ActionLine {
+                    width: parent.width
+                    visible: facesToIdentify > 0
+                    icon: "image://theme/icon-m-people"
                     text: facesToIdentify === 1
                           ? qsTr("1 face to identify")
                           : qsTr("%1 faces to identify").arg(facesToIdentify)
-                    color: Theme.highlightColor
-                    font.pixelSize: Theme.fontSizeSmall
-                    truncationMode: TruncationMode.Fade
+                    onClicked: pageStack.push(Qt.resolvedUrl("IdentifyFacesPage.qml"))
                 }
-
-                onClicked: pageStack.push(Qt.resolvedUrl("IdentifyFacesPage.qml"))
             }
         }
 
+        // Only for a gallery that has been through the pipeline and holds
+        // nobody. A first launch is answered above, by the block that says
+        // what the app is and offers the one button that starts it.
         ViewPlaceholder {
-            enabled: totalPeople === 0
-            text: qsTr("No faces detected yet")
-            hintText: qsTr("Pull down to scan your gallery")
+            enabled: totalPeople === 0 && !neverScanned
+            text: qsTr("No faces found")
+            hintText: qsTr("Check which folders are scanned in Settings")
         }
 
         VerticalScrollDecorator {}

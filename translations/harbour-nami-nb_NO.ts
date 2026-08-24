@@ -356,14 +356,6 @@
         <translation>Nami</translation>
     </message>
     <message>
-        <source>No faces detected yet</source>
-        <translation>Ingen ansikter oppdaget ennå</translation>
-    </message>
-    <message>
-        <source>Pull down to scan your gallery</source>
-        <translation>Dra ned for å skanne galleriet ditt</translation>
-    </message>
-    <message>
         <source>Scan Gallery</source>
         <translation>Skann galleri</translation>
     </message>
@@ -398,6 +390,30 @@
     <message>
         <source>%1 faces to identify</source>
         <translation>%1 ansikter å identifisere</translation>
+    </message>
+    <message>
+        <source>1 new photo to scan</source>
+        <translation>1 nytt bilde å skanne</translation>
+    </message>
+    <message>
+        <source>%1 new photos to scan</source>
+        <translation>%1 nye bilder å skanne</translation>
+    </message>
+    <message>
+        <source>Scan gallery</source>
+        <translation>Skann galleriet</translation>
+    </message>
+    <message>
+        <source>Scan %1 photos</source>
+        <translation>Skann %1 bilder</translation>
+    </message>
+    <message>
+        <source>No faces found</source>
+        <translation>Ingen ansikter funnet</translation>
+    </message>
+    <message>
+        <source>Check which folders are scanned in Settings</source>
+        <translation>Se hvilke mapper som skannes i innstillingene</translation>
     </message>
 </context>
 <context>

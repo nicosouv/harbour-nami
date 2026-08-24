@@ -1577,6 +1577,31 @@ QVector<int> personIdsFrom(const QVariantList &values)
 
 }  // namespace
 
+int FacePipeline::unscannedPhotoCount(const QStringList &folders)
+{
+    if (!m_initialized || !m_database || folders.isEmpty()) {
+        return 0;
+    }
+
+    const QSet<QString> known = m_database->knownPhotoPaths();
+
+    // Deduplicated across folders: a whitelist can name a directory and its
+    // parent, and counting a photo twice would promise a scan twice as big
+    QSet<QString> unscanned;
+    for (const QString &folder : folders) {
+        if (folder.isEmpty()) {
+            continue;
+        }
+        for (const QString &path : findImageFiles(folder, true)) {
+            if (!known.contains(path)) {
+                unscanned.insert(path);
+            }
+        }
+    }
+
+    return unscanned.size();
+}
+
 int FacePipeline::countPhotosOfPeople(const QVariantList &personIds, bool together)
 {
     if (!m_initialized || !m_database) {
