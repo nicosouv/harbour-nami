@@ -407,7 +407,7 @@ Page {
             width: parent.width
             spacing: Theme.paddingLarge
 
-            SectionHeader {
+            SectionPageHeader {
                 section: "events"
                 title: qsTr("Events")
             }

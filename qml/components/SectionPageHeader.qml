@@ -14,6 +14,11 @@ import Sailfish.Silica 1.0
 //
 // A drop-in for PageHeader: same title and description, and it still works
 // as a ListView header because it is one item.
+//
+// Not called SectionHeader. Silica already has one, and a component here
+// with that name shadows it in every file that imports this directory,
+// which took YearDetailPage down without a word: it uses Silica'''s, with a
+// text property this one does not have.
 Column {
     id: root
 

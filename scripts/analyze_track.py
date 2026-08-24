@@ -90,13 +90,17 @@ def energy_sections(y, sample_rate, safe_out_ms):
     return sections
 
 
-# Below either of these a track has a tempo but not much music, and a clip
-# cut to it feels slow whatever the beat grid says. Both were read off the
-# four tracks first shipped: the good ones sat near 0.16 loudness and 4
-# onsets a second, and the two that felt like slow motion were at 0.045 and
-# 0.109, and 2.5 and 3.0.
-QUIET = 0.12
+# Below this a track has a tempo but not much music in it, and a clip cut to
+# it feels slower than the beat grid says. Read off the tracks that failed:
+# the ones that worked sat near 4 onsets a second, the ones that felt like
+# slow motion were at 2.5 and 3.0.
 SPARSE = 3.2
+
+# Loudness is no longer warned about. The transcode normalises every track to
+# the same perceived level, so what is left of the difference is dynamic
+# range: an acoustic piece with quiet passages measures lower than a
+# compressed one at the same loudness, and flagging it would be flagging it
+# for being well recorded. It is still printed, because seeing it is useful.
 
 
 def character(path):
@@ -155,11 +159,15 @@ def main():
         target = MEDIA / (path.stem + ".json")
         target.write_text(json.dumps(grid, indent=2) + "\n", encoding="utf-8")
 
-        onsets, loudness = character(path)
+        # Measured on what ships, not on what was supplied: the transcode
+        # normalises loudness, so reading the source would report a level
+        # nobody will ever hear and warn about a track that is now fine
+        shipped = MEDIA / (path.stem + ".ogg")
+        onsets, loudness = character(shipped if shipped.exists() else path)
         print(f"{path.stem:16s} {grid['bpm']:7.1f} {onsets:8.2f} {loudness:7.4f} "
               f" {len(grid['beats']):6d}")
 
-        if loudness < QUIET or onsets < SPARSE:
+        if onsets < SPARSE:
             weak.append((path.stem, onsets, loudness))
 
     # The lesson from the first four, made into something the tool says out
@@ -167,12 +175,7 @@ def main():
     # whether there was any music there: one was four times quieter than the
     # rest and played like a clip in slow motion.
     for name, onsets, loudness in weak:
-        reasons = []
-        if loudness < QUIET:
-            reasons.append(f"quiet ({loudness:.3f}, others sit near 0.16)")
-        if onsets < SPARSE:
-            reasons.append(f"sparse ({onsets:.2f} onsets/s)")
-        print(f"\n  {name}: {' and '.join(reasons)}."
+        print(f"\n  {name}: sparse ({onsets:.2f} onsets/s, others sit near 4)."
               f"\n  A clip cut to this will feel slower than its tempo says.")
 
     return 0

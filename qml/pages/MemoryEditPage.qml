@@ -96,7 +96,7 @@ Page {
         anchors.fill: parent
         model: photosModel
 
-        header: SectionHeader {
+        header: SectionPageHeader {
             section: "memories"
             title: qsTr("Edit photos")
             description: page.memoryTitle

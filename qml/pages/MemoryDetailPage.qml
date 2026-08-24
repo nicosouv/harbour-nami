@@ -170,7 +170,7 @@ Page {
             }
         }
 
-        SectionHeader {
+        SectionPageHeader {
             section: "memories"
             id: header
             title: page.title

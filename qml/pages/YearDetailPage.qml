@@ -139,7 +139,7 @@ Page {
             width: parent.width
             spacing: Theme.paddingLarge
 
-            SectionHeader {
+            SectionPageHeader {
                 section: "events"
                 title: String(year)
                 description: qsTr("%1 · %2")

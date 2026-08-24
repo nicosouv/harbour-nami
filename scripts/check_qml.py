@@ -166,11 +166,43 @@ def check_shadowed_item_property(path, lines):
     return findings
 
 
+# Types Silica and QtQuick already define. A file in qml/components/ named
+# after one of these shadows it in every file that imports that directory.
+PLATFORM_TYPES = {
+    # Silica
+    "SectionHeader", "PageHeader", "Page", "Button", "Label", "TextField",
+    "TextArea", "Slider", "Switch", "TextSwitch", "ComboBox", "ContextMenu",
+    "MenuItem", "Dialog", "DialogHeader", "ViewPlaceholder", "SearchField",
+    "IconButton", "BackgroundItem", "ListItem", "RemorseItem", "Separator",
+    "SilicaListView", "SilicaGridView", "SilicaFlickable", "PullDownMenu",
+    "PushUpMenu", "BusyIndicator", "GlassItem", "DockedPanel", "ProgressBar",
+    "ValueButton", "Icon", "Theme", "Formatter",
+    # QtQuick
+    "Item", "Rectangle", "Image", "Text", "Row", "Column", "Grid", "Flow",
+    "Repeater", "Loader", "Timer", "Connections", "Component", "MouseArea",
+    "Flickable", "ListView", "GridView", "ListModel", "Animation", "Gradient",
+}
+
+
+def check_shadowed_platform_type(path, lines):
+    """A component named after a type Silica or QtQuick already defines.
+
+    The local one wins in every file that imports its directory, silently and
+    at load time. SectionPageHeader started life as SectionHeader and took
+    YearDetailPage down with it: that page uses Silica's, which has a text
+    property the local one did not, so the whole page failed to load.
+    """
+    if path.parent.name != "components" or path.stem not in PLATFORM_TYPES:
+        return []
+    return [(1, f"{path.stem} is already a Silica or QtQuick type")]
+
+
 CHECKS = [
     ("ListModel.get() inside a property binding", check_get_in_binding),
     ("unguarded Canvas dash API", check_unguarded_canvas_api),
     ("clear() on a shared people model", check_model_clear),
     ("property shadows one Item already has", check_shadowed_item_property),
+    ("component name shadows a platform type", check_shadowed_platform_type),
 ]
 
 

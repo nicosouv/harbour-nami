@@ -1,79 +1,77 @@
 # Clip music
 
-Four tracks, one per clip style. **CC0 only.** Never CC-BY: an attribution
-obligation would follow every clip a user posts publicly, which is friction
-and a legal exposure they did not sign up for when they tapped play.
+Four tracks, one per clip style, chosen by ear and supplied by the project
+owner. All four come from **Pixabay**, under the
+[Pixabay Content License](https://pixabay.com/service/license-summary/).
 
-`media/prepare_tracks.sh` fetches each original, pinned by checksum, and
-transcodes it to mono 44.1 kHz Vorbis, trimmed to the 92 seconds a clip can
-reach. The originals are thrown away; the transcodes and their beat grids
-are committed, which is what keeps a release build from depending on a third
-party still hosting a file. About 2.6 MB across the four.
-
-Vorbis rather than Opus, and at the source's own rate: Opus always decodes
-at 48 kHz by design, and against a device sink sitting at 44.1 that plays
-back 8.8% slow. The track sounds stretched, and only sometimes, because the
-sink's rate depends on whatever opened audio first.
-
-## Status: placeholders, being replaced
-
-Two of the four were judged bad on the device and are on their way out.
-`sentimental` (Softly) and `energetic` (Old Key) sound like a clip in slow
-motion, and the measurement agrees: Old Key is four times quieter than the
-others and Softly is barely denser. The files themselves are provably
-correct, 92.000 s of samples at 44.1 kHz, so nothing was wrong with the
-encoding or with playback. The music was simply the wrong music.
-
-**How to replace one.** Drop your file at `media/.sources/<style>.<ext>`
-(wav, flac, aiff, m4a, mp3, opus or ogg) and run
-`docker compose run --rm beats`. A supplied file wins over the download, so
-nothing else needs editing.
-
-## What tempo alone does not tell you
-
-The first assignment went by song title, which was wrong. The second went by
-measured tempo, which was better and still wrong: Old Key is 152 bpm *and*
-almost inaudible, the opposite of energetic.
-
-`scripts/analyze_track.py` now prints loudness and onset density beside the
-tempo and says so when a track is too quiet or too sparse. The four that
-worked sat near 0.16 loudness and 4 onsets a second; the two that failed
-were at 0.045 and 0.109, and 2.5 and 3.0.
-
-## How the current four were chosen
-
-All four are by **Loyalty Freak Music**, released CC0, obtained through
-Wikimedia Commons. They were picked without being listened to, which is worth
-saying plainly. What they were then *assigned* by is measured: the analysis
-gives each track's tempo, and the styles were matched to it, not to the song
-titles. That correction mattered, the title-based guess had the "energetic"
-style on the slowest of the four.
-
-| Style | Track | Tempo | Source |
-| --- | --- | --- | --- |
-| sentimental | Softly | 69.8 bpm | [Commons](https://commons.wikimedia.org/wiki/File:Loyalty_Freak_Music_-_06_-_Softly.ogg) |
-| energetic | Old Key | 152.0 bpm | [Commons](https://commons.wikimedia.org/wiki/File:Loyalty_Freak_Music_-_03_-_Old_Key.ogg) |
-| polaroid | Yippee! | 89.1 bpm | [Commons](https://commons.wikimedia.org/wiki/File:Loyalty_Freak_Music_-_08_-_Yippee_.ogg) |
-| bauhaus | Roller Fever | 129.2 bpm | [Commons](https://commons.wikimedia.org/wiki/File:Loyalty_Freak_Music_-_01_-_Roller_Fever.ogg) |
-
-| Track | sha256 |
+| Style | Track |
 | --- | --- |
-| sentimental.ogg | `6fea22d33d59b8e27f13d19e2b2a8069275e1784b8e989cedc79cb952937e5d9` |
-| energetic.ogg | `5182735c55982476007b468a9ffea7173ea724335a1d6de2cb90470a8e80197f` |
-| polaroid.ogg | `52594ef5f66dcf85a61f8068d2094a0de70925105eee14eaf213ca8a4ac89052` |
-| bauhaus.ogg | `13ec2e23828b9ff3399ed9cd2f580382a3d77debce3c615dadedee04fb49b2a8` |
+| sentimental | [Warm Nostalgic Sentimental](https://pixabay.com/music/acoustic-group-warm-nostalgic-sentimental-music-471262/) |
+| energetic | [Energetic](https://pixabay.com/music/upbeat-energetic-energetic-music-507828/) |
+| polaroid | [Polaroid Lo-Fi](https://pixabay.com/music/beats-polaroid-lo-fi-515821/) |
+| bauhaus | [Hi-Tech Loop](https://pixabay.com/music/corporate-hi-tech-loop-151203/) |
 
-| Track | Ships as |
-| --- | --- |
-| sentimental.ogg | 540 KB |
-| energetic.ogg | 621 KB |
-| polaroid.ogg | 725 KB |
-| bauhaus.ogg | 695 KB |
+The links are also in the app's About page. Pixabay asks for no attribution;
+they are there because somebody wrote this music and a clip made with it says
+so nowhere else.
 
-Swapping one is a URL and a checksum in `media/prepare_tracks.sh`, then
-`docker compose run --rm beats`.
+## What ships
 
-## Before release
+The originals are not committed. `media/prepare_tracks.sh` transcodes
+whatever is in `media/.sources/<style>.<ext>` into the `.ogg` files beside
+it, which are committed and go into the package:
 
-**Listen to them.** Nothing above involved hearing a note. Everything that
-could be decided from measurement has been; the rest is ears.
+- **Mono, 44.1 kHz Vorbis**, trimmed to the 92 seconds a clip can reach.
+  Not Opus: Opus only ever decodes at 48 kHz, and against a device sink
+  sitting at 44.1 that plays back 8.8% slow, which sounds like a clip in
+  slow motion.
+- **Normalised to -16 LUFS** (EBU R128). Tracks arrive mastered at whatever
+  level their author chose, and a quiet one does not merely sound quieter:
+  switching style mid-preview jumped in volume, and the quietest of the
+  first four was mistaken for a playback fault.
+- About 2.9 MB across the four.
+
+Nothing is fetched at runtime. The app declares no Internet permission and
+never could.
+
+## Replacing a track
+
+Drop the new file at `media/.sources/<style>.<ext>` (wav, flac, aiff, m4a,
+mp3, opus or ogg) and run `docker compose run --rm beats`. A style with no
+source keeps whatever is committed, so replacing one does not disturb the
+other three.
+
+## What the analysis is for
+
+Tempo decides how fast the clip cuts. It says nothing about whether there is
+any music there, and picking on tempo alone is how a 152 bpm track that was
+four times quieter than the others ended up on the energetic style and played
+like slow motion.
+
+`docker compose run --rm beats` therefore prints onset density and loudness
+beside the tempo, and warns when a track is too sparse. It no longer warns
+about loudness: the transcode normalises it, and what is left of the
+difference is dynamic range, which is not a fault.
+
+Ears still decide. The numbers only catch a pick that cannot work.
+
+## On the licence
+
+Not legal advice, and worth reading yourself. The two clauses that bear on
+an app like this one:
+
+- **Attribution is optional**, so nothing is imposed on someone who posts a
+  clip made with Nami. That was the deciding requirement, and it is why
+  CC-BY was ruled out early.
+- **Content may not be sold or distributed "on a Standalone basis"**, which
+  the terms define as "where no creative effort has been applied to the
+  Content and it remains in substantially the same form as it exists on the
+  Service".
+
+A clip is the music cut to somebody's photographs, so that is plainly not
+standalone. The files inside the package and inside this repository are
+closer to the line: they are the tracks, trimmed and re-encoded, which is a
+format change rather than creative effort. Bundling a soundtrack in an
+application is the use Pixabay exists for, and the clause is aimed at
+re-uploading content to stock sites or selling packs of it. The public
+repository is the weaker of the two, since anyone can take the file from it.

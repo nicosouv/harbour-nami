@@ -85,7 +85,7 @@ Page {
             width: parent.width
             spacing: Theme.paddingMedium
 
-            SectionHeader {
+            SectionPageHeader {
                 section: "memories"
                 title: qsTr("New memory")
             }
