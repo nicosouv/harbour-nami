@@ -5,10 +5,15 @@ obligation would follow every clip a user posts publicly, which is friction
 and a legal exposure they did not sign up for when they tapped play.
 
 `media/prepare_tracks.sh` fetches each original, pinned by checksum, and
-transcodes it to 64 kbps mono Opus trimmed to the 92 seconds a clip can
-reach. The originals are thrown away; the transcodes and their beat grids are
-committed, which is what keeps a release build from depending on a third
-party still hosting a file. About 3.2 MB across the four.
+transcodes it to mono 44.1 kHz Vorbis, trimmed to the 92 seconds a clip can
+reach. The originals are thrown away; the transcodes and their beat grids
+are committed, which is what keeps a release build from depending on a third
+party still hosting a file. About 2.6 MB across the four.
+
+Vorbis rather than Opus, and at the source's own rate: Opus always decodes
+at 48 kHz by design, and against a device sink sitting at 44.1 that plays
+back 8.8% slow. The track sounds stretched, and only sometimes, because the
+sink's rate depends on whatever opened audio first.
 
 ## Status: a first pass, chosen to have something to test against
 
@@ -35,10 +40,10 @@ style on the slowest of the four.
 
 | Track | Ships as |
 | --- | --- |
-| sentimental.opus | 822 KB |
-| energetic.opus | 698 KB |
-| polaroid.opus | 944 KB |
-| bauhaus.opus | 741 KB |
+| sentimental.ogg | 540 KB |
+| energetic.ogg | 621 KB |
+| polaroid.ogg | 725 KB |
+| bauhaus.ogg | 695 KB |
 
 Swapping one is a URL and a checksum in `media/prepare_tracks.sh`, then
 `docker compose run --rm beats`.

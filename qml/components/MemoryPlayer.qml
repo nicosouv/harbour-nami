@@ -153,9 +153,18 @@ Item {
         // nothing next to a silent failure
         source: Qt.resolvedUrl("ClipAudio.qml")
 
+        // Bindings, not assignments. Choosing another style recomposes the
+        // edit onto a different track, but `active` stays true throughout,
+        // so the Loader never reloads and onLoaded never runs again: a
+        // one-time assignment here left the first track playing forever.
         onLoaded: {
-            item.source = "file://" + edit.track_path
-            item.startMs = edit.track_start_ms
+            item.source = Qt.binding(function () {
+                return (player.edit && player.edit.track_path)
+                    ? "file://" + player.edit.track_path : ""
+            })
+            item.startMs = Qt.binding(function () {
+                return player.edit ? player.edit.track_start_ms : 0
+            })
             item.playing = Qt.binding(function () { return player.playing })
             item.level = Qt.binding(function () { return player.audioLevel })
         }

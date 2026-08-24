@@ -3,9 +3,9 @@
 #
 #   docker compose run --rm beats
 #
-# The originals are 2.8 to 4.3 MB of Vorbis and are not kept. What lands in
-# media/ is 64 kbps mono Opus trimmed to the 92 seconds a clip can reach,
-# which is a couple of hundred kilobytes each and small enough to commit.
+# The originals are 2.8 to 4.3 MB of stereo Vorbis and are not kept. What
+# lands in media/ is a mono 44.1 kHz cut of the first 92 seconds, small
+# enough to commit.
 #
 # Committing them matters more than the disk space: a release build that
 # fetches its own assets from a third party fails the day that third party
@@ -38,7 +38,7 @@ sha256_of() {
 prepare() {
     local id="$1" url="$2" expected="$3"
     local source="$SOURCE_DIR/$id.ogg"
-    local target="$MEDIA_DIR/$id.opus"
+    local target="$MEDIA_DIR/$id.ogg"
 
     if [ ! -f "$source" ] || [ "$(sha256_of "$source")" != "$expected" ]; then
         curl -fsSL -A "harbour-nami/1.0" "$url" -o "$source"
@@ -54,13 +54,22 @@ prepare() {
         fi
     fi
 
-    # Mono, because a phone speaker is mono and the file halves. The fade is
-    # a safety net for a track that has no ending of its own at 92 seconds;
-    # the player fades out at the clip's end regardless.
+    # Vorbis at the source's own 44.1 kHz, not Opus.
+    #
+    # Opus always decodes at 48 kHz, by design, and these sources are 44.1.
+    # On a device whose PulseAudio sink is sitting at 44.1, that mismatch
+    # plays back 8.8% slow: the track sounds stretched, and only sometimes,
+    # because the sink's rate depends on whatever opened audio first.
+    # Matching the source rate removes the negotiation entirely, and
+    # libgstvorbis is on every Sailfish device there has ever been.
+    #
+    # Mono, because a phone speaker is. The fade is a safety net for a track
+    # with no ending of its own at 92 seconds; the player fades out at the
+    # clip's end regardless.
     ffmpeg -y -loglevel error -i "$source" \
-        -t "$CLIP_SECONDS" -ac 1 \
+        -t "$CLIP_SECONDS" -ac 1 -ar 44100 \
         -af "afade=t=out:st=$((CLIP_SECONDS - 3)):d=3" \
-        -c:a libopus -b:a 64k -vbr on -application audio \
+        -c:a libvorbis -q:a 2 \
         "$target"
 
     echo "$(printf '%-12s' "$id") $(du -h "$target" | cut -f1)"
