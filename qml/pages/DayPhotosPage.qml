@@ -132,8 +132,18 @@ Page {
             }
         }
 
-        header: SectionPageHeader {
-            section: "events"
+        header: PageHeader {
+                // Which section this page belongs to, in the space the
+                // right-aligned title leaves free
+                SectionMark {
+                    section: "events"
+                    anchors {
+                        left: parent.left
+                        leftMargin: Theme.horizontalPageMargin
+                        verticalCenter: parent.verticalCenter
+                    }
+                }
+
             title: page.title
             description: photos.length + " "
                          + (photos.length === 1 ? qsTr("photo") : qsTr("photos"))

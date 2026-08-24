@@ -1740,7 +1740,7 @@
     </message>
 </context>
 <context>
-    <name>SectionPageHeader</name>
+    <name>SectionMark</name>
     <message>
         <source>People</source>
         <translation>Personer</translation>
