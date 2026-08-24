@@ -35,12 +35,31 @@ sha256_of() {
     fi
 }
 
+# A track you supplied, whatever its extension, or nothing
+supplied() {
+    local id="$1"
+    for ext in wav flac aiff m4a mp3 opus ogg; do
+        if [ -f "$SOURCE_DIR/$id.$ext" ]; then
+            echo "$SOURCE_DIR/$id.$ext"
+            return
+        fi
+    done
+}
+
 prepare() {
     local id="$1" url="$2" expected="$3"
-    local source="$SOURCE_DIR/$id.ogg"
     local target="$MEDIA_DIR/$id.ogg"
 
-    if [ ! -f "$source" ] || [ "$(sha256_of "$source")" != "$expected" ]; then
+    # Your own file wins over the download. Drop anything into
+    # media/.sources/<style>.<ext> and re-run: the checksummed fetch below is
+    # only there so the repository has something to play out of the box.
+    local source
+    source="$(supplied "$id")"
+
+    if [ -n "$source" ]; then
+        echo "$(printf '%-12s' "$id") using $(basename "$source")"
+    else
+        source="$SOURCE_DIR/$id.ogg"
         curl -fsSL -A "harbour-nami/1.0" "$url" -o "$source"
 
         local actual
