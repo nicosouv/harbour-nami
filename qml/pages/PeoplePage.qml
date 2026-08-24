@@ -298,7 +298,7 @@ Page {
             width: parent.width
             spacing: 0
 
-            SectionHeader {
+            SectionPageHeader {
                 section: "people"
                 title: qsTr("People")
                 // The counts as a quiet line under the title. A boxed panel

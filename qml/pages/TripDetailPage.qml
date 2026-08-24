@@ -369,7 +369,7 @@ Page {
             width: parent.width
             spacing: Theme.paddingLarge
 
-            SectionHeader {
+            SectionPageHeader {
                 section: "events"
                 title: tripName
                 description: totalPhotoCount + " " + (totalPhotoCount === 1 ? qsTr("photo") : qsTr("photos"))

@@ -87,6 +87,30 @@
         <source>Scan folders of your choice, SD card included</source>
         <translation>Skann mappene du velger, inkludert SD-kort</translation>
     </message>
+    <message>
+        <source>Clip music</source>
+        <translation>Musikk til klippene</translation>
+    </message>
+    <message>
+        <source>The four soundtracks come from Pixabay and are free to use.</source>
+        <translation>De fire sporene kommer fra Pixabay og er fri å bruke.</translation>
+    </message>
+    <message>
+        <source>Sentimental</source>
+        <translation>Sentimental</translation>
+    </message>
+    <message>
+        <source>Energetic</source>
+        <translation>Energisk</translation>
+    </message>
+    <message>
+        <source>Polaroid</source>
+        <translation>Polaroid</translation>
+    </message>
+    <message>
+        <source>Bauhaus</source>
+        <translation>Bauhaus</translation>
+    </message>
 </context>
 <context>
     <name>ConfirmDialog</name>
@@ -1716,7 +1740,7 @@
     </message>
 </context>
 <context>
-    <name>SectionHeader</name>
+    <name>SectionPageHeader</name>
     <message>
         <source>People</source>
         <translation>Personer</translation>

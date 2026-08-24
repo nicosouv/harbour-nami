@@ -154,7 +154,7 @@ Page {
             width: parent.width
             spacing: Theme.paddingLarge
 
-            SectionHeader {
+            SectionPageHeader {
                 section: "people"
                 title: qsTr("Identify Faces")
             }

@@ -133,6 +133,52 @@ Page {
             }
 
             SectionHeader {
+                text: qsTr("Clip music")
+            }
+
+            // Pixabay asks for no attribution. The links are here anyway:
+            // somebody wrote this music, and a clip made with it says so
+            // nowhere else.
+            Label {
+                x: Theme.horizontalPageMargin
+                width: parent.width - 2 * Theme.horizontalPageMargin
+                text: qsTr("The four soundtracks come from Pixabay and are free to use.")
+                color: Theme.secondaryColor
+                font.pixelSize: Theme.fontSizeExtraSmall
+                wrapMode: Text.WordWrap
+            }
+
+            Repeater {
+                model: [
+                    { style: qsTr("Sentimental"),
+                      url: "https://pixabay.com/music/acoustic-group-warm-nostalgic-sentimental-music-471262/" },
+                    { style: qsTr("Energetic"),
+                      url: "https://pixabay.com/music/upbeat-energetic-energetic-music-507828/" },
+                    { style: qsTr("Polaroid"),
+                      url: "https://pixabay.com/music/beats-polaroid-lo-fi-515821/" },
+                    { style: qsTr("Bauhaus"),
+                      url: "https://pixabay.com/music/corporate-hi-tech-loop-151203/" }
+                ]
+
+                delegate: BackgroundItem {
+                    width: parent.width
+                    height: Theme.itemSizeExtraSmall
+
+                    Label {
+                        x: Theme.horizontalPageMargin
+                        width: parent.width - 2 * Theme.horizontalPageMargin
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: modelData.style
+                        color: highlighted ? Theme.highlightColor : Theme.primaryColor
+                        font.pixelSize: Theme.fontSizeSmall
+                        truncationMode: TruncationMode.Fade
+                    }
+
+                    onClicked: Qt.openUrlExternally(modelData.url)
+                }
+            }
+
+            SectionHeader {
                 text: qsTr("License")
             }
 

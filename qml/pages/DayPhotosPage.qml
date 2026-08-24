@@ -132,7 +132,7 @@ Page {
             }
         }
 
-        header: SectionHeader {
+        header: SectionPageHeader {
             section: "events"
             title: page.title
             description: photos.length + " "

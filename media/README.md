@@ -4,9 +4,12 @@
 docker compose run --rm beats
 ```
 
-fetches the four originals, transcodes them to mono 44.1 kHz Vorbis trimmed
-to 92 seconds, and writes each one's beat grid beside it. The transcodes and the
-grids are committed; the originals, under `.sources/`, are not.
+transcodes whatever is in `.sources/` to mono 44.1 kHz Vorbis, normalised to
+-16 LUFS and trimmed to 92 seconds, and writes each one's beat grid beside
+it. The transcodes and the grids are committed; the originals are not.
+
+Nothing is downloaded, then or ever. The app declares no Internet permission:
+the `.ogg` files here go into the package and are all it has.
 
 The app runs without any of it: a style whose audio is missing plays silently
 against an even grid at its own fallback tempo, which is enough to see the
@@ -76,7 +79,7 @@ times quieter than the others ended up on the energetic style and played
 like slow motion.
 
 So `docker compose run --rm beats` also prints loudness and onset density,
-and warns when either is low:
+and warns when a track is too sparse:
 
 ```
 track                bpm  onset/s    loud   beats
@@ -89,8 +92,8 @@ Ears still decide. The numbers only catch a pick that cannot work.
 ## Using your own track
 
 Drop it at `media/.sources/<style>.<ext>` (wav, flac, aiff, m4a, mp3, opus
-or ogg) and run the command above. A supplied file wins over the checksummed
-download, which is only there so a fresh clone has something to play.
+or ogg) and run the command above. A style with no source keeps whatever is
+committed, so replacing one track does not disturb the other three.
 
 ## Licensing
 

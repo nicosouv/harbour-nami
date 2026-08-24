@@ -87,6 +87,30 @@
         <source>Memories from previous years, plus a year-by-year recap</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Clip music</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The four soundtracks come from Pixabay and are free to use.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sentimental</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Energetic</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Polaroid</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bauhaus</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>ConfirmDialog</name>
@@ -1715,7 +1739,7 @@
     </message>
 </context>
 <context>
-    <name>SectionHeader</name>
+    <name>SectionPageHeader</name>
     <message>
         <source>People</source>
         <translation type="unfinished"></translation>

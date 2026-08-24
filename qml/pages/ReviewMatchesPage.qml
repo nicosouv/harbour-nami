@@ -77,7 +77,7 @@ Page {
             width: parent.width
             spacing: Theme.paddingLarge
 
-            SectionHeader {
+            SectionPageHeader {
                 section: "people"
                 title: personName
                 description: page.done

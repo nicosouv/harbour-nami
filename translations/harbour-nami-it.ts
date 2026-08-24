@@ -87,6 +87,30 @@
         <source>Memories from previous years, plus a year-by-year recap</source>
         <translation>Ricordi degli anni passati, con un riepilogo anno per anno</translation>
     </message>
+    <message>
+        <source>Clip music</source>
+        <translation>Musica dei clip</translation>
+    </message>
+    <message>
+        <source>The four soundtracks come from Pixabay and are free to use.</source>
+        <translation>Le quattro colonne sonore vengono da Pixabay e sono libere.</translation>
+    </message>
+    <message>
+        <source>Sentimental</source>
+        <translation>Sentimentale</translation>
+    </message>
+    <message>
+        <source>Energetic</source>
+        <translation>Energico</translation>
+    </message>
+    <message>
+        <source>Polaroid</source>
+        <translation>Polaroid</translation>
+    </message>
+    <message>
+        <source>Bauhaus</source>
+        <translation>Bauhaus</translation>
+    </message>
 </context>
 <context>
     <name>ConfirmDialog</name>
@@ -1716,7 +1740,7 @@
     </message>
 </context>
 <context>
-    <name>SectionHeader</name>
+    <name>SectionPageHeader</name>
     <message>
         <source>People</source>
         <translation>Persone</translation>
