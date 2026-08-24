@@ -1,3 +1,27 @@
+* Sun Aug 24 2026 Nicolas Souveton <souvetonnicolas@gmail.com> 0.9.0-1
+- Memories are real things now: the app looks through your gallery once a day
+  and makes them, from an anniversary, a trip, a busy day, someone you see a
+  lot, or two people who keep turning up together
+- Every memory plays as a clip, cut to the beat of its music, with the camera
+  moving across each photo and ending on the faces in it
+- Four styles to choose between, each with its own music: sentimental,
+  energetic, polaroid and bauhaus. Pick one and it plays straight away
+- Build a memory from whoever you like: choose several people and get either
+  the photos where they are all together or every photo any of them is in
+- Edit a memory: reorder its photos, leave some out of the clip, put them
+  back, choose the cover, rename it or hide it
+- New home page. The best memory of the day fills the top of the screen, the
+  others sit below it, and your most recently photographed people follow
+- The home tells you when there is something to do, and only then: photos
+  waiting to be scanned, faces waiting for a name
+- The people list moved to its own page, one swipe to the left
+- A page now says which section it belongs to, by icon, colour and name
+- A memory's photos are scattered like a real pile of polaroids rather than
+  laid out in two columns
+- A first launch explains what the app is and offers the scan, instead of
+  telling you no faces were found before you had a chance to look
+- New app icon
+
 * Sat Aug 22 2026 Nicolas Souveton <souvetonnicolas@gmail.com> 0.8.7-1
 - Opening a person, a day or a trip is much quicker: their photos come back
   in one database query instead of one per photo, and without dragging the
