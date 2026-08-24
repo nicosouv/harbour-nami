@@ -272,6 +272,75 @@ check('memories: the subject date falls back to sort_date', () => {
     assert(memories.subjectDate(null) === null, 'no memory');
 });
 
+/* ---------------- scatter ---------------- */
+
+const scatter = loadQmlJs('qml/js/scatter.js');
+
+check('scatter: every photo gets a place', () => {
+    for (const count of [1, 2, 5, 17, 40]) {
+        const heap = scatter.layout(count);
+        assert(heap.items.length === count,
+               `${count} photos laid out as ${heap.items.length}`);
+        assert(heap.height > 0, `${count} photos gave no height`);
+    }
+});
+
+check('scatter: rows hold two to four, not a fixed number', () => {
+    // A pile does not have columns. Rows of a single repeated width were
+    // exactly what the first version looked like.
+    const widths = new Set();
+    for (const item of scatter.layout(40).items) {
+        widths.add(item.w.toFixed(4));
+    }
+    assert(widths.size >= 2, `every row came out the same width: ${[...widths]}`);
+});
+
+check('scatter: nothing wanders off the table', () => {
+    for (const count of [3, 12, 40]) {
+        for (const item of scatter.layout(count).items) {
+            assert(item.x > -0.05 && item.x + item.w < 1.05,
+                   `x ${item.x} width ${item.w} leaves the table`);
+            assert(item.y >= -0.05, `y ${item.y} is above the table`);
+        }
+    }
+});
+
+check('scatter: the table is tall enough to hold the pile', () => {
+    for (const count of [1, 7, 40]) {
+        const heap = scatter.layout(count);
+        for (const item of heap.items) {
+            assert(item.y + item.h <= heap.height + 1e-9,
+                   `a photo reaches ${item.y + item.h}, the table stops at ${heap.height}`);
+        }
+    }
+});
+
+check('scatter: rotations are small enough to still read as prints', () => {
+    for (const item of scatter.layout(40).items) {
+        assert(Math.abs(item.rotation) <= 10,
+               `rotated ${item.rotation} degrees`);
+    }
+});
+
+check('scatter: the same photos always land the same way', () => {
+    // Turning the phone rescales the heap; it must not deal a new one
+    const a = JSON.stringify(scatter.layout(23));
+    const b = JSON.stringify(scatter.layout(23));
+    assert(a === b, 'two layouts of the same count differed');
+});
+
+check('scatter: different memories do not open on the same arrangement', () => {
+    const a = scatter.layout(9).items[0];
+    const b = scatter.layout(10).items[0];
+    assert(a.w !== b.w || a.x !== b.x, 'both memories started identically');
+});
+
+check('scatter: nothing to lay out is not an error', () => {
+    assert(scatter.layout(0).items.length === 0, 'zero');
+    assert(scatter.layout(0).height === 0, 'zero height');
+    assert(scatter.layout(-3).items.length === 0, 'negative');
+});
+
 /* ---------------- report ---------------- */
 
 for (const failure of failures) {

@@ -2,6 +2,7 @@ import QtQuick 2.6
 import Sailfish.Silica 1.0
 import "../components"
 import "../js/faceutils.js" as FaceUtils
+import "../js/scatter.js" as Scatter
 
 // A memory's photos scattered like polaroids thrown on a table
 Page {
@@ -24,12 +25,10 @@ Page {
     PhotoSelection { id: selection }
     StyleLabels { id: styleLabels }
 
-    // Deterministic pseudo-random in [0,1) so the scatter looks organic but
-    // stays stable across relayouts
-    function jitter(i, salt) {
-        var x = Math.sin(i * 127.1 + salt * 311.7) * 43758.5453
-        return x - Math.floor(x)
-    }
+    // Where each polaroid lands, in fractions of the table's width. Not a
+    // binding: it is recomputed when the photo set changes, and never
+    // because the phone turned.
+    property var scatter: Scatter.layout(0)
 
     function loadPhotos() {
         if (!facePipeline || !facePipeline.initialized || memoryId <= 0) return
@@ -39,6 +38,12 @@ Page {
         // Already in playback order, and already without the photos the user
         // took out of the clip
         var photos = facePipeline.getMemoryPhotos(memoryId, true)
+
+        // Before the model is filled, not after: a delegate is created the
+        // moment its row appears, and one created against the previous
+        // layout lands in the wrong place and then jumps
+        scatter = Scatter.layout(photos.length)
+
         for (var i = 0; i < photos.length; i++) {
             var photo = photos[i]
             photosModel.append({
@@ -265,14 +270,11 @@ Page {
             id: table
             anchors.top: stage.visible ? stage.bottom : header.bottom
             width: parent.width
-            // Two loose columns; each row eats ~55% of a polaroid height so
-            // they overlap a little like a real pile
-            property real polaroidWidth: width * 0.46
-            property real polaroidHeight: polaroidWidth * 1.2
-            property real rowStep: polaroidHeight * 0.72
-            height: photosModel.count > 0
-                    ? Math.ceil(photosModel.count / 2) * rowStep + polaroidHeight * 0.5
-                    : 0
+
+            // Worked out once per photo count and held in fractions of the
+            // width, so turning the phone rescales the same heap instead of
+            // dealing a new one
+            height: page.scatter.height * width
 
             Repeater {
                 model: photosModel
@@ -281,18 +283,14 @@ Page {
                 delegate: Item {
                     id: polaroid
 
-                    property real jx: jitter(index, 1)
-                    property real jy: jitter(index, 2)
-                    property real jr: jitter(index, 3)
+                    property var place: page.scatter.items[index]
+                                        || { x: 0, y: 0, w: 0.4, h: 0.48, rotation: 0 }
 
-                    width: table.polaroidWidth
-                    height: table.polaroidHeight
-                    x: Theme.horizontalPageMargin
-                       + (index % 2) * (table.width - table.polaroidWidth - 2 * Theme.horizontalPageMargin)
-                       * (0.9 + 0.1 * jx)
-                       + (index % 2 === 0 ? jx * table.width * 0.06 : -jx * table.width * 0.06)
-                    y: Math.floor(index / 2) * table.rowStep + jy * table.rowStep * 0.25
-                    rotation: (jr - 0.5) * 16
+                    width: place.w * table.width
+                    height: place.h * table.width
+                    x: place.x * table.width
+                    y: place.y * table.width
+                    rotation: place.rotation
                     z: index
 
                     // Thrown-on-the-table entrance
@@ -302,7 +300,10 @@ Page {
 
                     SequentialAnimation {
                         id: dropAnimation
-                        PauseAnimation { duration: 120 * index }
+                        // Staggered, but capped: at forty photos a fixed
+                        // step per print meant five seconds of waiting for
+                        // the pile to finish landing
+                        PauseAnimation { duration: Math.min(index * 70, 1600) }
                         ParallelAnimation {
                             NumberAnimation {
                                 target: polaroid; property: "opacity"
@@ -364,9 +365,16 @@ Page {
                             text: model.caption
                             color: "#444444"
                             font.italic: true
-                            font.pixelSize: Theme.fontSizeExtraSmall
+                            // Scaled to the print rather than fixed: rows
+                            // now hold two to four, so a print can be half
+                            // the width of the one above it and a fixed
+                            // size would run a date off the edge
+                            font.pixelSize: Math.max(Theme.fontSizeTiny,
+                                                     Math.min(Theme.fontSizeExtraSmall,
+                                                              polaroid.width * 0.11))
                             horizontalAlignment: Text.AlignHCenter
                             verticalAlignment: Text.AlignVCenter
+                            truncationMode: TruncationMode.Fade
                         }
                     }
 
