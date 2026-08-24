@@ -587,6 +587,10 @@
         <source>They appear once your gallery has been scanned</source>
         <translation>Aparecen cuando se haya analizado tu galería</translation>
     </message>
+    <message>
+        <source>Memory of chosen people</source>
+        <translation>Recuerdo de personas elegidas</translation>
+    </message>
 </context>
 <context>
     <name>MemoryLabels</name>
@@ -1654,6 +1658,45 @@
     <message>
         <source>Bauhaus</source>
         <translation>Bauhaus</translation>
+    </message>
+</context>
+<context>
+    <name>CreateMemoryPage</name>
+    <message>
+        <source>New memory</source>
+        <translation>Nuevo recuerdo</translation>
+    </message>
+    <message>
+        <source>Together</source>
+        <translation>Juntos</translation>
+    </message>
+    <message>
+        <source>Any of them</source>
+        <translation>Cualquiera de ellos</translation>
+    </message>
+    <message>
+        <source>1 photo</source>
+        <translation>1 foto</translation>
+    </message>
+    <message>
+        <source>%1 photos</source>
+        <translation>%1 fotos</translation>
+    </message>
+    <message>
+        <source>Unknown</source>
+        <translation>Desconocido</translation>
+    </message>
+    <message>
+        <source>No people yet</source>
+        <translation>Aún no hay personas</translation>
+    </message>
+    <message>
+        <source>They appear once your gallery has been scanned</source>
+        <translation>Aparecen cuando se haya analizado tu galería</translation>
+    </message>
+    <message>
+        <source>Create</source>
+        <translation>Crear</translation>
     </message>
 </context>
 </TS>

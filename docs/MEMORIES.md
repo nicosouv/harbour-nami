@@ -94,10 +94,18 @@ Each asks the database one question (`photosOnMonthDays`, `photosOnDates`,
 photos in JavaScript already loop over every person's every photo on each
 opening, and this must not become that.
 
-Guards: at least 5 photos or no memory; at most 3 memories per run for the
+Guards: at least 5 photos or no memory; at most 6 memories per run for the
 recipes that scale with the gallery (event, person, duo); days already
 grouped into a trip belong to the trip, and days the user hid from the
 Events list stay hidden here.
+
+A seventh kind, `people`, is not a recipe: the user picks a group and the
+memory is made from their photos. It generalises `duo` from the pair the
+counting noticed to the people somebody wanted. `source_key` is the sorted
+ids plus `+all` or `+any`, because photos where the whole group appears at
+once and photos where any of them appears are different questions, and with
+three or four people the answers are worlds apart. Created with `edited` set,
+so no recipe ever rewrites a choice somebody made deliberately.
 
 ### Titles are stored untranslated
 

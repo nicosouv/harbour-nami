@@ -565,6 +565,30 @@ public:
     Q_INVOKABLE bool deleteMemory(int memoryId);
 
     /**
+     * @brief How many photos a chosen group of people would give
+     *
+     * So a picker can say what it is about to make before making it, and so
+     * choosing a fourth person who is never in the frame with the other
+     * three shows as zero rather than as an empty memory afterwards.
+     *
+     * @param together Photos where all of them appear at once, rather than
+     *        every photo any of them is in
+     */
+    Q_INVOKABLE int countPhotosOfPeople(const QVariantList &personIds, bool together);
+
+    /**
+     * @brief Make a memory out of a chosen group of people
+     *
+     * The recipes already do this for pairs that keep turning up together.
+     * This is the same thing asked for rather than found, so it is marked
+     * edited on creation: a recipe must never rewrite a choice somebody
+     * made deliberately.
+     *
+     * @return Memory ID, or -1 when the group has too few photos between them
+     */
+    Q_INVOKABLE int createPeopleMemory(const QVariantList &personIds, bool together);
+
+    /**
      * @brief Compose a memory into an edit the player can run
      *
      * The map holds duration_ms, track_start_ms, style, track_id, aspect, a

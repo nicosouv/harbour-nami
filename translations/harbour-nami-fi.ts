@@ -587,6 +587,10 @@
         <source>They appear once your gallery has been scanned</source>
         <translation>Ne ilmestyvät, kun galleria on käyty läpi</translation>
     </message>
+    <message>
+        <source>Memory of chosen people</source>
+        <translation>Muisto valituista henkilöistä</translation>
+    </message>
 </context>
 <context>
     <name>MemoryLabels</name>
@@ -1654,6 +1658,45 @@
     <message>
         <source>Bauhaus</source>
         <translation>Bauhaus</translation>
+    </message>
+</context>
+<context>
+    <name>CreateMemoryPage</name>
+    <message>
+        <source>New memory</source>
+        <translation>Uusi muisto</translation>
+    </message>
+    <message>
+        <source>Together</source>
+        <translation>Yhdessä</translation>
+    </message>
+    <message>
+        <source>Any of them</source>
+        <translation>Kuka tahansa heistä</translation>
+    </message>
+    <message>
+        <source>1 photo</source>
+        <translation>1 kuva</translation>
+    </message>
+    <message>
+        <source>%1 photos</source>
+        <translation>%1 kuvaa</translation>
+    </message>
+    <message>
+        <source>Unknown</source>
+        <translation>Tuntematon</translation>
+    </message>
+    <message>
+        <source>No people yet</source>
+        <translation>Ei vielä henkilöitä</translation>
+    </message>
+    <message>
+        <source>They appear once your gallery has been scanned</source>
+        <translation>Ne ilmestyvät, kun galleria on käyty läpi</translation>
+    </message>
+    <message>
+        <source>Create</source>
+        <translation>Luo</translation>
     </message>
 </context>
 </TS>

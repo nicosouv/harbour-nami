@@ -72,6 +72,11 @@ Page {
                     loadMemories()
                 }
             }
+            MenuItem {
+                text: qsTr("Memory of chosen people")
+                enabled: facePipeline && facePipeline.initialized
+                onClicked: pageStack.push(Qt.resolvedUrl("CreateMemoryPage.qml"))
+            }
         }
 
         header: PageHeader {

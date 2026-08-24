@@ -586,6 +586,10 @@
         <source>They appear once your gallery has been scanned</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Memory of chosen people</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>MemoryLabels</name>
@@ -1652,6 +1656,45 @@
     </message>
     <message>
         <source>Bauhaus</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>CreateMemoryPage</name>
+    <message>
+        <source>New memory</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Together</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Any of them</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>1 photo</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 photos</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unknown</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No people yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>They appear once your gallery has been scanned</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Create</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

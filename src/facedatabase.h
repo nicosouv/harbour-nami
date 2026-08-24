@@ -694,6 +694,17 @@ public:
     QVector<MemoryCandidate> photosOfPeoplePair(int personA, int personB);
 
     /**
+     * @brief Photos of a chosen set of people
+     *
+     * @param together true for the photos where all of them appear at once,
+     *        false for every photo any of them is in. With three or four
+     *        people the two answers are worlds apart, which is why the
+     *        caller says which one it means rather than being given a
+     *        default that is wrong half the time.
+     */
+    QVector<MemoryCandidate> photosOfPeople(const QVector<int> &personIds, bool together);
+
+    /**
      * @brief Photos taken in a calendar month
      */
     QVector<MemoryCandidate> photosInMonth(int year, int month);
