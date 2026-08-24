@@ -15,7 +15,32 @@ at 48 kHz by design, and against a device sink sitting at 44.1 that plays
 back 8.8% slow. The track sounds stretched, and only sometimes, because the
 sink's rate depends on whatever opened audio first.
 
-## Status: a first pass, chosen to have something to test against
+## Status: placeholders, being replaced
+
+Two of the four were judged bad on the device and are on their way out.
+`sentimental` (Softly) and `energetic` (Old Key) sound like a clip in slow
+motion, and the measurement agrees: Old Key is four times quieter than the
+others and Softly is barely denser. The files themselves are provably
+correct, 92.000 s of samples at 44.1 kHz, so nothing was wrong with the
+encoding or with playback. The music was simply the wrong music.
+
+**How to replace one.** Drop your file at `media/.sources/<style>.<ext>`
+(wav, flac, aiff, m4a, mp3, opus or ogg) and run
+`docker compose run --rm beats`. A supplied file wins over the download, so
+nothing else needs editing.
+
+## What tempo alone does not tell you
+
+The first assignment went by song title, which was wrong. The second went by
+measured tempo, which was better and still wrong: Old Key is 152 bpm *and*
+almost inaudible, the opposite of energetic.
+
+`scripts/analyze_track.py` now prints loudness and onset density beside the
+tempo and says so when a track is too quiet or too sparse. The four that
+worked sat near 0.16 loudness and 4 onsets a second; the two that failed
+were at 0.045 and 0.109, and 2.5 and 3.0.
+
+## How the current four were chosen
 
 All four are by **Loyalty Freak Music**, released CC0, obtained through
 Wikimedia Commons. They were picked without being listened to, which is worth

@@ -68,6 +68,30 @@ because the sink's rate depends on whatever opened audio first. Encoding at
 the source's own rate removes the negotiation, and `libgstvorbis` has been on
 every Sailfish device there has ever been.
 
+## Choosing a track
+
+Tempo decides how fast the clip cuts. It says nothing about whether there is
+any music there, and picking on it alone is how a 152 bpm track that is four
+times quieter than the others ended up on the energetic style and played
+like slow motion.
+
+So `docker compose run --rm beats` also prints loudness and onset density,
+and warns when either is low:
+
+```
+track                bpm  onset/s    loud   beats
+bauhaus            129.2     3.75  0.1684     199
+energetic          152.0     2.51  0.0454     229   <- flagged
+```
+
+Ears still decide. The numbers only catch a pick that cannot work.
+
+## Using your own track
+
+Drop it at `media/.sources/<style>.<ext>` (wav, flac, aiff, m4a, mp3, opus
+or ogg) and run the command above. A supplied file wins over the checksummed
+download, which is only there so a fresh clone has something to play.
+
 ## Licensing
 
 CC0 only. CC-BY would force an attribution into a clip the user posts

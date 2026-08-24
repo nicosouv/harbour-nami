@@ -90,6 +90,24 @@ def energy_sections(y, sample_rate, safe_out_ms):
     return sections
 
 
+# Below either of these a track has a tempo but not much music, and a clip
+# cut to it feels slow whatever the beat grid says. Both were read off the
+# four tracks first shipped: the good ones sat near 0.16 loudness and 4
+# onsets a second, and the two that felt like slow motion were at 0.045 and
+# 0.109, and 2.5 and 3.0.
+QUIET = 0.12
+SPARSE = 3.2
+
+
+def character(path):
+    """How loud and how busy, which is what tempo alone does not say."""
+    y, sample_rate = librosa.load(str(path), mono=True, duration=92)
+    onsets = librosa.onset.onset_detect(y=y, sr=sample_rate, units="time")
+    loudness = float(np.mean(librosa.feature.rms(y=y)[0]))
+    duration = max(1.0, librosa.get_duration(y=y, sr=sample_rate))
+    return len(onsets) / duration, loudness
+
+
 def analyse(path):
     y, sample_rate = librosa.load(str(path), mono=True)
     duration_ms = int(librosa.get_duration(y=y, sr=sample_rate) * 1000)
@@ -128,13 +146,34 @@ def main():
         print(f"no audio in {directory}; nothing to analyse")
         return 0
 
+    print(f"{'track':16s} {'bpm':>7s} {'onset/s':>8s} {'loud':>7s}  {'beats':>6s}")
+    weak = []
+
     for path in tracks:
         grid = analyse(path)
         # Always beside the audio the app ships, whichever file was read
         target = MEDIA / (path.stem + ".json")
         target.write_text(json.dumps(grid, indent=2) + "\n", encoding="utf-8")
-        print(f"{path.name}: {grid['bpm']} bpm, {len(grid['beats'])} beats, "
-              f"{len(grid['sections'])} sections, safe to {grid['safe_out_ms']}ms")
+
+        onsets, loudness = character(path)
+        print(f"{path.stem:16s} {grid['bpm']:7.1f} {onsets:8.2f} {loudness:7.4f} "
+              f" {len(grid['beats']):6d}")
+
+        if loudness < QUIET or onsets < SPARSE:
+            weak.append((path.stem, onsets, loudness))
+
+    # The lesson from the first four, made into something the tool says out
+    # loud. Two of them were picked on tempo, which said nothing about
+    # whether there was any music there: one was four times quieter than the
+    # rest and played like a clip in slow motion.
+    for name, onsets, loudness in weak:
+        reasons = []
+        if loudness < QUIET:
+            reasons.append(f"quiet ({loudness:.3f}, others sit near 0.16)")
+        if onsets < SPARSE:
+            reasons.append(f"sparse ({onsets:.2f} onsets/s)")
+        print(f"\n  {name}: {' and '.join(reasons)}."
+              f"\n  A clip cut to this will feel slower than its tempo says.")
 
     return 0
 
