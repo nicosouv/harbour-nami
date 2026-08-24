@@ -132,7 +132,8 @@ Page {
             }
         }
 
-        header: PageHeader {
+        header: SectionHeader {
+            section: "events"
             title: page.title
             description: photos.length + " "
                          + (photos.length === 1 ? qsTr("photo") : qsTr("photos"))

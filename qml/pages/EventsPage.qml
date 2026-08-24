@@ -1,5 +1,6 @@
 import QtQuick 2.6
 import Sailfish.Silica 1.0
+import "../components"
 import "../js/faceutils.js" as FaceUtils
 import "../js/geoutils.js" as GeoUtils
 import "../js/eventsettings.js" as EventSettings
@@ -406,7 +407,8 @@ Page {
             width: parent.width
             spacing: Theme.paddingLarge
 
-            PageHeader {
+            SectionHeader {
+                section: "events"
                 title: qsTr("Events")
             }
 

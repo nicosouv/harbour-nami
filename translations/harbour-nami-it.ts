@@ -1715,4 +1715,19 @@
         <translation>Crea</translation>
     </message>
 </context>
+<context>
+    <name>SectionHeader</name>
+    <message>
+        <source>People</source>
+        <translation>Persone</translation>
+    </message>
+    <message>
+        <source>Events</source>
+        <translation>Eventi</translation>
+    </message>
+    <message>
+        <source>Memories</source>
+        <translation>Ricordi</translation>
+    </message>
+</context>
 </TS>

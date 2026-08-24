@@ -170,7 +170,8 @@ Page {
             }
         }
 
-        PageHeader {
+        SectionHeader {
+            section: "memories"
             id: header
             title: page.title
             description: photosModel.count + " " + (photosModel.count === 1 ? qsTr("photo") : qsTr("photos"))

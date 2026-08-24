@@ -1715,4 +1715,19 @@
         <translation>Luo</translation>
     </message>
 </context>
+<context>
+    <name>SectionHeader</name>
+    <message>
+        <source>People</source>
+        <translation>Henkilöt</translation>
+    </message>
+    <message>
+        <source>Events</source>
+        <translation>Tapahtumat</translation>
+    </message>
+    <message>
+        <source>Memories</source>
+        <translation>Muistot</translation>
+    </message>
+</context>
 </TS>
