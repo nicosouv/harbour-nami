@@ -77,8 +77,18 @@ Page {
             width: parent.width
             spacing: Theme.paddingLarge
 
-            SectionPageHeader {
-                section: "people"
+            PageHeader {
+                // Which section this page belongs to, in the space the
+                // right-aligned title leaves free
+                SectionMark {
+                    section: "people"
+                    anchors {
+                        left: parent.left
+                        leftMargin: Theme.horizontalPageMargin
+                        verticalCenter: parent.verticalCenter
+                    }
+                }
+
                 title: personName
                 description: page.done
                     ? qsTr("Nothing left to confirm")

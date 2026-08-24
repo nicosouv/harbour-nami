@@ -339,9 +339,19 @@ Page {
             width: parent.width
             spacing: Theme.paddingLarge
 
-            SectionPageHeader {
-                section: "people"
+            PageHeader {
                 id: header
+                // Which section this page belongs to, in the space the
+                // right-aligned title leaves free
+                SectionMark {
+                    section: "people"
+                    anchors {
+                        left: parent.left
+                        leftMargin: Theme.horizontalPageMargin + Theme.itemSizeSmall + Theme.paddingMedium
+                        verticalCenter: parent.verticalCenter
+                    }
+                }
+
                 title: personName
 
                 // The face, next to the name: on the previous page every

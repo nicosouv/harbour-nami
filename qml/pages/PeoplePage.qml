@@ -298,8 +298,18 @@ Page {
             width: parent.width
             spacing: 0
 
-            SectionPageHeader {
-                section: "people"
+            PageHeader {
+                // Which section this page belongs to, in the space the
+                // right-aligned title leaves free
+                SectionMark {
+                    section: "people"
+                    anchors {
+                        left: parent.left
+                        leftMargin: Theme.horizontalPageMargin
+                        verticalCenter: parent.verticalCenter
+                    }
+                }
+
                 title: qsTr("People")
                 // The counts as a quiet line under the title. A boxed panel
                 // is ornament: hierarchy comes from position and scale.

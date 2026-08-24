@@ -170,9 +170,19 @@ Page {
             }
         }
 
-        SectionPageHeader {
-            section: "memories"
+        PageHeader {
             id: header
+            // Which section this page belongs to, in the space the
+            // right-aligned title leaves free
+            SectionMark {
+                section: "memories"
+                anchors {
+                    left: parent.left
+                    leftMargin: Theme.horizontalPageMargin
+                    verticalCenter: parent.verticalCenter
+                }
+            }
+
             title: page.title
             description: photosModel.count + " " + (photosModel.count === 1 ? qsTr("photo") : qsTr("photos"))
         }

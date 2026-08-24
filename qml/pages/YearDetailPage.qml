@@ -139,8 +139,18 @@ Page {
             width: parent.width
             spacing: Theme.paddingLarge
 
-            SectionPageHeader {
-                section: "events"
+            PageHeader {
+                // Which section this page belongs to, in the space the
+                // right-aligned title leaves free
+                SectionMark {
+                    section: "events"
+                    anchors {
+                        left: parent.left
+                        leftMargin: Theme.horizontalPageMargin
+                        verticalCenter: parent.verticalCenter
+                    }
+                }
+
                 title: String(year)
                 description: qsTr("%1 · %2")
                     .arg(yearTrips.length === 1 ? qsTr("1 trip") : qsTr("%1 trips").arg(yearTrips.length))

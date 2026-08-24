@@ -369,8 +369,18 @@ Page {
             width: parent.width
             spacing: Theme.paddingLarge
 
-            SectionPageHeader {
-                section: "events"
+            PageHeader {
+                // Which section this page belongs to, in the space the
+                // right-aligned title leaves free
+                SectionMark {
+                    section: "events"
+                    anchors {
+                        left: parent.left
+                        leftMargin: Theme.horizontalPageMargin
+                        verticalCenter: parent.verticalCenter
+                    }
+                }
+
                 title: tripName
                 description: totalPhotoCount + " " + (totalPhotoCount === 1 ? qsTr("photo") : qsTr("photos"))
             }

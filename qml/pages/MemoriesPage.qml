@@ -79,8 +79,18 @@ Page {
             }
         }
 
-        header: SectionPageHeader {
-            section: "memories"
+        header: PageHeader {
+                // Which section this page belongs to, in the space the
+                // right-aligned title leaves free
+                SectionMark {
+                    section: "memories"
+                    anchors {
+                        left: parent.left
+                        leftMargin: Theme.horizontalPageMargin
+                        verticalCenter: parent.verticalCenter
+                    }
+                }
+
             title: qsTr("Memories")
         }
 
