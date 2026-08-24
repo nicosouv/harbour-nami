@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.5)
 
-project(harbour-nami VERSION 0.8.7 LANGUAGES CXX)
+project(harbour-nami VERSION 0.9.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -140,8 +140,8 @@ install(DIRECTORY python/models
     FILES_MATCHING PATTERN "*.onnx"
 )
 
-# Clip music and the beat grids computed for it at build time. Empty until
-# the tracks are supplied; the app plays silently without them.
+# Clip music and the beat grids computed for it off the device. Bundled, not
+# fetched: the app declares no Internet permission and never could.
 install(DIRECTORY media
     DESTINATION share/${PROJECT_NAME}
 )
