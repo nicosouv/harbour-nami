@@ -710,6 +710,15 @@ public:
     QVector<MemoryCandidate> photosInMonth(int year, int month);
 
     /**
+     * @brief The file path of every photo already scanned
+     *
+     * One column of one query, because the only question asked of it is
+     * whether a file on disk is in here: pulling whole rows to answer that
+     * would read the whole gallery's metadata to count what is missing.
+     */
+    QSet<QString> knownPhotoPaths();
+
+    /**
      * @brief Every face box in a memory's photos, keyed by photo id
      *
      * One query for the whole memory rather than one per photo: composing a

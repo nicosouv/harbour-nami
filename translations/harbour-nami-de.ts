@@ -414,14 +414,6 @@
         <translation>Nami</translation>
     </message>
     <message>
-        <source>No faces detected yet</source>
-        <translation>Noch keine Gesichter erkannt</translation>
-    </message>
-    <message>
-        <source>Pull down to scan your gallery</source>
-        <translation>Nach unten ziehen, um die Galerie zu scannen</translation>
-    </message>
-    <message>
         <source>Scan Gallery</source>
         <translation>Galerie scannen</translation>
     </message>
@@ -456,6 +448,30 @@
     <message>
         <source>%1 faces to identify</source>
         <translation>%1 Gesichter zu benennen</translation>
+    </message>
+    <message>
+        <source>1 new photo to scan</source>
+        <translation>1 neues Foto zu durchsuchen</translation>
+    </message>
+    <message>
+        <source>%1 new photos to scan</source>
+        <translation>%1 neue Fotos zu durchsuchen</translation>
+    </message>
+    <message>
+        <source>Scan gallery</source>
+        <translation>Galerie durchsuchen</translation>
+    </message>
+    <message>
+        <source>Scan %1 photos</source>
+        <translation>%1 Fotos durchsuchen</translation>
+    </message>
+    <message>
+        <source>No faces found</source>
+        <translation>Keine Gesichter gefunden</translation>
+    </message>
+    <message>
+        <source>Check which folders are scanned in Settings</source>
+        <translation>Prüfen Sie die durchsuchten Ordner in den Einstellungen</translation>
     </message>
 </context>
 <context>

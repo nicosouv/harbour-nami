@@ -330,6 +330,18 @@ public:
     Q_INVOKABLE QVariantMap getStatistics();
 
     /**
+     * @brief How many photos in these folders have never been scanned
+     *
+     * Walks the folders and counts what is not already in the database. No
+     * pixels are read, only names, but it is still a directory walk over a
+     * whole gallery: call it off the first frame, not from a binding.
+     *
+     * The folders come from the caller because the settings that hold them
+     * are already read in QML, where a scan is started from.
+     */
+    Q_INVOKABLE int unscannedPhotoCount(const QStringList &folders);
+
+    /**
      * @brief Delete all face recognition data
      * @return true if successful
      */

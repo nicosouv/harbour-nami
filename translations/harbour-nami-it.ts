@@ -414,14 +414,6 @@
         <translation>Nami</translation>
     </message>
     <message>
-        <source>No faces detected yet</source>
-        <translation>Ancora nessun volto rilevato</translation>
-    </message>
-    <message>
-        <source>Pull down to scan your gallery</source>
-        <translation>Trascina verso il basso per scansionare la galleria</translation>
-    </message>
-    <message>
         <source>Scan Gallery</source>
         <translation>Scansiona la galleria</translation>
     </message>
@@ -456,6 +448,30 @@
     <message>
         <source>%1 faces to identify</source>
         <translation>%1 volti da identificare</translation>
+    </message>
+    <message>
+        <source>1 new photo to scan</source>
+        <translation>1 nuova foto da analizzare</translation>
+    </message>
+    <message>
+        <source>%1 new photos to scan</source>
+        <translation>%1 nuove foto da analizzare</translation>
+    </message>
+    <message>
+        <source>Scan gallery</source>
+        <translation>Analizza la galleria</translation>
+    </message>
+    <message>
+        <source>Scan %1 photos</source>
+        <translation>Analizza %1 foto</translation>
+    </message>
+    <message>
+        <source>No faces found</source>
+        <translation>Nessun volto trovato</translation>
+    </message>
+    <message>
+        <source>Check which folders are scanned in Settings</source>
+        <translation>Controlla le cartelle analizzate nelle impostazioni</translation>
     </message>
 </context>
 <context>

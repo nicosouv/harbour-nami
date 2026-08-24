@@ -413,14 +413,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>No faces detected yet</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Pull down to scan your gallery</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Scan Gallery</source>
         <translation type="unfinished"></translation>
     </message>
@@ -454,6 +446,30 @@
     </message>
     <message>
         <source>%1 faces to identify</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>1 new photo to scan</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 new photos to scan</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scan gallery</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scan %1 photos</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No faces found</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Check which folders are scanned in Settings</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

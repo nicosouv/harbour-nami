@@ -414,14 +414,6 @@
         <translation>Nami</translation>
     </message>
     <message>
-        <source>No faces detected yet</source>
-        <translation>Kasvoja ei ole vielä havaittu</translation>
-    </message>
-    <message>
-        <source>Pull down to scan your gallery</source>
-        <translation>Skannaa galleria vetämällä alas</translation>
-    </message>
-    <message>
         <source>Scan Gallery</source>
         <translation>Skannaa galleria</translation>
     </message>
@@ -456,6 +448,30 @@
     <message>
         <source>%1 faces to identify</source>
         <translation>%1 tunnistamatonta kasvoa</translation>
+    </message>
+    <message>
+        <source>1 new photo to scan</source>
+        <translation>1 uusi kuva käytäväksi läpi</translation>
+    </message>
+    <message>
+        <source>%1 new photos to scan</source>
+        <translation>%1 uutta kuvaa käytäväksi läpi</translation>
+    </message>
+    <message>
+        <source>Scan gallery</source>
+        <translation>Käy galleria läpi</translation>
+    </message>
+    <message>
+        <source>Scan %1 photos</source>
+        <translation>Käy %1 kuvaa läpi</translation>
+    </message>
+    <message>
+        <source>No faces found</source>
+        <translation>Kasvoja ei löytynyt</translation>
+    </message>
+    <message>
+        <source>Check which folders are scanned in Settings</source>
+        <translation>Tarkista läpikäytävät kansiot asetuksista</translation>
     </message>
 </context>
 <context>
