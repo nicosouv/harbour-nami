@@ -24,6 +24,17 @@ services:
     working_dir: /src
     command: bash tests/syntax-check.sh
 
+  # App icon: cuts the leaf out of its artwork and writes every size the RPM
+  # ships. Run when the icon changes, not as part of any build.
+  icons:
+    image: python:3.12-slim
+    volumes:
+      - .:/src
+    working_dir: /src
+    command: >
+      bash -c "pip install --quiet --no-cache-dir pillow
+      && python3 scripts/make_icons.py"
+
   # Beat analysis: fetches the clip music and writes each track's grid beside
   # it. Run once when a track changes, not as part of any build. The grids
   # are committed, the audio is not.
