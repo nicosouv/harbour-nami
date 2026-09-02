@@ -195,6 +195,12 @@ Page {
             // Same reason as above: a walk over the gallery has no business
             // happening before the page has drawn
             photosToScan = facePipeline.unscannedPhotoCount(scanFolders())
+
+            // Asked once, here, for its side effect: the first call opens
+            // GStreamer and scans its plugin registry, and that belongs in
+            // the same quiet moment as the rest of this rather than in the
+            // pull-down of the first memory somebody opens
+            facePipeline.canExportVideo()
         }
     }
 
