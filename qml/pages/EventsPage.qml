@@ -79,6 +79,21 @@ Page {
         }
     }
 
+    // A named day is a trip of one date. There is no second kind of thing
+    // here: the database has always accepted a trip with a single date, and
+    // everything that already works on a trip (rename, merge, add days, its
+    // own memory carrying the name) works on it from the first minute.
+    function nameDay(dateKey) {
+        var dialog = pageStack.push(Qt.resolvedUrl("../dialogs/TripNameDialog.qml"), {
+            titleText: qsTr("Name this day"),
+            singleDay: true
+        })
+        dialog.accepted.connect(function() {
+            faceManager.createTrip(dialog.newName, [dateKey])
+            detectEvents()
+        })
+    }
+
     function groupSelectedDates() {
         var dialog = pageStack.push(Qt.resolvedUrl("../dialogs/TripNameDialog.qml"), {
             titleText: qsTr("Name this trip")
@@ -429,7 +444,7 @@ Page {
                     ? (editingTripId >= 0
                         ? qsTr("Select the days to add to this trip")
                         : qsTr("Select the days to combine into a trip"))
-                    : qsTr("Photos automatically grouped by date. Group several days into a trip for a multi-day event.")
+                    : qsTr("Photos automatically grouped by date. Name a day, or group several days into a trip.")
                 font.pixelSize: Theme.fontSizeSmall
                 color: Theme.secondaryHighlightColor
                 wrapMode: Text.WordWrap
@@ -547,13 +562,20 @@ Page {
 
             menu: ContextMenu {
                 MenuItem {
+                    text: qsTr("Name this day…")
+                    visible: model.type === "day" && !model.hidden
+                    onClicked: nameDay(model.dateKey)
+                }
+                MenuItem {
                     text: qsTr("Rename")
                     visible: model.type === "trip" && !model.hidden
                     onClicked: {
                         var tid = model.tripId
+                        var single = model.dayCount === 1
                         var dialog = pageStack.push(Qt.resolvedUrl("../dialogs/TripNameDialog.qml"), {
-                            titleText: qsTr("Rename trip"),
-                            currentName: model.name
+                            titleText: single ? qsTr("Rename event") : qsTr("Rename trip"),
+                            currentName: model.name,
+                            singleDay: single
                         })
                         dialog.accepted.connect(function() {
                             faceManager.renameTrip(tid, dialog.newName)
@@ -582,11 +604,16 @@ Page {
                     }
                 }
                 MenuItem {
-                    text: qsTr("Ungroup")
+                    // On a single day there is nothing to ungroup: what the
+                    // action undoes is the name, and the row goes back to
+                    // being the date it was
+                    text: model.dayCount > 1 ? qsTr("Ungroup") : qsTr("Remove name")
                     visible: model.type === "trip" && !model.hidden
                     onClicked: {
                         var tid = model.tripId
-                        Remorse.popupAction(page, qsTr("Ungrouping trip"), function() {
+                        var notice = model.dayCount > 1 ? qsTr("Ungrouping trip")
+                                                        : qsTr("Removing name")
+                        Remorse.popupAction(page, notice, function() {
                             faceManager.deleteTrip(tid)
                             detectEvents()
                         })
@@ -663,14 +690,16 @@ Page {
                         radius: Theme.paddingSmall
                     }
 
-                    // Trip badge
+                    // Trip badge. Only on the ones that really are several
+                    // days: on a named single day it would be a label
+                    // contradicting the date printed under it.
                     Rectangle {
                         anchors {
                             top: parent.top
                             left: parent.left
                             margins: Theme.paddingSmall / 2
                         }
-                        visible: model.type === "trip"
+                        visible: model.type === "trip" && model.dayCount > 1
                         width: tripBadgeLabel.width + Theme.paddingMedium
                         height: tripBadgeLabel.height + Theme.paddingSmall
                         radius: Theme.paddingSmall
@@ -732,9 +761,12 @@ Page {
                     }
 
                     Label {
-                        text: model.type === "trip"
-                            ? model.dateRangeString + " · " + model.dayCount + " " + (model.dayCount === 1 ? qsTr("day") : qsTr("days"))
-                            : ""
+                        // "1 day" next to a single date says the same thing
+                        // twice, so a named day shows only its date
+                        text: model.type !== "trip" ? ""
+                            : model.dayCount === 1
+                                ? model.dateRangeString
+                                : model.dateRangeString + " · " + model.dayCount + " " + qsTr("days")
                         color: Theme.secondaryHighlightColor
                         font.pixelSize: Theme.fontSizeExtraSmall
                         truncationMode: TruncationMode.Fade

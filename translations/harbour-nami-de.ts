@@ -283,10 +283,6 @@
         <translation>Diese Reise benennen</translation>
     </message>
     <message>
-        <source>Photos automatically grouped by date. Group several days into a trip for a multi-day event.</source>
-        <translation>Fotos werden automatisch nach Datum gruppiert. Fassen Sie mehrere Tage zu einer Reise zusammen für ein mehrtägiges Ereignis.</translation>
-    </message>
-    <message>
         <source>Rename</source>
         <translation>Umbenennen</translation>
     </message>
@@ -335,12 +331,32 @@
         <translation>Jahresrückblick</translation>
     </message>
     <message>
-        <source>day</source>
-        <translation>Tag</translation>
-    </message>
-    <message>
         <source>days</source>
         <translation>Tage</translation>
+    </message>
+    <message>
+        <source>Name this day</source>
+        <translation>Diesen Tag benennen</translation>
+    </message>
+    <message>
+        <source>Name this day…</source>
+        <translation>Diesen Tag benennen…</translation>
+    </message>
+    <message>
+        <source>Photos automatically grouped by date. Name a day, or group several days into a trip.</source>
+        <translation>Fotos werden automatisch nach Datum gruppiert. Benenne einen Tag oder fasse mehrere Tage zu einer Reise zusammen.</translation>
+    </message>
+    <message>
+        <source>Remove name</source>
+        <translation>Namen entfernen</translation>
+    </message>
+    <message>
+        <source>Removing name</source>
+        <translation>Name wird entfernt</translation>
+    </message>
+    <message>
+        <source>Rename event</source>
+        <translation>Ereignis umbenennen</translation>
     </message>
 </context>
 <context>
@@ -1364,6 +1380,10 @@
         <source>By location</source>
         <translation>Nach Ort</translation>
     </message>
+    <message>
+        <source>Rename event</source>
+        <translation>Ereignis umbenennen</translation>
+    </message>
 </context>
 <context>
     <name>PassphraseDialog</name>
@@ -1471,6 +1491,58 @@
     <message>
         <source>e.g. Rome, Summer holidays</source>
         <translation>z. B. Rom, Sommerurlaub</translation>
+    </message>
+    <message>
+        <source>Event name</source>
+        <translation>Name des Ereignisses</translation>
+    </message>
+    <message>
+        <source>e.g. Birthday, Beach day</source>
+        <translation>z. B. Geburtstag, Strandtag</translation>
+    </message>
+    <message>
+        <source>Birthday</source>
+        <translation>Geburtstag</translation>
+    </message>
+    <message>
+        <source>Party</source>
+        <translation>Feier</translation>
+    </message>
+    <message>
+        <source>Wedding</source>
+        <translation>Hochzeit</translation>
+    </message>
+    <message>
+        <source>Outing</source>
+        <translation>Ausflug</translation>
+    </message>
+    <message>
+        <source>Concert</source>
+        <translation>Konzert</translation>
+    </message>
+    <message>
+        <source>Dinner</source>
+        <translation>Abendessen</translation>
+    </message>
+    <message>
+        <source>Holiday</source>
+        <translation>Urlaub</translation>
+    </message>
+    <message>
+        <source>Weekend</source>
+        <translation>Wochenende</translation>
+    </message>
+    <message>
+        <source>Road trip</source>
+        <translation>Roadtrip</translation>
+    </message>
+    <message>
+        <source>Hike</source>
+        <translation>Wanderung</translation>
+    </message>
+    <message>
+        <source>Family</source>
+        <translation>Familie</translation>
     </message>
 </context>
 <context>

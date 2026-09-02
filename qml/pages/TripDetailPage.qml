@@ -24,6 +24,9 @@ Page {
     property var routePoints: []
     property var mapStops: []
     property int totalPhotoCount: 0
+    // A trip can be a single named day, and calling that a trip to its face
+    // is the confusion naming a day was meant to remove
+    property int dayCount: 0
     property bool hasLocationData: false
     property real distanceKm: 0
     property string coverPath: ""
@@ -40,6 +43,7 @@ Page {
             if (trips[t].trip_id === tripId) {
                 tripName = trips[t].name
                 dateKeys = trips[t].date_keys
+                dayCount = dateKeys.length
                 break
             }
         }
@@ -336,11 +340,13 @@ Page {
                 onClicked: selection.begin("")
             }
             MenuItem {
-                text: qsTr("Rename trip")
+                text: dayCount === 1 ? qsTr("Rename event") : qsTr("Rename trip")
                 onClicked: {
                     var dialog = pageStack.push(Qt.resolvedUrl("../dialogs/TripNameDialog.qml"), {
-                        titleText: qsTr("Rename trip"),
-                        currentName: tripName
+                        titleText: dayCount === 1 ? qsTr("Rename event")
+                                                  : qsTr("Rename trip"),
+                        currentName: tripName,
+                        singleDay: dayCount === 1
                     })
                     dialog.accepted.connect(function() {
                         faceManager.renameTrip(tripId, dialog.newName)

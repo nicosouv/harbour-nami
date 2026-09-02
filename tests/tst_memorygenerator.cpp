@@ -201,16 +201,22 @@ void TstMemoryGenerator::busyDaysBecomeEventsUnlessATripClaimedThem()
     for (int i = 0; i < 14; i++) {
         addPhoto(QDateTime(QDate(2025, 9, 20), QTime(11, i)));
     }
-    // Another one, but grouped into a trip: it belongs to the trip's memory
+    // Another one, but named: a single day the user gave a name to is a trip
+    // of one date, and its memory carries the name rather than the date
     for (int i = 0; i < 14; i++) {
         addPhoto(QDateTime(QDate(2025, 3, 5), QTime(11, i)));
     }
-    m_db->createTrip("Rome", { "2025-03-05" });
+    const int named = m_db->createTrip("Rome", { "2025-03-05" });
+    QVERIFY(named > 0);
 
     m_generator->generate(true, today());
 
     QVERIFY(memoryOf("event", "2025-09-20").id > 0);
     QCOMPARE(memoryOf("event", "2025-03-05").id, -1);
+
+    const Memory day = memoryOf("trip", QString::number(named));
+    QVERIFY(day.id > 0);
+    QCOMPARE(day.title, QStringLiteral("Rome"));
 }
 
 void TstMemoryGenerator::dismissedDaysStayDismissed()

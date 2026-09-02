@@ -283,10 +283,6 @@
         <translation>Nimeä tämä matka</translation>
     </message>
     <message>
-        <source>Photos automatically grouped by date. Group several days into a trip for a multi-day event.</source>
-        <translation>Kuvat ryhmitellään automaattisesti päivämäärän mukaan. Ryhmitä useampi päivä matkaksi monipäiväistä tapahtumaa varten.</translation>
-    </message>
-    <message>
         <source>Rename</source>
         <translation>Nimeä uudelleen</translation>
     </message>
@@ -335,12 +331,32 @@
         <translation>Vuosikatsaus</translation>
     </message>
     <message>
-        <source>day</source>
-        <translation>päivä</translation>
-    </message>
-    <message>
         <source>days</source>
         <translation>päivää</translation>
+    </message>
+    <message>
+        <source>Name this day</source>
+        <translation>Nimeä tämä päivä</translation>
+    </message>
+    <message>
+        <source>Name this day…</source>
+        <translation>Nimeä tämä päivä…</translation>
+    </message>
+    <message>
+        <source>Photos automatically grouped by date. Name a day, or group several days into a trip.</source>
+        <translation>Kuvat ryhmitellään automaattisesti päivän mukaan. Nimeä päivä tai kokoa useita päiviä matkaksi.</translation>
+    </message>
+    <message>
+        <source>Remove name</source>
+        <translation>Poista nimi</translation>
+    </message>
+    <message>
+        <source>Removing name</source>
+        <translation>Poistetaan nimi</translation>
+    </message>
+    <message>
+        <source>Rename event</source>
+        <translation>Nimeä tapahtuma uudelleen</translation>
     </message>
 </context>
 <context>
@@ -1364,6 +1380,10 @@
         <source>By location</source>
         <translation>Sijainnin mukaan</translation>
     </message>
+    <message>
+        <source>Rename event</source>
+        <translation>Nimeä tapahtuma uudelleen</translation>
+    </message>
 </context>
 <context>
     <name>PassphraseDialog</name>
@@ -1471,6 +1491,58 @@
     <message>
         <source>e.g. Rome, Summer holidays</source>
         <translation>esim. Rooma, Kesäloma</translation>
+    </message>
+    <message>
+        <source>Event name</source>
+        <translation>Tapahtuman nimi</translation>
+    </message>
+    <message>
+        <source>e.g. Birthday, Beach day</source>
+        <translation>esim. Syntymäpäivä, Rantapäivä</translation>
+    </message>
+    <message>
+        <source>Birthday</source>
+        <translation>Syntymäpäivä</translation>
+    </message>
+    <message>
+        <source>Party</source>
+        <translation>Juhlat</translation>
+    </message>
+    <message>
+        <source>Wedding</source>
+        <translation>Häät</translation>
+    </message>
+    <message>
+        <source>Outing</source>
+        <translation>Retki</translation>
+    </message>
+    <message>
+        <source>Concert</source>
+        <translation>Konsertti</translation>
+    </message>
+    <message>
+        <source>Dinner</source>
+        <translation>Illallinen</translation>
+    </message>
+    <message>
+        <source>Holiday</source>
+        <translation>Loma</translation>
+    </message>
+    <message>
+        <source>Weekend</source>
+        <translation>Viikonloppu</translation>
+    </message>
+    <message>
+        <source>Road trip</source>
+        <translation>Automatka</translation>
+    </message>
+    <message>
+        <source>Hike</source>
+        <translation>Vaellus</translation>
+    </message>
+    <message>
+        <source>Family</source>
+        <translation>Perhe</translation>
     </message>
 </context>
 <context>

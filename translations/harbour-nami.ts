@@ -283,10 +283,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Photos automatically grouped by date. Group several days into a trip for a multi-day event.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Rename</source>
         <translation type="unfinished"></translation>
     </message>
@@ -335,11 +331,31 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>day</source>
+        <source>days</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>days</source>
+        <source>Name this day</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Name this day…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Photos automatically grouped by date. Name a day, or group several days into a trip.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Removing name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rename event</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -1363,6 +1379,10 @@
         <source>By location</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Rename event</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>PassphraseDialog</name>
@@ -1469,6 +1489,58 @@
     </message>
     <message>
         <source>e.g. Rome, Summer holidays</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Event name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>e.g. Birthday, Beach day</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Birthday</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Party</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Wedding</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Outing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Concert</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Dinner</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Holiday</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Weekend</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Road trip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hike</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Family</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

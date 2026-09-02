@@ -225,10 +225,6 @@
         <translation>Gi denne turen et navn</translation>
     </message>
     <message>
-        <source>Photos automatically grouped by date. Group several days into a trip for a multi-day event.</source>
-        <translation>Bilder grupperes automatisk etter dato. Grupper flere dager til en tur for en flerdagshendelse.</translation>
-    </message>
-    <message>
         <source>Rename</source>
         <translation>Gi nytt navn</translation>
     </message>
@@ -277,12 +273,32 @@
         <translation>Året oppsummert</translation>
     </message>
     <message>
-        <source>day</source>
-        <translation>dag</translation>
-    </message>
-    <message>
         <source>days</source>
         <translation>dager</translation>
+    </message>
+    <message>
+        <source>Name this day</source>
+        <translation>Gi denne dagen et navn</translation>
+    </message>
+    <message>
+        <source>Name this day…</source>
+        <translation>Gi denne dagen et navn…</translation>
+    </message>
+    <message>
+        <source>Photos automatically grouped by date. Name a day, or group several days into a trip.</source>
+        <translation>Bilder grupperes automatisk etter dato. Gi en dag et navn, eller samle flere dager i en tur.</translation>
+    </message>
+    <message>
+        <source>Remove name</source>
+        <translation>Fjern navnet</translation>
+    </message>
+    <message>
+        <source>Removing name</source>
+        <translation>Fjerner navnet</translation>
+    </message>
+    <message>
+        <source>Rename event</source>
+        <translation>Gi hendelsen nytt navn</translation>
     </message>
 </context>
 <context>
@@ -1449,6 +1465,10 @@
         <source>By location</source>
         <translation>Etter sted</translation>
     </message>
+    <message>
+        <source>Rename event</source>
+        <translation>Gi hendelsen nytt navn</translation>
+    </message>
 </context>
 <context>
     <name>TripNameDialog</name>
@@ -1471,6 +1491,58 @@
     <message>
         <source>e.g. Rome, Summer holidays</source>
         <translation>f.eks. Roma, Sommerferie</translation>
+    </message>
+    <message>
+        <source>Event name</source>
+        <translation>Navn på hendelsen</translation>
+    </message>
+    <message>
+        <source>e.g. Birthday, Beach day</source>
+        <translation>f.eks. Bursdag, Stranddag</translation>
+    </message>
+    <message>
+        <source>Birthday</source>
+        <translation>Bursdag</translation>
+    </message>
+    <message>
+        <source>Party</source>
+        <translation>Fest</translation>
+    </message>
+    <message>
+        <source>Wedding</source>
+        <translation>Bryllup</translation>
+    </message>
+    <message>
+        <source>Outing</source>
+        <translation>Utflukt</translation>
+    </message>
+    <message>
+        <source>Concert</source>
+        <translation>Konsert</translation>
+    </message>
+    <message>
+        <source>Dinner</source>
+        <translation>Middag</translation>
+    </message>
+    <message>
+        <source>Holiday</source>
+        <translation>Ferie</translation>
+    </message>
+    <message>
+        <source>Weekend</source>
+        <translation>Helg</translation>
+    </message>
+    <message>
+        <source>Road trip</source>
+        <translation>Biltur</translation>
+    </message>
+    <message>
+        <source>Hike</source>
+        <translation>Fottur</translation>
+    </message>
+    <message>
+        <source>Family</source>
+        <translation>Familie</translation>
     </message>
 </context>
 <context>
