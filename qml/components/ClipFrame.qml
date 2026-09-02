@@ -27,6 +27,29 @@ Item {
         return from + (to - from) * progress
     }
 
+    // The tightest the camera gets on this photo, which is what decides how
+    // many pixels are worth decoding: a crop rectangle covering 94% of the
+    // width is drawn at 1.06 times the viewport, not at 1.67.
+    //
+    // This used to be a flat 1/0.6, the tightest crop any style asks for,
+    // applied to every shot of every style. A sentimental clip, which barely
+    // zooms at all, was decoding two and a half times the pixels it draws,
+    // and paying for it at every cut.
+    readonly property real tightestWidth: {
+        if (!shot) return 1.0
+        return Math.max(0.05, Math.min(shot.from_w, shot.to_w))
+    }
+
+    // Rounded up to a step, so that going from one shot to the next usually
+    // does not change it at all. Both `source` and `sourceSize` restart the
+    // load on their own, and two of them landing in the same pass would ask
+    // the reader thread for the photo twice.
+    readonly property int decodeWidth: {
+        if (frame.width <= 0) return 0
+        var wanted = frame.width / tightestWidth
+        return Math.ceil(wanted / 128) * 128
+    }
+
     Item {
         // The reveal is a clip on the frame, not a scale: a wipe uncovers
         // the photograph, it does not squeeze it
@@ -46,10 +69,10 @@ Item {
             autoTransform: true
             cache: false
 
-            // Decoded once at roughly the size it will be drawn, rather than
-            // at 12 megapixels: a shot lasts a second or two and the whole
-            // clip would otherwise decode a gigapixel
-            sourceSize.width: frame.width > 0 ? Math.round(frame.width / 0.6) : 0
+            // Decoded once at the size it will be drawn, rather than at 12
+            // megapixels: a shot lasts a second or two and the whole clip
+            // would otherwise decode a gigapixel
+            sourceSize.width: frame.decodeWidth
 
             width: rectW > 0 ? frame.width / rectW : frame.width
             height: rectH > 0 ? frame.height / rectH : frame.height

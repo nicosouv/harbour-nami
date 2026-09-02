@@ -34,10 +34,12 @@ Item {
 
     // Which shot covers the clock, and how far through it we are
     property int currentIndex: 0
-    readonly property var currentShot: (hasClip && currentIndex < shotCount)
-                                       ? edit.shots[currentIndex] : null
-    readonly property var previousShot: (hasClip && currentIndex > 0)
-                                        ? edit.shots[currentIndex - 1] : null
+    readonly property var currentShot: shotAt(currentIndex)
+    readonly property var previousShot: (currentIndex > 0) ? shotAt(currentIndex - 1) : null
+
+    function shotAt(index) {
+        return (hasClip && index >= 0 && index < shotCount) ? edit.shots[index] : null
+    }
 
     signal finished()
 
@@ -46,6 +48,7 @@ Item {
         if (positionMs >= durationMs) {
             positionMs = 0
         }
+        clockReset()
         playing = true
     }
 
@@ -56,6 +59,7 @@ Item {
     function restart() {
         positionMs = 0
         currentIndex = 0
+        clockReset()
         playing = true
         if (audioLoader.item) {
             audioLoader.item.restart()
@@ -64,6 +68,7 @@ Item {
 
     function seek(ms) {
         positionMs = Math.max(0, Math.min(durationMs, ms))
+        clockReset()
         updateIndex()
     }
 
@@ -112,22 +117,64 @@ Item {
         positionMs = 0
         currentIndex = 0
         playing = false
+        clockReset()
     }
 
     onPositionMsChanged: updateIndex()
 
-    // The clock. When there is music it follows the audio, because a
-    // slideshow that drifts from its own soundtrack is worse than a silent
-    // one. Otherwise it counts frames.
+    // === The clock ===
+    //
+    // It runs on its own, on real elapsed time, and only listens to the
+    // music when the music has something new to say.
+    //
+    // Reading the audio position every frame and believing it was the first
+    // version, and it stuttered: Audio.position is not a clock, it is the
+    // last value the backend pushed, and the backend pushes one about once
+    // a second. Between two of those, the same number is read thirty times,
+    // so the camera move stopped dead and then jumped.
+    //
+    // So: advance on the wall clock, and correct only when a genuinely new
+    // sample arrives and disagrees by more than the sampling can explain. A
+    // stale sample re-read is not evidence of drift.
+    property double lastTickMs: 0
+    property int lastReportedMs: -1
+
+    // The longest gap a tick may account for. A screen that blanked or a
+    // page that was pushed on top must not make the clip leap forward.
+    readonly property int maxStepMs: 250
+    readonly property int resyncMs: 200
+
+    function clockReset() {
+        lastTickMs = 0
+        lastReportedMs = -1
+    }
+
+    onPlayingChanged: {
+        if (!playing) clockReset()
+    }
+
     Timer {
         interval: 32
         repeat: true
         running: player.playing && player.hasClip
 
         onTriggered: {
-            var next = (audioLoader.item && audioLoader.item.ready)
-                ? audioLoader.item.positionMs
-                : player.positionMs + interval
+            var now = Date.now()
+            var elapsed = player.lastTickMs > 0
+                ? Math.min(player.maxStepMs, now - player.lastTickMs)
+                : interval
+            player.lastTickMs = now
+
+            var next = player.positionMs + elapsed
+
+            var audio = audioLoader.item
+            if (audio && audio.ready && audio.positionMs !== player.lastReportedMs) {
+                // A fresh sample, taken now rather than up to a second ago
+                player.lastReportedMs = audio.positionMs
+                if (Math.abs(audio.positionMs - next) > player.resyncMs) {
+                    next = audio.positionMs
+                }
+            }
 
             if (next >= player.durationMs) {
                 if (player.loop) {
@@ -195,34 +242,73 @@ Item {
         color: player.transition === "drop" ? "#f2efe9" : "black"
     }
 
-    // The outgoing shot, still there for as long as the transition lasts
-    ClipFrame {
-        id: outgoing
-        anchors.fill: parent
-        shot: player.previousShot
-        // Frozen where its own move ended rather than continuing to drift
-        progress: 1.0
-        visible: player.inTransition && player.transition !== "cut"
+    // === The two frames ===
+    //
+    // They do not swap sources at a cut, they take turns: one holds the
+    // even-numbered shots, the other the odd ones. Whichever is not leading
+    // shows the shot being dissolved out of, and once that dissolve is over
+    // it goes and fetches the next one, which is the whole trick.
+    //
+    // The first version assigned "the current shot" to one frame and "the
+    // previous shot" to the other. Every cut therefore changed both sources
+    // at once, so the photo that had just been decoded for the incoming
+    // frame was decoded a second time for the outgoing one, and the photo
+    // coming up was decoded at the exact moment it had to appear. Two
+    // decodes at every cut, none of them anticipated, on a clip that cuts
+    // every half second in the energetic style.
+    //
+    // Taking turns, a photo is decoded once, one shot ahead of its cue.
+    function frameIndexFor(parity) {
+        var index = currentIndex
+        if (index % 2 === parity) {
+            return index
+        }
+        // Holding the shot being dissolved out of, or already reading ahead
+        return inTransition ? index - 1 : index + 1
     }
 
-    // The incoming shot
+    readonly property int frameAIndex: frameIndexFor(0)
+    readonly property int frameBIndex: frameIndexFor(1)
+
+    // What the shot arriving on screen looks like while it arrives. Written
+    // once here rather than twice below: the two frames are the same frame,
+    // and only one of them is leading at a time.
+    readonly property real incomingOpacity:
+        (transition === "dissolve" || transition === "drop") ? transitionProgress : 1.0
+    // The polaroid lands on the pile rather than fading in
+    readonly property real incomingScale:
+        transition === "drop" ? 1.0 + 0.35 * (1.0 - transitionProgress) : 1.0
+    readonly property real incomingRotation:
+        transition === "drop" ? 4.0 * (1.0 - transitionProgress) : 0.0
+    // A wipe reveals it from the left instead
+    readonly property real incomingRevealed:
+        transition === "wipe" ? transitionProgress : 1.0
+
     ClipFrame {
-        id: incoming
         anchors.fill: parent
-        shot: player.currentShot
-        progress: player.shotProgress(player.currentShot)
+        readonly property bool leading: player.frameAIndex === player.currentIndex
+        shot: player.shotAt(player.frameAIndex)
+        // Frozen where its own move ended rather than continuing to drift
+        progress: leading ? player.shotProgress(shot) : 1.0
+        opacity: leading ? player.incomingOpacity : 1.0
+        scale: leading ? player.incomingScale : 1.0
+        rotation: leading ? player.incomingRotation : 0.0
+        revealed: leading ? player.incomingRevealed : 1.0
+        z: leading ? 1 : 0
+        visible: leading || (player.inTransition && player.transition !== "cut")
+    }
 
-        opacity: (player.transition === "dissolve" || player.transition === "drop")
-                 ? player.transitionProgress : 1.0
-
-        // The polaroid lands on the pile rather than fading in
-        scale: player.transition === "drop"
-               ? 1.0 + 0.35 * (1.0 - player.transitionProgress) : 1.0
-        rotation: player.transition === "drop"
-                  ? 4.0 * (1.0 - player.transitionProgress) : 0.0
-
-        // A wipe reveals it from the left instead
-        revealed: player.transition === "wipe" ? player.transitionProgress : 1.0
+    ClipFrame {
+        anchors.fill: parent
+        readonly property bool leading: player.frameBIndex === player.currentIndex
+        shot: player.shotAt(player.frameBIndex)
+        progress: leading ? player.shotProgress(shot) : 1.0
+        opacity: leading ? player.incomingOpacity : 1.0
+        scale: leading ? player.incomingScale : 1.0
+        rotation: leading ? player.incomingRotation : 0.0
+        revealed: leading ? player.incomingRevealed : 1.0
+        z: leading ? 1 : 0
+        visible: leading || (player.inTransition && player.transition !== "cut")
     }
 
     // The flat colour that sweeps a bauhaus wipe. Its leading edge is the
