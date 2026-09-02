@@ -2,6 +2,7 @@ import QtQuick 2.6
 import Sailfish.Silica 1.0
 import "../components"
 import "../js/faceutils.js" as FaceUtils
+import "../js/memories.js" as Memories
 
 // The app's first screen: what there is to look at right now. The full
 // people list, with its search and its sort order, is one swipe to the left
@@ -40,9 +41,9 @@ Page {
         pageStack.push(Qt.resolvedUrl("ScanningPage.qml"))
     }
 
-    // The best memory the recipes found, shown full width. One card rather
-    // than a carousel: if the app has something worth remembering today it
-    // should say so once and loudly, not offer ten equal thumbnails.
+    // The day's memory, shown full width. One card rather than a carousel:
+    // if the app has something worth remembering today it should say so
+    // once and loudly, not offer ten equal thumbnails.
     property var heroMemory: null
 
     // The rest of the memories, which is where trips and busy days surface.
@@ -76,28 +77,33 @@ Page {
 
         // Best first, dismissed ones already left out
         var all = facePipeline.getMemories()
-        heroMemory = all.length > 0 ? all[0] : null
+        var heroIndex = Memories.heroIndex(all, new Date())
+        heroMemory = heroIndex >= 0 ? all[heroIndex] : null
 
         // The phrasing is worked out here rather than in the delegates: the
         // translator is installed once at startup, so a title cannot change
         // language while the page is alive, and a delegate that formats
         // dates on every rebind pays for it on every flick
-        var shown = Math.min(all.length - 1, stripCount)
-        for (var i = 0; i < shown; i++) {
-            var memory = all[i + 1]
+        var shown = 0
+        for (var i = 0; i < all.length && shown < stripCount; i++) {
+            // Whichever one leads today, not whichever one leads the list
+            if (i === heroIndex) continue
+
+            var memory = all[i]
             var item = {
                 memory_id: memory.memory_id,
                 cover_photo: memory.cover_photo,
                 display_title: memoryLabels.title(memory),
                 display_subtitle: memoryLabels.subtitle(memory)
             }
-            if (i < memoriesModel.count) {
-                memoriesModel.set(i, item)
+            if (shown < memoriesModel.count) {
+                memoriesModel.set(shown, item)
             } else {
                 memoriesModel.append(item)
             }
+            shown++
         }
-        while (memoriesModel.count > Math.max(0, shown)) {
+        while (memoriesModel.count > shown) {
             memoriesModel.remove(memoriesModel.count - 1)
         }
     }

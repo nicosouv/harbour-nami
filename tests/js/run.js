@@ -272,6 +272,44 @@ check('memories: the subject date falls back to sort_date', () => {
     assert(memories.subjectDate(null) === null, 'no memory');
 });
 
+/* ---------------- the home page hero ---------------- */
+
+const band = (...scores) => scores.map((score, index) => ({ memory_id: index, score }));
+
+check('hero: only the memories of the same standing take a turn', () => {
+    // 0.50 is a busy day against a 0.78 anniversary: it does not get to
+    // lead the home page just because nothing else was generated that week
+    assert(memories.heroPoolSize(band(0.78, 0.75, 0.50, 0.50)) === 2, 'wide gap');
+    assert(memories.heroPoolSize(band(0.65, 0.65, 0.65)) === 3, 'all equal');
+    assert(memories.heroPoolSize(band(0.9)) === 1, 'one memory');
+    assert(memories.heroPoolSize([]) === 0, 'nothing at all');
+});
+
+check('hero: the pool is capped whatever the scores say', () => {
+    const many = band(...new Array(30).fill(0.7));
+    assert(memories.heroPoolSize(many) === 5, `got ${memories.heroPoolSize(many)}`);
+});
+
+check('hero: the same day always gives the same card', () => {
+    const all = band(0.7, 0.7, 0.7);
+    const morning = memories.heroIndex(all, new Date(2026, 8, 2, 8, 30));
+    const evening = memories.heroIndex(all, new Date(2026, 8, 2, 23, 15));
+    assert(morning === evening, `${morning} in the morning, ${evening} at night`);
+});
+
+check('hero: consecutive days move through the pool', () => {
+    const all = band(0.7, 0.7, 0.7);
+    const seen = new Set();
+    for (let day = 0; day < 3; day++) {
+        seen.add(memories.heroIndex(all, new Date(2026, 8, 2 + day, 12, 0)));
+    }
+    assert(seen.size === 3, `three days showed ${seen.size} different memories`);
+});
+
+check('hero: an empty library has no hero rather than memory zero', () => {
+    assert(memories.heroIndex([], new Date()) === -1);
+});
+
 /* ---------------- scatter ---------------- */
 
 const scatter = loadQmlJs('qml/js/scatter.js');

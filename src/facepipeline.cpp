@@ -1418,6 +1418,9 @@ QVariantMap memoryToMap(const Memory &memory)
     map["timestamp"] = memory.sortDate.isValid()
         ? memory.sortDate.toMSecsSinceEpoch() / 1000 : 0;
     map["photo_count"] = memory.photoCount;
+    // What the recipe thought of it. The home reads it to decide which
+    // memories are close enough to the best to take their turn as the hero.
+    map["score"] = memory.score;
     map["dismissed"] = memory.dismissed;
     map["edited"] = memory.edited;
     return map;

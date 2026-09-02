@@ -20,6 +20,42 @@ function hasComputedTitle(kind) {
     return COMPUTED_TITLE_KINDS.indexOf(kind) >= 0
 }
 
+// === Which memory leads the home page ===
+
+// How far below the best score a memory may sit and still take its turn as
+// the hero. The recipes score in wide steps (an anniversary 0.70, a trip
+// 0.65, a busy day 0.50), so a band this size holds the memories of
+// genuinely the same standing and leaves out the ones that would only get
+// there for lack of competition.
+var HERO_BAND = 0.15
+var HERO_POOL_MAX = 5
+
+// How many of them are in the running, given a list sorted by score
+function heroPoolSize(memories) {
+    if (!memories || memories.length === 0) {
+        return 0
+    }
+    var best = memories[0].score || 0
+    var pool = 1
+    while (pool < memories.length && pool < HERO_POOL_MAX
+           && (memories[pool].score || 0) >= best - HERO_BAND) {
+        pool++
+    }
+    return pool
+}
+
+// Rotated by the day rather than shuffled. The home refreshes on every
+// return to it, and a random pick would move the hero under someone coming
+// back from a photo; keyed on the date, it is the same card all day and a
+// different one tomorrow. Returns -1 when there is nothing to show.
+function heroIndex(memories, now) {
+    var pool = heroPoolSize(memories)
+    if (pool === 0) {
+        return -1
+    }
+    return Math.floor(now.getTime() / 86400000) % pool
+}
+
 // An anniversary's source_key is the year its photos were taken
 function anniversaryYear(memory) {
     if (!memory || memory.kind !== "anniversary") {
