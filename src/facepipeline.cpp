@@ -3,6 +3,7 @@
 #include "filehash.h"
 #include "backupcrypto.h"
 #include "memorygenerator.h"
+#include "memoryexporter.h"
 #include <QDebug>
 #include "logging.h"
 #include <QDir>
@@ -30,6 +31,7 @@ FacePipeline::FacePipeline(QObject *parent)
     , m_currentScanIsForced(false)
     , m_totalPhotos(0)
     , m_processedPhotos(0)
+    , m_videoMemoryId(-1)
     , m_personProtoCacheValid(false)
     , m_autoMatchThreshold(AUTO_MATCH_THRESHOLD)
 {
@@ -37,6 +39,8 @@ FacePipeline::FacePipeline(QObject *parent)
             this, &FacePipeline::onExtractionFinished);
     connect(&m_hashBackfillWatcher, &QFutureWatcher<QVector<QPair<int, QString>>>::finished,
             this, &FacePipeline::onHashBackfillFinished);
+    connect(&m_videoWatcher, &QFutureWatcher<VideoExport>::finished,
+            this, &FacePipeline::onVideoExportFinished);
 }
 
 FacePipeline::~FacePipeline()
@@ -47,6 +51,13 @@ FacePipeline::~FacePipeline()
     }
     if (m_hashBackfillWatcher.isRunning()) {
         m_hashBackfillWatcher.waitForFinished();
+    }
+    // The worker holds a pointer back here to report progress, so it has to
+    // be gone before this object is. Told to stop first: an export is
+    // minutes long and nobody should wait for one to close the app.
+    if (m_videoWatcher.isRunning()) {
+        m_videoCancelled.storeRelease(1);
+        m_videoWatcher.waitForFinished();
     }
 
     delete m_detector;
@@ -1421,6 +1432,8 @@ QVariantMap memoryToMap(const Memory &memory)
     // What the recipe thought of it. The home reads it to decide which
     // memories are close enough to the best to take their turn as the hero.
     map["score"] = memory.score;
+    // Empty unless a clip was exported and the file is still there
+    map["video_path"] = memory.videoPath;
     map["dismissed"] = memory.dismissed;
     map["edited"] = memory.edited;
     return map;
@@ -1724,17 +1737,20 @@ QVariantList FacePipeline::memoryStyles()
     return result;
 }
 
-QVariantMap FacePipeline::composeMemoryClip(int memoryId, const QString &styleId)
+Clip FacePipeline::buildClip(int memoryId, const QString &styleId,
+                             QString *trackFile)
 {
-    QVariantMap result;
+    if (trackFile) {
+        trackFile->clear();
+    }
 
     if (!m_initialized || !m_database) {
-        return result;
+        return Clip();
     }
 
     const Memory memory = m_database->getMemory(memoryId);
     if (memory.id <= 0) {
-        return result;
+        return Clip();
     }
 
     MemoryStyle style = MemoryStyles::byId(styleId.isEmpty() ? memory.style : styleId);
@@ -1763,7 +1779,19 @@ QVariantMap FacePipeline::composeMemoryClip(int memoryId, const QString &styleId
                                                      : memory.trackId;
     const BeatGrid grid = loadBeatGrid(trackId, style);
 
-    const Clip clip = MemoryComposer::compose(photos, style, grid);
+    if (trackFile) {
+        *trackFile = trackPath(trackId);
+    }
+
+    return MemoryComposer::compose(photos, style, grid);
+}
+
+QVariantMap FacePipeline::composeMemoryClip(int memoryId, const QString &styleId)
+{
+    QVariantMap result;
+
+    QString trackFile;
+    const Clip clip = buildClip(memoryId, styleId, &trackFile);
     if (clip.isEmpty()) {
         return result;
     }
@@ -1792,11 +1820,112 @@ QVariantMap FacePipeline::composeMemoryClip(int memoryId, const QString &styleId
     result["track_start_ms"] = clip.trackStartMs;
     result["style"] = clip.styleId;
     result["track_id"] = clip.trackId;
-    result["track_path"] = trackPath(clip.trackId);
+    result["track_path"] = trackFile;
     result["aspect"] = clip.aspect;
     result["grade"] = grade;
     result["shots"] = shots;
     return result;
+}
+
+bool FacePipeline::canExportVideo()
+{
+    return MemoryExporter::isAvailable();
+}
+
+bool FacePipeline::exportMemoryVideo(int memoryId, const QString &title)
+{
+    if (!m_initialized || !m_database || m_videoWatcher.isRunning()) {
+        return false;
+    }
+
+    if (!MemoryExporter::isAvailable()) {
+        emit videoExportFailed(memoryId, MemoryExporter::unavailableReason());
+        return false;
+    }
+
+    const Memory memory = m_database->getMemory(memoryId);
+    if (memory.id <= 0) {
+        return false;
+    }
+
+    // Composed here, on the thread that owns the database connection. What
+    // crosses to the worker is an edit and a list of file paths.
+    MemoryExporter::Request request;
+    request.clip = buildClip(memoryId, QString(), &request.trackPath);
+    if (request.clip.isEmpty()) {
+        emit videoExportFailed(memoryId, QStringLiteral("there is nothing to export"));
+        return false;
+    }
+
+    // The name the user reads, not the raw material the recipe stored: a
+    // file called "2025-09-20.mp4" is not what somebody looks for in their
+    // gallery a month later
+    request.baseName = MemoryExporter::fileName(title.isEmpty() ? memory.title
+                                                                : title);
+    request.directory = QStandardPaths::writableLocation(
+                QStandardPaths::MoviesLocation) + QStringLiteral("/Nami");
+
+    m_videoMemoryId = memoryId;
+    m_videoCancelled.storeRelease(0);
+    emit exportingVideoChanged();
+    emit videoExportStarted(memoryId);
+
+    FacePipeline *self = this;
+    m_videoWatcher.setFuture(QtConcurrent::run([self, request, memoryId]() {
+        VideoExport outcome;
+        outcome.memoryId = memoryId;
+
+        int lastPercent = -1;
+        const MemoryExporter::Result result =
+                MemoryExporter::run(request, [&](double progress) {
+            if (self->m_videoCancelled.loadAcquire() != 0) {
+                return false;
+            }
+            // A thousand frames is a thousand queued signals otherwise, for
+            // a bar a hundred pixels wide
+            const int percent = int(progress * 100);
+            if (percent != lastPercent) {
+                lastPercent = percent;
+                emit self->videoExportProgress(memoryId, progress);
+            }
+            return true;
+        });
+
+        outcome.ok = result.ok;
+        outcome.cancelled = result.cancelled;
+        outcome.path = result.path;
+        outcome.error = result.error;
+        return outcome;
+    }));
+
+    return true;
+}
+
+void FacePipeline::cancelMemoryVideo()
+{
+    m_videoCancelled.storeRelease(1);
+}
+
+void FacePipeline::onVideoExportFinished()
+{
+    const VideoExport outcome = m_videoWatcher.result();
+
+    m_videoMemoryId = -1;
+    emit exportingVideoChanged();
+
+    if (outcome.ok) {
+        m_database->setMemoryVideo(outcome.memoryId, outcome.path);
+        emit videoExportFinished(outcome.memoryId, outcome.path);
+        return;
+    }
+
+    if (!outcome.cancelled) {
+        qCWarning(lcNami) << "Video export failed:" << outcome.error;
+    }
+    // An empty message is the user having called it off, which needs no
+    // apology from the app
+    emit videoExportFailed(outcome.memoryId,
+                           outcome.cancelled ? QString() : outcome.error);
 }
 
 BeatGrid FacePipeline::loadBeatGrid(const QString &trackId, const MemoryStyle &style)

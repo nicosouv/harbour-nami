@@ -201,6 +201,38 @@
         <source>Rename memory</source>
         <translation>Renombrar el recuerdo</translation>
     </message>
+    <message>
+        <source>Save as video</source>
+        <translation>Guardar como vídeo</translation>
+    </message>
+    <message>
+        <source>Save the video again</source>
+        <translation>Guardar el vídeo de nuevo</translation>
+    </message>
+    <message>
+        <source>Share video</source>
+        <translation>Compartir el vídeo</translation>
+    </message>
+    <message>
+        <source>Stop saving</source>
+        <translation>Detener el guardado</translation>
+    </message>
+    <message>
+        <source>Saving the video, %1%</source>
+        <translation>Guardando el vídeo, %1 %</translation>
+    </message>
+    <message>
+        <source>Video saved to %1</source>
+        <translation>Vídeo guardado en %1</translation>
+    </message>
+    <message>
+        <source>Could not save the video</source>
+        <translation>No se pudo guardar el vídeo</translation>
+    </message>
+    <message>
+        <source>Could not start saving the video</source>
+        <translation>No se pudo iniciar el guardado del vídeo</translation>
+    </message>
 </context>
 <context>
     <name>EventsPage</name>

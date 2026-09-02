@@ -1274,6 +1274,38 @@
         <source>Rename memory</source>
         <translation>Gi minnet nytt navn</translation>
     </message>
+    <message>
+        <source>Save as video</source>
+        <translation>Lagre som video</translation>
+    </message>
+    <message>
+        <source>Save the video again</source>
+        <translation>Lagre videoen på nytt</translation>
+    </message>
+    <message>
+        <source>Share video</source>
+        <translation>Del videoen</translation>
+    </message>
+    <message>
+        <source>Stop saving</source>
+        <translation>Stopp lagringen</translation>
+    </message>
+    <message>
+        <source>Saving the video, %1%</source>
+        <translation>Lagrer videoen, %1 %</translation>
+    </message>
+    <message>
+        <source>Video saved to %1</source>
+        <translation>Videoen er lagret i %1</translation>
+    </message>
+    <message>
+        <source>Could not save the video</source>
+        <translation>Kunne ikke lagre videoen</translation>
+    </message>
+    <message>
+        <source>Could not start saving the video</source>
+        <translation>Kunne ikke starte lagringen av videoen</translation>
+    </message>
 </context>
 <context>
     <name>PassphraseDialog</name>

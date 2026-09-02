@@ -15,7 +15,7 @@ disk as an mp4.
 
 - **0.9.0**: data model, recipes, home restructure, in-app clip player,
   four styles, bundled tracks, basic editing. No file is written.
-- **0.9.1**: offline renderer, mp4 export, share.
+- **0.9.1**: offline renderer, video export, share.
 
 The split exists so the branch stays testable on device from week one. Both
 halves consume the same edit decision list (below), so the export reuses the
@@ -330,17 +330,37 @@ length, title. No timeline.
 
 ## Export (0.9.1)
 
-The only real technical risk, so it is isolated behind an `Encoder` interface.
+Done. The only real technical risk, so it is isolated behind an `Encoder`
+interface, and the plan of bundling a minimal ffmpeg was dropped: the phone
+already has encoders, and it plays video with them every day.
 
-- ffmpeg minimal (LGPL) bundled in `%{_libdir}/harbour-nami`, the precedent
-  set by the minimal OpenCV build already shipping there, plus openh264 (BSD)
-  for real H.264/AAC in mp4. Roughly 5 MB added to the RPM.
-- Target 1280x720 at 30 fps, around 8 Mbps. A 40s clip is 1200 frames; expect
-  2 to 4x real time on device, so the render runs in the background with
-  progress and never blocks the UI.
-- Output to `~/Videos/Nami/`, which requires adding `Videos` to the
-  `X-Sailjail` permissions in `harbour-nami.desktop` (currently
-  `Pictures;Documents;RemovableMedia;Contacts;Privileged`).
+- `ClipRenderer` draws the frames. Same edit decision list the player
+  animates, same expressions for the camera move, the transitions and the
+  grade, a `QPainter` instead of a scene graph. It is pure Qt, so it is
+  tested frame by frame with no device and no encoder (`tst_clipexport`).
+- `GstEncoder` compresses them, through a GStreamer **loaded at runtime by
+  name**. Nothing is linked, nothing is bundled, no build dependency is
+  added, and a device without it loses one menu item and says why. The cost
+  is a table of function pointers and two mirrored structs, and the struct
+  layout is verified against a freshly allocated buffer before a single
+  frame is written.
+- What it encodes with is decided from the plugin registry, not assumed:
+  H.264 in mp4 where possible, VP8 in webm next, and Theora in ogg as the
+  floor, because that encoder, that muxer and the audio plumbing all ship in
+  gst-plugins-base. A combination that carries the music beats one that does
+  not, even when the silent one would be more widely playable.
+- 1280x720 (960x720 for the 4:3 polaroid style) at 25 fps. A 40s clip is a
+  thousand frames; expect minutes rather than seconds on a phone, so it runs
+  on a worker with progress and can be called off.
+- The track is played from its beginning and the renderer holds the opening
+  frame for `trackStartMs` instead. That puts every cut back on its beat
+  without seeking the audio branch, which a `gst_parse_launch` pipeline
+  cannot do cleanly, and it reads as an opening rather than a stumble.
+- Output to `~/Videos/Nami/`, which is why `Videos` is now in the
+  `X-Sailjail` permissions in `harbour-nami.desktop`.
+- `memories.video_path` remembers the file. It is only reported back to QML
+  while the file is still there, so a clip deleted from the gallery stops
+  being offered for sharing.
 
 ## Build and packaging changes
 

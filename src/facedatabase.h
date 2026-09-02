@@ -77,6 +77,7 @@ struct Memory {
     bool edited = false; // the user reordered, excluded or renamed: stop regenerating
     QDateTime createdAt;
     int photoCount = 0;  // included photos, filled in by the read queries
+    QString videoPath;   // where the exported clip was written, if it was
 };
 
 /**
@@ -615,6 +616,14 @@ public:
      * @brief Choose the music track; empty reverts to the style's default
      */
     bool setMemoryTrack(int memoryId, const QString &trackId);
+
+    /**
+     * @brief Remember where a memory's clip was written
+     *
+     * Not part of what a regeneration may touch: the file exists whatever
+     * the recipes decide next.
+     */
+    bool setMemoryVideo(int memoryId, const QString &path);
 
     /**
      * @brief Pin a cover photo; empty reverts to "the first photo"

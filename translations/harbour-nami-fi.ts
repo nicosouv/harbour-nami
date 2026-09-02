@@ -201,6 +201,38 @@
         <source>Rename memory</source>
         <translation>Nimeä muisto uudelleen</translation>
     </message>
+    <message>
+        <source>Save as video</source>
+        <translation>Tallenna videona</translation>
+    </message>
+    <message>
+        <source>Save the video again</source>
+        <translation>Tallenna video uudelleen</translation>
+    </message>
+    <message>
+        <source>Share video</source>
+        <translation>Jaa video</translation>
+    </message>
+    <message>
+        <source>Stop saving</source>
+        <translation>Lopeta tallennus</translation>
+    </message>
+    <message>
+        <source>Saving the video, %1%</source>
+        <translation>Tallennetaan videota, %1 %</translation>
+    </message>
+    <message>
+        <source>Video saved to %1</source>
+        <translation>Video tallennettu kohteeseen %1</translation>
+    </message>
+    <message>
+        <source>Could not save the video</source>
+        <translation>Videon tallennus epäonnistui</translation>
+    </message>
+    <message>
+        <source>Could not start saving the video</source>
+        <translation>Videon tallennusta ei voitu aloittaa</translation>
+    </message>
 </context>
 <context>
     <name>EventsPage</name>

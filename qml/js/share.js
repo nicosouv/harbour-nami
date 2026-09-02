@@ -36,6 +36,20 @@ function mimeForPath(path) {
     case "tif":
     case "tiff":
         return "image/tiff"
+    // A memory's exported clip. Which container it landed in depends on
+    // what the device could encode, so all of them are listed rather than
+    // the one a developer's phone happened to pick.
+    case "mp4":
+    case "m4v":
+        return "video/mp4"
+    case "webm":
+        return "video/webm"
+    case "mkv":
+        return "video/x-matroska"
+    case "ogv":
+        return "video/ogg"
+    case "avi":
+        return "video/x-msvideo"
     default:
         return "image/*"
     }

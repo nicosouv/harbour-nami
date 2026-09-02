@@ -50,6 +50,25 @@ target_include_directories(tst_memorycomposer PRIVATE ${NAMI_SRC})
 target_link_libraries(tst_memorycomposer Qt5::Core Qt5::Gui Qt5::Test)
 add_test(NAME memorycomposer COMMAND tst_memorycomposer)
 
+# Drawing the frames and picking what to compress them with. No GStreamer
+# here: the library is opened by name at runtime, so this links against Qt
+# alone and the choice of encoder is tested as what it is, a decision about
+# a set of names.
+add_executable(tst_clipexport
+    ${CMAKE_CURRENT_LIST_DIR}/tst_clipexport.cpp
+    ${NAMI_SRC}/cliprenderer.cpp
+    ${NAMI_SRC}/encoder.cpp
+    ${NAMI_SRC}/gstencoder.cpp
+    ${NAMI_SRC}/memoryexporter.cpp
+    ${NAMI_SRC}/memorycomposer.cpp
+    ${NAMI_SRC}/memorystyle.cpp
+    ${NAMI_SRC}/beatgrid.cpp
+    ${NAMI_SRC}/logging.cpp
+)
+target_include_directories(tst_clipexport PRIVATE ${NAMI_SRC})
+target_link_libraries(tst_clipexport Qt5::Core Qt5::Gui Qt5::Test)
+add_test(NAME clipexport COMMAND tst_clipexport)
+
 # The six recipes that decide what the app offers to remember
 add_executable(tst_memorygenerator
     ${CMAKE_CURRENT_LIST_DIR}/tst_memorygenerator.cpp

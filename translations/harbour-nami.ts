@@ -201,6 +201,38 @@
         <source>Rename memory</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Save as video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save the video again</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Share video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stop saving</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saving the video, %1%</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Video saved to %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not save the video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not start saving the video</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>EventsPage</name>

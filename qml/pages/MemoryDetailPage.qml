@@ -81,14 +81,64 @@ Page {
     property var edit: null
     property string style: ""
 
+    // Where the exported clip was written, empty until there is one. Read
+    // from the memory rather than remembered from the export: the file can
+    // be deleted from the gallery, and the app must not go on offering it.
+    property string videoPath: ""
+
+    // 0 to 1 while a clip is being written. The export runs on a worker and
+    // survives leaving the page, so this page reports it rather than owning
+    // it.
+    property real exportProgress: 0
+
+    readonly property bool exporting: facePipeline && facePipeline.exportingVideo
+
     function loadClip() {
         if (!facePipeline || !facePipeline.initialized || memoryId <= 0) return
 
         var memory = facePipeline.getMemory(memoryId)
         style = memory.style || ""
+        videoPath = memory.video_path || ""
 
         var composed = facePipeline.composeMemoryClip(memoryId)
         edit = (composed && composed.shots && composed.shots.length > 0) ? composed : null
+    }
+
+    // The clip as a file, which is the only form of it anybody else can
+    // watch. Minutes of work on a phone, so the page says so and stays
+    // usable while it happens.
+    function saveVideo() {
+        clipPlayer.pause()
+        exportProgress = 0
+        if (!facePipeline.exportMemoryVideo(memoryId, page.title)) {
+            banner.show(qsTr("Could not start saving the video"))
+        }
+    }
+
+    Connections {
+        target: facePipeline
+
+        onVideoExportProgress: {
+            if (memoryId === page.memoryId) {
+                page.exportProgress = progress
+            }
+        }
+
+        onVideoExportFinished: {
+            if (memoryId !== page.memoryId) return
+            page.videoPath = path
+            banner.show(qsTr("Video saved to %1").arg(path))
+        }
+
+        onVideoExportFailed: {
+            if (memoryId !== page.memoryId) return
+            // An empty message is the export having been called off, which
+            // the user already knows about
+            if (error.length > 0) {
+                banner.show(qsTr("Could not save the video"))
+                console.warn("Memory video export failed:", error)
+            }
+        }
     }
 
     // Written down straight away rather than on leaving the page: trying a
@@ -152,20 +202,44 @@ Page {
         PullDownMenu {
             MenuItem {
                 text: qsTr("Hide this memory")
+                visible: !page.exporting
                 onClicked: hideMemory()
+            }
+            MenuItem {
+                text: qsTr("Share video")
+                visible: page.videoPath.length > 0 && !page.exporting
+                onClicked: shareAction.shareFile(page.videoPath)
+            }
+            MenuItem {
+                // Absent rather than disabled when the device has no
+                // encoder: an item that can never do anything is one the
+                // user is invited to keep trying
+                text: page.videoPath.length > 0 ? qsTr("Save the video again")
+                                                : qsTr("Save as video")
+                visible: !page.exporting && page.edit !== null
+                         && facePipeline && facePipeline.canExportVideo()
+                onClicked: saveVideo()
+            }
+            MenuItem {
+                text: qsTr("Stop saving")
+                visible: page.exporting
+                onClicked: facePipeline.cancelMemoryVideo()
             }
             MenuItem {
                 text: qsTr("Edit photos")
                 enabled: photosModel.count > 0
+                visible: !page.exporting
                 onClicked: editPhotos()
             }
             MenuItem {
                 text: qsTr("Rename")
+                visible: !page.exporting
                 onClicked: renameMemory()
             }
             MenuItem {
                 text: qsTr("Select photos")
                 enabled: photosModel.count > 0 && !selection.active
+                visible: !page.exporting
                 onClicked: selection.begin("")
             }
         }
@@ -432,6 +506,60 @@ Page {
         }
 
         VerticalScrollDecorator {}
+    }
+
+    // What the export is doing, over the clip it is drawing. A line and a
+    // count of nothing: the numbers a person can act on are how far along it
+    // is and that it can be stopped, and the pull-down holds the second one.
+    Rectangle {
+        anchors {
+            left: parent.left
+            right: parent.right
+            bottom: parent.bottom
+        }
+        height: exportColumn.height + 2 * Theme.paddingLarge
+        color: Theme.rgba(Theme.highlightDimmerColor, 0.95)
+        visible: page.exporting
+        z: 150
+
+        Column {
+            id: exportColumn
+            anchors {
+                left: parent.left
+                right: parent.right
+                verticalCenter: parent.verticalCenter
+                leftMargin: Theme.horizontalPageMargin
+                rightMargin: Theme.horizontalPageMargin
+            }
+            spacing: Theme.paddingMedium
+
+            Label {
+                width: parent.width
+                text: qsTr("Saving the video, %1%").arg(Math.round(page.exportProgress * 100))
+                color: Theme.highlightColor
+                font.pixelSize: Theme.fontSizeSmall
+                truncationMode: TruncationMode.Fade
+            }
+
+            Rectangle {
+                width: parent.width
+                height: 2
+                color: Theme.rgba(Theme.secondaryColor, 0.3)
+
+                Rectangle {
+                    height: parent.height
+                    width: parent.width * page.exportProgress
+                    color: Theme.highlightColor
+                }
+            }
+        }
+    }
+
+    InfoBanner {
+        id: banner
+        anchors.top: parent.top
+        anchors.topMargin: Theme.paddingLarge
+        z: 200
     }
 
     PhotoSelectionBar {

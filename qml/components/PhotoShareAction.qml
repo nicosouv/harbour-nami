@@ -19,6 +19,12 @@ ShareAction {
 
     // Jolla's own apps hand ShareAction plain absolute paths (no file://
     // prefix), so keep that convention.
+    // A memory's exported clip goes out the same way a photo does: one
+    // absolute path, and the mime type its extension implies
+    function shareFile(path) {
+        return sharePhoto(path)
+    }
+
     function sharePhoto(path) {
         if (!path) {
             return false

@@ -5,6 +5,7 @@
 #include <QString>
 #include <QImage>
 #include <QVector>
+#include <QAtomicInt>
 #include <QFuture>
 #include <QFutureWatcher>
 #include "facedetector.h"
@@ -54,6 +55,21 @@ struct PhotoExtraction {
 };
 
 /**
+ * @brief What came of writing a memory's clip to a file
+ *
+ * Same reasoning as PhotoExtraction: the work happens on a worker thread
+ * and carries nothing back that only the main thread may touch. The row
+ * that remembers the file is written when this lands.
+ */
+struct VideoExport {
+    int memoryId = -1;
+    bool ok = false;
+    bool cancelled = false;
+    QString path;
+    QString error;
+};
+
+/**
  * @brief Main face recognition pipeline
  *
  * Orchestrates the complete face recognition workflow:
@@ -71,6 +87,7 @@ class FacePipeline : public QObject
     Q_PROPERTY(int totalPhotos READ totalPhotos NOTIFY totalPhotosChanged)
     Q_PROPERTY(int processedPhotos READ processedPhotos NOTIFY processedPhotosChanged)
     Q_PROPERTY(bool needsRescan READ needsRescan NOTIFY needsRescanChanged)
+    Q_PROPERTY(bool exportingVideo READ isExportingVideo NOTIFY exportingVideoChanged)
     // Privacy switch: when false the app never reads device contacts, even
     // though the Contacts permission is granted (persisted setting)
     Q_PROPERTY(bool contactsEnabled READ contactsEnabled WRITE setContactsEnabled NOTIFY contactsEnabledChanged)
@@ -619,6 +636,36 @@ public:
                                               const QString &styleId = QString());
 
     /**
+     * @brief Whether this device can write a clip to a file at all
+     *
+     * The encoders are the phone's own, found at runtime, so this is a
+     * question that can only be answered on the device. False here means
+     * the menu item should not be there rather than fail when tapped.
+     */
+    Q_INVOKABLE bool canExportVideo();
+
+    /**
+     * @brief Write a memory's clip to ~/Videos/Nami, in the background
+     *
+     * Composes the same edit the player shows, draws every frame of it and
+     * encodes them. Minutes of work on a phone, so it reports progress and
+     * can be called off.
+     *
+     * @return false when nothing was started: no encoder, no clip, or an
+     *         export already running.
+     *
+     * @param title What the file should be called, which is the phrasing
+     *        QML shows rather than the raw material the recipe stored
+     */
+    Q_INVOKABLE bool exportMemoryVideo(int memoryId,
+                                       const QString &title = QString());
+
+    /**
+     * @brief Abandon the running export and delete what it had written
+     */
+    Q_INVOKABLE void cancelMemoryVideo();
+
+    /**
      * @brief The clip styles, in the order a picker should offer them
      * @return List of maps with id and default_track_id
      */
@@ -641,6 +688,7 @@ public:
 
     bool isInitialized() const { return m_initialized; }
     bool isProcessing() const { return m_processing; }
+    bool isExportingVideo() const { return m_videoMemoryId >= 0; }
     bool contactsEnabled() const { return m_contactsEnabled; }
     void setContactsEnabled(bool enabled);
     int totalPhotos() const { return m_totalPhotos; }
@@ -667,12 +715,32 @@ signals:
     // Emitted when backfillPhotoHashes() finishes (count of photos hashed)
     void hashBackfillCompleted(int count);
 
+    // Writing a memory's clip to a file. Minutes of work, so it is watched
+    // rather than waited for. Progress is 0 to 1.
+    void videoExportStarted(int memoryId);
+    void videoExportProgress(int memoryId, double progress);
+    void videoExportFinished(int memoryId, const QString &path);
+    void videoExportFailed(int memoryId, const QString &error);
+    void exportingVideoChanged();
+
 private:
     /**
      * @brief The track's analysed beat grid, or an even one at the style's
      *        tempo when there is none
      */
     BeatGrid loadBeatGrid(const QString &trackId, const MemoryStyle &style);
+
+    /**
+     * @brief The edit for a memory, as the player and the export both need it
+     *
+     * Everything that reads the database happens here, on the main thread,
+     * so the worker that draws and encodes the frames touches nothing but
+     * files. QSqlDatabase has thread affinity and this is how the scan has
+     * always respected it.
+     */
+    Clip buildClip(int memoryId, const QString &styleId, QString *trackPath);
+
+    void onVideoExportFinished();
 
     FaceDetector *m_detector;
     FaceRecognizer *m_recognizer;
@@ -699,6 +767,12 @@ private:
     // Backfills file_hash for photos scanned before that column existed;
     // computed as one batch on a worker thread, applied on completion
     QFutureWatcher<QVector<QPair<int, QString>>> m_hashBackfillWatcher;
+
+    // Drawing and encoding a clip: minutes of work, one at a time, and the
+    // only shared state is the flag the UI raises to call it off
+    QFutureWatcher<VideoExport> m_videoWatcher;
+    QAtomicInt m_videoCancelled;
+    int m_videoMemoryId;
 
     // Person exemplars cache (up to 5 verified embeddings per person);
     // recomputing them from the DB for every detected face is

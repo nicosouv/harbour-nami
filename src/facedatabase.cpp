@@ -230,6 +230,7 @@ bool FaceDatabase::initializeSchema()
             score REAL DEFAULT 0.0,
             dismissed INTEGER DEFAULT 0,
             edited INTEGER DEFAULT 0,
+            video_path TEXT,
             created_at TEXT DEFAULT CURRENT_TIMESTAMP,
             UNIQUE(kind, source_key)
         )
@@ -237,6 +238,11 @@ bool FaceDatabase::initializeSchema()
         emit error("Failed to create memories table: " + query.lastError().text());
         return false;
     }
+
+    // Where the exported clip was written. Nothing depends on it existing:
+    // the file can be deleted from the gallery like any other video, and the
+    // column is then a path to nothing, which is what the reader checks.
+    query.exec("ALTER TABLE memories ADD COLUMN video_path TEXT");
 
     // A memory's photos in playback order. included = 0 is the user taking a
     // photo out of the clip: the row stays so the exclusion can be undone.
@@ -1838,6 +1844,13 @@ Memory readMemoryRow(const QSqlQuery &query)
     memory.createdAt = QDateTime::fromString(query.value("created_at").toString(), Qt::ISODate);
     memory.photoCount = query.value("photo_count").toInt();
 
+    // The clip is only there while its file is: a video deleted from the
+    // gallery must not leave the app offering to share it
+    const QString video = query.value("video_path").toString();
+    if (!video.isEmpty() && QFile::exists(video)) {
+        memory.videoPath = video;
+    }
+
     memory.coverPhoto = query.value("cover_photo").toString();
     if (memory.coverPhoto.isEmpty()) {
         memory.coverPhoto = query.value("first_photo").toString();
@@ -2070,6 +2083,16 @@ bool FaceDatabase::setMemoryTrack(int memoryId, const QString &trackId)
     QSqlQuery query(m_db);
     query.prepare("UPDATE memories SET track_id = :track WHERE id = :id");
     query.bindValue(":track", trackId);
+    query.bindValue(":id", memoryId);
+
+    return query.exec() && query.numRowsAffected() > 0;
+}
+
+bool FaceDatabase::setMemoryVideo(int memoryId, const QString &path)
+{
+    QSqlQuery query(m_db);
+    query.prepare("UPDATE memories SET video_path = :path WHERE id = :id");
+    query.bindValue(":path", path);
     query.bindValue(":id", memoryId);
 
     return query.exec() && query.numRowsAffected() > 0;

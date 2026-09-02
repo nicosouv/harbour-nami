@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.5)
 
-project(harbour-nami VERSION 0.9.0 LANGUAGES CXX)
+project(harbour-nami VERSION 0.9.1 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -57,6 +57,10 @@ set(SOURCES
     src/memorystyle.cpp
     src/beatgrid.cpp
     src/memorycomposer.cpp
+    src/cliprenderer.cpp
+    src/encoder.cpp
+    src/gstencoder.cpp
+    src/memoryexporter.cpp
     src/faceimageprovider.cpp
     src/exifreader.cpp
     src/filehash.cpp
@@ -74,6 +78,10 @@ set(HEADERS
     src/memorystyle.h
     src/beatgrid.h
     src/memorycomposer.h
+    src/cliprenderer.h
+    src/encoder.h
+    src/gstencoder.h
+    src/memoryexporter.h
     src/faceimageprovider.h
     src/exifreader.h
     src/filehash.h

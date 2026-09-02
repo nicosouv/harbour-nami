@@ -1,3 +1,15 @@
+* Wed Sep 02 2026 Nicolas Souveton <souvetonnicolas@gmail.com> 0.9.1-1
+- A memory's clip can be saved as a video file, in ~/Videos/Nami, and shared
+  from there like any other video. It is written with the phone's own
+  encoders, so nothing extra is bundled and the menu item is simply absent on
+  a device that cannot do it
+- Clips play smoothly: each photo is now decoded once, one shot before it is
+  needed, instead of twice at the exact moment it had to appear
+- The home page shows a different memory each day rather than the same one
+  until the recipes find a better
+- A single day can be given a name, from the Events list, and becomes an
+  event with its own memory carrying that name
+
 * Sun Aug 24 2026 Nicolas Souveton <souvetonnicolas@gmail.com> 0.9.0-1
 - Memories are real things now: the app looks through your gallery once a day
   and makes them, from an anniversary, a trip, a busy day, someone you see a
