@@ -345,10 +345,24 @@ already has encoders, and it plays video with them every day.
   layout is verified against a freshly allocated buffer before a single
   frame is written.
 - What it encodes with is decided from the plugin registry, not assumed:
-  H.264 in mp4 where possible, VP8 in webm next, and Theora in ogg as the
-  floor, because that encoder, that muxer and the audio plumbing all ship in
+  H.264 in mp4 where possible, then MPEG-4 in mp4 (gst-libav brings it along
+  with the AAC encoder), then VP8 in webm, and Theora in ogg as the floor,
+  because that encoder, that muxer and the audio plumbing all ship in
   gst-plugins-base. A combination that carries the music beats one that does
   not, even when the silent one would be more widely playable.
+- **Being in the registry is not being usable**, and this cost a release to
+  learn. A Jolla phone's only H.264 encoder is `droidvenc`, which is present,
+  findable, and cannot load its own Android libraries inside this process: it
+  refuses the first frame with `not-negotiated` and the export died there.
+  So `Encoders::rank()` returns every viable combination and the exporter
+  works down the list until a pipeline actually accepts frames. A refusal
+  shows up within the first frames or not at all, so a later failure is a
+  real failure and is not retried with another codec.
+- A GStreamer buffer carries no format: the format travels ahead of it as an
+  event that `appsrc` only sends if its `caps` property was applied. The caps
+  are therefore set twice, as an unquoted property and again as a capsfilter.
+  A caps-less appsrc produces exactly the same `not-negotiated` error, from a
+  place in the logs that never mentions caps.
 - 1280x720 (960x720 for the 4:3 polaroid style) at 25 fps. A 40s clip is a
   thousand frames; expect minutes rather than seconds on a phone, so it runs
   on a worker with progress and can be called off.
