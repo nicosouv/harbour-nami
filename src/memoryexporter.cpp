@@ -2,6 +2,7 @@
 
 #include <QDir>
 #include <QFile>
+#include <QStringList>
 
 #include "cliprenderer.h"
 #include "encoder.h"
@@ -22,6 +23,66 @@ const int kFps = 25;
 const int kFadeMs = 1200;
 
 const int kFrameHeight = 720;
+
+// How far in a refusal still counts as "this encoder will not do". Caps are
+// negotiated on the first buffer, so a combination that is going to fail
+// fails immediately; anything later is the disk or the file, not the codec.
+const int kEarlyFrames = 3;
+
+MemoryExporter::Result attemptExport(ClipRenderer &renderer,
+                                     const MemoryExporter::Request &request,
+                                     const EncoderChoice &choice,
+                                     const QString &path,
+                                     int frames,
+                                     const MemoryExporter::Progress &progress)
+{
+    MemoryExporter::Result result;
+
+    GstEncoder encoder;
+    if (!encoder.open(path, MemoryExporter::frameSize(request.clip.aspect),
+                      kFps, request.trackPath, choice)) {
+        result.error = encoder.errorString();
+        result.rejectedEarly = true;
+        return result;
+    }
+
+    const qint64 duration = renderer.durationMs();
+
+    for (int index = 0; index < frames; index++) {
+        const qint64 time = qint64(index) * 1000 / kFps;
+
+        const qint64 remaining = duration - time;
+        encoder.setAudioLevel(remaining >= kFadeMs
+                              ? 1.0 : qMax(0.0, double(remaining) / kFadeMs));
+
+        if (!encoder.writeFrame(renderer.frameAt(time))) {
+            result.error = encoder.errorString();
+            result.rejectedEarly = index < kEarlyFrames;
+            QFile::remove(path);
+            return result;
+        }
+
+        if (progress && !progress(double(index + 1) / double(frames))) {
+            result.cancelled = true;
+            // No half a clip left behind: it would be indistinguishable in
+            // the gallery from one that worked
+            QFile::remove(path);
+            return result;
+        }
+    }
+
+    if (!encoder.finish()) {
+        result.error = encoder.errorString();
+        QFile::remove(path);
+        return result;
+    }
+
+    qCDebug(lcNami) << "Exported" << frames << "frames to" << path;
+
+    result.ok = true;
+    result.path = path;
+    return result;
+}
 
 }  // namespace
 
@@ -81,8 +142,9 @@ MemoryExporter::Result MemoryExporter::run(const Request &request,
         return result;
     }
 
-    const EncoderChoice choice = Encoders::choose(GstEncoder::availableElements());
-    if (!choice.isValid()) {
+    const QSet<QString> available = GstEncoder::availableElements();
+    const QVector<EncoderChoice> ranked = Encoders::rank(available);
+    if (ranked.isEmpty()) {
         result.error = unavailableReason();
         return result;
     }
@@ -93,11 +155,6 @@ MemoryExporter::Result MemoryExporter::run(const Request &request,
         return result;
     }
 
-    // Same memory, same name: exporting again replaces the file rather than
-    // leaving a numbered pile of nearly identical clips in the gallery
-    const QString path = directory.filePath(request.baseName + QLatin1Char('.')
-                                            + choice.extension);
-
     const QSize size = frameSize(request.clip.aspect);
     ClipRenderer renderer(request.clip, size);
 
@@ -107,45 +164,46 @@ MemoryExporter::Result MemoryExporter::run(const Request &request,
         return result;
     }
 
-    GstEncoder encoder;
-    if (!encoder.open(path, size, kFps, request.trackPath)) {
-        result.error = encoder.errorString();
-        return result;
-    }
+    // The registry says an element exists; only pushing a frame at it says
+    // whether it will take one. A hardware encoder that wants camera buffers
+    // is present, findable, and refuses the first frame, so the answer is to
+    // work down the list rather than to guess which name is safe.
+    //
+    // A refusal shows up within the first frames or not at all, so a later
+    // failure is a real failure (a full disk, a file pulled away) and is not
+    // retried with another codec.
+    for (int attempt = 0; attempt < ranked.size(); attempt++) {
+        const EncoderChoice &choice = ranked.at(attempt);
 
-    const qint64 duration = renderer.durationMs();
+        // Same memory, same name: exporting again replaces the file rather
+        // than leaving a numbered pile of nearly identical clips
+        const QString path = directory.filePath(request.baseName
+                                                + QLatin1Char('.')
+                                                + choice.extension);
 
-    for (int index = 0; index < frames; index++) {
-        const qint64 time = qint64(index) * 1000 / kFps;
+        result = attemptExport(renderer, request, choice, path, frames, progress);
 
-        const qint64 remaining = duration - time;
-        encoder.setAudioLevel(remaining >= kFadeMs
-                              ? 1.0 : qMax(0.0, double(remaining) / kFadeMs));
-
-        if (!encoder.writeFrame(renderer.frameAt(time))) {
-            result.error = encoder.errorString();
-            QFile::remove(path);
+        if (result.ok || result.cancelled) {
             return result;
         }
 
-        if (progress && !progress(double(index + 1) / double(frames))) {
-            result.cancelled = true;
-            // No half a clip left behind: it would be indistinguishable in
-            // the gallery from one that worked
-            QFile::remove(path);
+        if (!result.rejectedEarly || attempt + 1 >= ranked.size()) {
             return result;
         }
+
+        qCWarning(lcNami) << "MemoryExporter:" << choice.videoEncoder
+                          << "would not take the frames, trying the next";
     }
 
-    if (!encoder.finish()) {
-        result.error = encoder.errorString();
-        QFile::remove(path);
-        return result;
+    // Every combination refused. What the device actually holds is the one
+    // thing worth knowing next, and it cannot be guessed from here.
+    QStringList found;
+    for (const QString &name : available) {
+        found << name;
     }
+    found.sort();
+    qCWarning(lcNami) << "MemoryExporter: nothing would encode. Available:"
+                      << found.join(QStringLiteral(", "));
 
-    qCDebug(lcNami) << "Exported" << frames << "frames to" << path;
-
-    result.ok = true;
-    result.path = path;
     return result;
 }

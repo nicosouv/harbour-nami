@@ -294,10 +294,19 @@ bool GstEncoder::takeError()
     }
 
     if (debug) {
-        qCWarning(lcNami) << "GstEncoder:" << debug;
+        // Flattened: GStreamer's debug string is several lines, and only the
+        // first of them carries the process name in the journal. Everything
+        // that says *why* was on the lines a `journalctl | grep nami` threw
+        // away, which is how "Internal data stream error" arrived with its
+        // reason missing.
+        QString detail = QString::fromUtf8(debug).replace(QLatin1Char('\n'),
+                                                          QLatin1String(" | "));
+        qCWarning(lcNami) << "GstEncoder:" << m_choice << "failed:" << detail;
         if (gst.mem_free) {
             gst.mem_free(debug);
         }
+    } else {
+        qCWarning(lcNami) << "GstEncoder:" << m_choice << "failed:" << m_error;
     }
 
     gst.mini_object_unref(message);
@@ -334,7 +343,7 @@ void GstEncoder::release()
 }
 
 bool GstEncoder::open(const QString &path, const QSize &size, int fps,
-                      const QString &audioPath)
+                      const QString &audioPath, const EncoderChoice &choice)
 {
     GstApi &gst = api();
     if (!gst.ready) {
@@ -342,7 +351,6 @@ bool GstEncoder::open(const QString &path, const QSize &size, int fps,
         return false;
     }
 
-    const EncoderChoice choice = Encoders::choose(availableElements());
     if (!choice.isValid()) {
         m_error = QStringLiteral("no usable video encoder on this device");
         return false;
@@ -351,20 +359,37 @@ bool GstEncoder::open(const QString &path, const QSize &size, int fps,
     m_size = size;
     m_fps = qMax(1, fps);
     m_frames = 0;
+    m_choice = choice.videoEncoder + QLatin1String(" -> ") + choice.muxer
+             + (choice.hasAudio() ? QLatin1String(" + ") + choice.audioEncoder
+                                  : QLatin1String(" (silent)"));
 
     // Even dimensions: every H.264 profile worth writing wants them, and a
     // photograph resized by one pixel is a photograph
     m_size.setWidth(m_size.width() - (m_size.width() % 2));
     m_size.setHeight(m_size.height() - (m_size.height() % 2));
 
+    // Said twice, on purpose.
+    //
+    // A GStreamer buffer carries no format: the format travels ahead of it,
+    // as an event, and appsrc only sends that event if its `caps` property
+    // was set. Without it the first frame arrives at an element that has no
+    // idea what it is looking at, negotiation fails, and the source thread
+    // reports the failure as "Internal data stream error" from somewhere
+    // that says nothing about caps at all.
+    //
+    // So the caps go on the property, unquoted (the value has no spaces, and
+    // quoting it is one more thing that has to survive the parser), and
+    // again as a filter downstream, which is the form gst-launch itself is
+    // usually written in. Either one alone would do; both cost nothing.
+    const QString caps = QStringLiteral(
+        "video/x-raw,format=BGRx,width=%1,height=%2,framerate=%3/1")
+            .arg(m_size.width()).arg(m_size.height()).arg(m_fps);
+
     QString description;
     description += QStringLiteral(
         "appsrc name=vsrc is-live=false format=time do-timestamp=false "
-        "block=true max-bytes=16000000 "
-        "caps=\"video/x-raw,format=BGRx,width=%1,height=%2,framerate=%3/1\" "
-        "! videoconvert ! %4")
-            .arg(m_size.width()).arg(m_size.height()).arg(m_fps)
-            .arg(choice.videoEncoder);
+        "block=true max-bytes=16000000 caps=%1 ! %2 ! videoconvert ! %3")
+            .arg(caps, caps, choice.videoEncoder);
 
     if (!choice.videoOptions.isEmpty()) {
         description += QLatin1Char(' ') + choice.videoOptions;
@@ -448,10 +473,10 @@ bool GstEncoder::open(const QString &path, const QSize &size, int fps,
         return false;
     }
 
-    qCDebug(lcNami) << "GstEncoder: writing with" << choice.videoEncoder
-                          << "into" << choice.muxer
-                          << (withAudio ? choice.audioEncoder
-                                        : QStringLiteral("no audio"));
+    // At warning level, once per attempt: on a device that cannot be
+    // debugged from here, knowing which combination was tried is the whole
+    // difference between a bug report and a guess
+    qCWarning(lcNami) << "GstEncoder: writing with" << m_choice;
     return true;
 }
 

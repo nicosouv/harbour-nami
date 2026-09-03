@@ -5,6 +5,7 @@
 #include <QSet>
 #include <QSize>
 #include <QString>
+#include <QVector>
 
 /**
  * @brief Which elements a clip will actually be written with
@@ -51,6 +52,20 @@ QStringList candidates();
  */
 EncoderChoice choose(const QSet<QString> &available);
 
+/**
+ * @brief Every combination that could be assembled, best first
+ *
+ * The registry says an element exists. It does not say the element will
+ * accept these frames: a hardware encoder that only takes buffers from the
+ * camera is present, findable, and useless here, and it says so by failing
+ * to negotiate once data starts flowing.
+ *
+ * So the caller gets the whole ranked list and works down it until a
+ * pipeline actually runs, rather than betting the feature on the first name
+ * that turned up.
+ */
+QVector<EncoderChoice> rank(const QSet<QString> &available);
+
 }  // namespace Encoders
 
 /**
@@ -66,14 +81,18 @@ public:
     virtual ~Encoder() {}
 
     /**
-     * @brief Start writing
+     * @brief Start writing, with the combination the caller settled on
      *
      * `audioPath` may be empty, in which case the clip is silent. It is
      * played from its beginning: the renderer holds the opening frame for
      * the track's lead-in instead, which needs no seeking.
+     *
+     * Succeeding here only means the pipeline was built and started. An
+     * element that will not accept these frames says so on the first push,
+     * not before, which is why the caller keeps the ranked list.
      */
     virtual bool open(const QString &path, const QSize &size, int fps,
-                      const QString &audioPath) = 0;
+                      const QString &audioPath, const EncoderChoice &choice) = 0;
 
     /**
      * @brief Hand over the next frame, in order

@@ -32,6 +32,7 @@ private slots:
     void musicBeatsCompatibility();
     void anUnparseableStreamIsNotWritten();
     void nothingAvailableIsSaidPlainly();
+    void everyFallbackIsOfferedInOrder();
 
 private:
     Clip twoShotClip() const;
@@ -273,6 +274,51 @@ void TstClipExport::nothingAvailableIsSaidPlainly()
         unique.insert(name);
     }
     QCOMPARE(candidates.size(), unique.size());
+}
+
+void TstClipExport::everyFallbackIsOfferedInOrder()
+{
+    // Being in the registry is not being usable: a hardware encoder that
+    // only takes camera buffers is present, findable, and refuses the first
+    // frame. So the caller gets the whole list and works down it.
+    const QSet<QString> phone = {
+        QStringLiteral("droidvenc"), QStringLiteral("h264parse"),
+        QStringLiteral("mp4mux"), QStringLiteral("avenc_aac"),
+        QStringLiteral("vp8enc"), QStringLiteral("webmmux"),
+        QStringLiteral("theoraenc"), QStringLiteral("oggmux"),
+        QStringLiteral("vorbisenc")
+    };
+
+    const QVector<EncoderChoice> ranked = Encoders::rank(phone);
+    QVERIFY(ranked.size() >= 3);
+
+    // The first is what choose() would have committed to on its own
+    QCOMPARE(ranked.first().videoEncoder, Encoders::choose(phone).videoEncoder);
+    QCOMPARE(ranked.first().videoEncoder, QStringLiteral("droidvenc"));
+
+    QStringList encoders;
+    for (const EncoderChoice &choice : ranked) {
+        QVERIFY(choice.isValid());
+        encoders << choice.videoEncoder;
+    }
+    // Everything that could work is still on the list behind it
+    QVERIFY(encoders.contains(QStringLiteral("vp8enc")));
+    QVERIFY(encoders.contains(QStringLiteral("theoraenc")));
+
+    // Silent combinations come after every one that carries the music, so a
+    // device falls back to a lesser codec before it falls back to no sound
+    int firstSilent = ranked.size();
+    for (int i = 0; i < ranked.size(); i++) {
+        if (!ranked.at(i).hasAudio()) {
+            firstSilent = i;
+            break;
+        }
+    }
+    for (int i = firstSilent; i < ranked.size(); i++) {
+        QVERIFY(!ranked.at(i).hasAudio());
+    }
+
+    QVERIFY(Encoders::rank(QSet<QString>()).isEmpty());
 }
 
 QTEST_MAIN(TstClipExport)

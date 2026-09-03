@@ -106,7 +106,14 @@ QStringList Encoders::candidates()
 
 EncoderChoice Encoders::choose(const QSet<QString> &available)
 {
-    EncoderChoice silent;
+    const QVector<EncoderChoice> ranked = rank(available);
+    return ranked.isEmpty() ? EncoderChoice() : ranked.first();
+}
+
+QVector<EncoderChoice> Encoders::rank(const QSet<QString> &available)
+{
+    QVector<EncoderChoice> withAudio;
+    QVector<EncoderChoice> silent;
 
     for (const VideoCandidate &candidate : kVideo) {
         const QString encoder = QLatin1String(candidate.element);
@@ -142,15 +149,13 @@ EncoderChoice Encoders::choose(const QSet<QString> &available)
             }
 
             if (choice.hasAudio()) {
-                return choice;
-            }
-            // Remember the best silent combination, but keep looking for one
-            // that can carry the music
-            if (!silent.isValid()) {
-                silent = choice;
+                withAudio.append(choice);
+            } else {
+                // Kept, but behind every combination that can carry the music
+                silent.append(choice);
             }
         }
     }
 
-    return silent;
+    return withAudio + silent;
 }

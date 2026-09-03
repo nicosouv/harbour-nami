@@ -42,7 +42,7 @@ public:
     static QSet<QString> availableElements();
 
     bool open(const QString &path, const QSize &size, int fps,
-              const QString &audioPath) override;
+              const QString &audioPath, const EncoderChoice &choice) override;
     bool writeFrame(const QImage &frame) override;
     void setAudioLevel(double level) override;
     bool finish() override;
@@ -59,6 +59,9 @@ private:
     void *m_bus;
 
     QString m_error;
+    // Which combination this pipeline was built from, so a failure names the
+    // element that refused rather than only the source that noticed
+    QString m_choice;
     QSize m_size;
     int m_fps;
     qint64 m_frames;

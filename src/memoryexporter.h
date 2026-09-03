@@ -33,6 +33,9 @@ struct Result {
     QString path;
     QString error;
     bool cancelled = false;
+    // The encoder refused the frames rather than the export going wrong:
+    // worth trying the next combination down, and nothing to tell the user
+    bool rejectedEarly = false;
 };
 
 /**
