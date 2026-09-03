@@ -1,20 +1,10 @@
-* Thu Sep 03 2026 Nicolas Souveton <souvetonnicolas@gmail.com> 0.9.2-1
-- Saving a video works on devices whose only H.264 encoder is the hardware
-  one: it is still tried first, and when it refuses the frames the app moves
-  down to the next encoder the phone has instead of giving up
-- An MPEG-4 encoder is now among them, so a phone with no usable H.264 still
-  gets an mp4 with its music rather than a container half the world cannot
-  open
-- The frames now carry their format to the encoder in two ways rather than
-  one, which is what "Internal data stream error" meant
-- A failed export names the encoder it was using, on one line, and lists what
-  the device can actually encode with
-
-* Wed Sep 02 2026 Nicolas Souveton <souvetonnicolas@gmail.com> 0.9.1-1
+* Thu Sep 03 2026 Nicolas Souveton <souvetonnicolas@gmail.com> 0.9.1-1
 - A memory's clip can be saved as a video file, in ~/Videos/Nami, and shared
-  from there like any other video. It is written with the phone's own
-  encoders, so nothing extra is bundled and the menu item is simply absent on
-  a device that cannot do it
+  from there like any other video
+- It is written with the phone's own encoders, so nothing extra is bundled.
+  Which one it uses is decided on the device: an encoder that is present but
+  will not take the frames, as the hardware one on some phones will not, is
+  simply followed by the next, down to one that works
 - Clips play smoothly: each photo is now decoded once, one shot before it is
   needed, instead of twice at the exact moment it had to appear
 - The home page shows a different memory each day rather than the same one
