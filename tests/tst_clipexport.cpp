@@ -33,6 +33,7 @@ private slots:
     void anUnparseableStreamIsNotWritten();
     void nothingAvailableIsSaidPlainly();
     void everyFallbackIsOfferedInOrder();
+    void theDeviceThatSentThisBugReport();
 
 private:
     Clip twoShotClip() const;
@@ -319,6 +320,34 @@ void TstClipExport::everyFallbackIsOfferedInOrder()
     }
 
     QVERIFY(Encoders::rank(QSet<QString>()).isEmpty());
+}
+
+void TstClipExport::theDeviceThatSentThisBugReport()
+{
+    // A Jolla phone, 2026: the only H.264 encoder in the registry is the
+    // hardware one, and it cannot load its own Android libraries inside this
+    // process, so it refuses the first frame with "not-negotiated". What
+    // saves the feature is that gst-libav is installed for the AAC, and
+    // brings an MPEG-4 encoder that goes into the same mp4.
+    const QSet<QString> jolla = {
+        QStringLiteral("droidvenc"), QStringLiteral("h264parse"),
+        QStringLiteral("mp4mux"), QStringLiteral("avenc_aac"),
+        QStringLiteral("avenc_mpeg4"), QStringLiteral("theoraenc"),
+        QStringLiteral("oggmux"), QStringLiteral("vorbisenc")
+    };
+
+    const QVector<EncoderChoice> ranked = Encoders::rank(jolla);
+    QVERIFY(ranked.size() >= 2);
+
+    QCOMPARE(ranked.at(0).videoEncoder, QStringLiteral("droidvenc"));
+
+    // The one that will actually run, and it still lands in an mp4 with the
+    // music in it rather than in a container nobody can open
+    QCOMPARE(ranked.at(1).videoEncoder, QStringLiteral("avenc_mpeg4"));
+    QCOMPARE(ranked.at(1).muxer, QStringLiteral("mp4mux"));
+    QCOMPARE(ranked.at(1).extension, QStringLiteral("mp4"));
+    QCOMPARE(ranked.at(1).audioEncoder, QStringLiteral("avenc_aac"));
+    QVERIFY(ranked.at(1).videoParser.isEmpty());
 }
 
 QTEST_MAIN(TstClipExport)

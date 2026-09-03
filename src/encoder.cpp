@@ -24,6 +24,11 @@ const VideoCandidate kVideo[] = {
     { "omxh264enc",  "h264",   "" },
     { "droidvenc",   "h264",   "" },
     { "v4l2h264enc", "h264",   "" },
+    // MPEG-4 part 2, from gst-libav. Older and less efficient than H.264,
+    // but it goes into an mp4 next to AAC and plays on anything that plays
+    // video, which is worth more to somebody sending a clip to a friend
+    // than a better codec in a container half the world cannot open.
+    { "avenc_mpeg4", "mpeg4",  "bitrate=4000000" },
     { "vp8enc",      "vp8",    "deadline=1 cpu-used=8" },
     { "theoraenc",   "theora", "quality=40" },
     { "jpegenc",     "mjpeg",  "quality=88" },
@@ -44,6 +49,10 @@ const Container kContainers[] = {
     // falling through to VP8.
     { "h264",   "mp4mux",      "mp4",  "h264parse" },
     { "h264",   "matroskamux", "mkv",  "h264parse" },
+    // mp4mux takes an MPEG-4 elementary stream as the encoder emits it, so
+    // there is no parser to be missing here
+    { "mpeg4",  "mp4mux",      "mp4",  "" },
+    { "mpeg4",  "matroskamux", "mkv",  "" },
     { "vp8",    "webmmux",     "webm", "" },
     { "vp8",    "matroskamux", "mkv",  "" },
     { "theora", "oggmux",      "ogv",  "" },
