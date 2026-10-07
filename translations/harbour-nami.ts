@@ -457,10 +457,6 @@
 <context>
     <name>HomePage</name>
     <message>
-        <source>About</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Automatically organize your photos by faces. All processing happens on your device for complete privacy.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -474,10 +470,6 @@
     </message>
     <message>
         <source>Identify Faces</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Memories</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -542,6 +534,10 @@
     </message>
     <message>
         <source>Check which folders are scanned in Settings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All memories</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -1123,15 +1119,19 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Scanned folders</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Nami only scans the folders listed here. Add a folder on the SD card to include external photos.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Add folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add memory card</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add memory card %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1151,23 +1151,11 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>All face recognition processing happens locally on your device. No data is sent to external servers.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Clear all data</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Data Management</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Deleting all data</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Detected faces</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1187,23 +1175,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Named people</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>On-device processing</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Privacy</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Recognition strictness</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Scanning</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1215,15 +1187,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Storage</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Storage used</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Language</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1236,10 +1200,6 @@
     </message>
     <message>
         <source>Restart Nami to apply the new language</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>A backup includes everyone you've identified, their photos and your trips, so you can restore it all on a new device. Links to your contacts are left out, since those contacts may not exist on the new phone — you can link them again there. It's encrypted with a passphrase you choose — if you forget it, the backup can't be recovered. On the new phone, scan your gallery first, then restore: this is always safe, whether your photos ended up at the same path or not, and whatever Nami version you're running.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1264,10 +1224,6 @@
     </message>
     <message>
         <source>Enter the backup's passphrase</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Events</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1341,7 +1297,27 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Photos you deleted from your phone stay in Nami as empty tiles. This forgets them. It runs on its own after every scan, so you only need it to clean up without rescanning.</source>
+        <source>About</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Photos</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Contacts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Data</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Everyone you&apos;ve identified, their photos and your trips, encrypted with a passphrase you choose. Links to contacts are not included.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Photos deleted from the phone stay as empty tiles until forgotten. This also happens after every scan.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -1475,6 +1451,10 @@
     </message>
     <message>
         <source>Select a backup to restore</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scan this phone&apos;s gallery first, so restored people find their photos. Restoring is safe whatever the Nami version or photo paths.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

@@ -458,10 +458,6 @@
 <context>
     <name>HomePage</name>
     <message>
-        <source>About</source>
-        <translation>Über</translation>
-    </message>
-    <message>
         <source>Automatically organize your photos by faces. All processing happens on your device for complete privacy.</source>
         <translation>Organisieren Sie Ihre Fotos automatisch nach Gesichtern. Die gesamte Verarbeitung erfolgt auf Ihrem Gerät.</translation>
     </message>
@@ -476,10 +472,6 @@
     <message>
         <source>Identify Faces</source>
         <translation>Gesichter identifizieren</translation>
-    </message>
-    <message>
-        <source>Memories</source>
-        <translation>Erinnerungen</translation>
     </message>
     <message>
         <source>Nami</source>
@@ -544,6 +536,10 @@
     <message>
         <source>Check which folders are scanned in Settings</source>
         <translation>Prüfen Sie die durchsuchten Ordner in den Einstellungen</translation>
+    </message>
+    <message>
+        <source>All memories</source>
+        <translation>Alle Erinnerungen</translation>
     </message>
 </context>
 <context>
@@ -1124,16 +1120,20 @@
         <translation>Raster ×4</translation>
     </message>
     <message>
-        <source>Scanned folders</source>
-        <translation>Gescannte Ordner</translation>
-    </message>
-    <message>
         <source>Nami only scans the folders listed here. Add a folder on the SD card to include external photos.</source>
         <translation>Nami scannt nur die hier aufgeführten Ordner. Füge einen Ordner auf der SD-Karte hinzu, um externe Fotos einzubeziehen.</translation>
     </message>
     <message>
         <source>Add folder</source>
         <translation>Ordner hinzufügen</translation>
+    </message>
+    <message>
+        <source>Add memory card</source>
+        <translation>Speicherkarte hinzufügen</translation>
+    </message>
+    <message>
+        <source>Add memory card %1</source>
+        <translation>Speicherkarte %1 hinzufügen</translation>
     </message>
     <message>
         <source>Display</source>
@@ -1152,24 +1152,12 @@
         <translation>Entfernen</translation>
     </message>
     <message>
-        <source>All face recognition processing happens locally on your device. No data is sent to external servers.</source>
-        <translation>Die gesamte Gesichtserkennung erfolgt lokal auf Ihrem Gerät. Es werden keine Daten an externe Server gesendet.</translation>
-    </message>
-    <message>
         <source>Clear all data</source>
         <translation>Alle Daten löschen</translation>
     </message>
     <message>
-        <source>Data Management</source>
-        <translation>Datenverwaltung</translation>
-    </message>
-    <message>
         <source>Deleting all data</source>
         <translation>Alle Daten werden gelöscht</translation>
-    </message>
-    <message>
-        <source>Detected faces</source>
-        <translation>Erkannte Gesichter</translation>
     </message>
     <message>
         <source>Export data</source>
@@ -1188,24 +1176,8 @@
         <translation>Höhere Werte reduzieren Fehlzuordnungen, lassen aber mehr Gesichter zur manuellen Identifizierung übrig</translation>
     </message>
     <message>
-        <source>Named people</source>
-        <translation>Benannte Personen</translation>
-    </message>
-    <message>
-        <source>On-device processing</source>
-        <translation>Verarbeitung auf dem Gerät</translation>
-    </message>
-    <message>
-        <source>Privacy</source>
-        <translation>Datenschutz</translation>
-    </message>
-    <message>
         <source>Recognition strictness</source>
         <translation>Strenge der Erkennung</translation>
-    </message>
-    <message>
-        <source>Scanning</source>
-        <translation>Scannen</translation>
     </message>
     <message>
         <source>Select folder to scan</source>
@@ -1216,16 +1188,8 @@
         <translation>Einstellungen</translation>
     </message>
     <message>
-        <source>Storage</source>
-        <translation>Speicher</translation>
-    </message>
-    <message>
         <source>Storage used</source>
         <translation>Belegter Speicher</translation>
-    </message>
-    <message>
-        <source>Language</source>
-        <translation>Sprache</translation>
     </message>
     <message>
         <source>App language</source>
@@ -1238,10 +1202,6 @@
     <message>
         <source>Restart Nami to apply the new language</source>
         <translation>Starten Sie Nami neu, um die neue Sprache zu übernehmen</translation>
-    </message>
-    <message>
-        <source>A backup includes everyone you've identified, their photos and your trips, so you can restore it all on a new device. Links to your contacts are left out, since those contacts may not exist on the new phone — you can link them again there. It's encrypted with a passphrase you choose — if you forget it, the backup can't be recovered. On the new phone, scan your gallery first, then restore: this is always safe, whether your photos ended up at the same path or not, and whatever Nami version you're running.</source>
-        <translation>Ein Backup enthält alle von Ihnen identifizierten Personen, deren Fotos und Ihre Reisen, sodass Sie alles auf einem neuen Gerät wiederherstellen können. Verknüpfungen zu Ihren Kontakten bleiben außen vor, da diese Kontakte auf dem neuen Telefon möglicherweise nicht existieren, dort können Sie sie erneut verknüpfen. Es wird mit einer von Ihnen gewählten Passphrase verschlüsselt: Wenn Sie sie vergessen, lässt sich das Backup nicht wiederherstellen. Scannen Sie auf dem neuen Telefon zuerst Ihre Galerie und stellen Sie dann wieder her: Das ist immer sicher, egal ob Ihre Fotos im selben Pfad gelandet sind oder nicht, und unabhängig von der Nami-Version.</translation>
     </message>
     <message>
         <source>Backup</source>
@@ -1266,10 +1226,6 @@
     <message>
         <source>Enter the backup's passphrase</source>
         <translation>Passphrase des Backups eingeben</translation>
-    </message>
-    <message>
-        <source>Events</source>
-        <translation>Ereignisse</translation>
     </message>
     <message>
         <source>Identifications and trips will be added to what's already on this device. Nothing is deleted.</source>
@@ -1342,8 +1298,28 @@
         <translation>Nichts aufzuräumen</translation>
     </message>
     <message>
-        <source>Photos you deleted from your phone stay in Nami as empty tiles. This forgets them. It runs on its own after every scan, so you only need it to clean up without rescanning.</source>
-        <translation>Fotos, die Sie auf dem Telefon gelöscht haben, bleiben in Nami als leere Kacheln. Dies vergisst sie. Es geschieht nach jedem Scan von selbst; die Schaltfläche dient nur zum Aufräumen ohne erneuten Scan.</translation>
+        <source>About</source>
+        <translation>Über</translation>
+    </message>
+    <message>
+        <source>Photos</source>
+        <translation>Fotos</translation>
+    </message>
+    <message>
+        <source>Contacts</source>
+        <translation>Kontakte</translation>
+    </message>
+    <message>
+        <source>Data</source>
+        <translation>Daten</translation>
+    </message>
+    <message>
+        <source>Everyone you&apos;ve identified, their photos and your trips, encrypted with a passphrase you choose. Links to contacts are not included.</source>
+        <translation>Alle erkannten Personen, ihre Fotos und deine Reisen, verschlüsselt mit einer selbst gewählten Passphrase. Verknüpfungen mit Kontakten sind nicht enthalten.</translation>
+    </message>
+    <message>
+        <source>Photos deleted from the phone stay as empty tiles until forgotten. This also happens after every scan.</source>
+        <translation>Vom Telefon gelöschte Fotos bleiben als leere Kacheln, bis sie vergessen werden. Das passiert auch nach jedem Scan.</translation>
     </message>
 </context>
 <context>
@@ -1477,6 +1453,10 @@
     <message>
         <source>Select a backup to restore</source>
         <translation>Wählen Sie ein Backup zum Wiederherstellen</translation>
+    </message>
+    <message>
+        <source>Scan this phone&apos;s gallery first, so restored people find their photos. Restoring is safe whatever the Nami version or photo paths.</source>
+        <translation>Scanne zuerst die Galerie dieses Telefons, damit wiederhergestellte Personen ihre Fotos finden. Die Wiederherstellung ist sicher, unabhängig von Nami-Version und Fotopfaden.</translation>
     </message>
 </context>
 <context>

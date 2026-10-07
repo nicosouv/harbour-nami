@@ -8,6 +8,8 @@ Page {
     property var stats: ({})
     // Whitelist of folders Nami is allowed to scan (internal storage + SD card)
     property var scanFolders: []
+    // Memory cards mounted right now, offered without going through the picker
+    property var removableVolumes: []
     // ISO date string of the last successful backup, empty if none yet
     property string lastBackupAt: ""
 
@@ -17,6 +19,7 @@ Page {
         if (facePipeline && facePipeline.initialized) {
             stats = facePipeline.getStatistics()
             loadFolders()
+            removableVolumes = facePipeline.removableVolumes()
             lastBackupAt = facePipeline.getSetting("last_backup_at", "")
         }
     }
@@ -71,6 +74,13 @@ Page {
         anchors.fill: parent
         contentHeight: column.height
 
+        PullDownMenu {
+            MenuItem {
+                text: qsTr("About")
+                onClicked: pageStack.push(Qt.resolvedUrl("AboutPage.qml"))
+            }
+        }
+
         VerticalScrollDecorator {}
 
         Column {
@@ -82,27 +92,7 @@ Page {
             }
 
             SectionHeader {
-                text: qsTr("Privacy")
-            }
-
-            TextArea {
-                width: parent.width
-                readOnly: true
-                label: qsTr("On-device processing")
-                text: qsTr("All face recognition processing happens locally on your device. No data is sent to external servers.")
-            }
-
-            TextSwitch {
-                text: qsTr("Contacts integration")
-                description: qsTr("Let you link people to your device contacts. When off, Nami never reads your contacts, even though the permission is granted.")
-                enabled: facePipeline && facePipeline.initialized
-                automaticCheck: false
-                checked: facePipeline && facePipeline.contactsEnabled
-                onClicked: facePipeline.contactsEnabled = !facePipeline.contactsEnabled
-            }
-
-            SectionHeader {
-                text: qsTr("Scanned folders")
+                text: qsTr("Photos")
             }
 
             Label {
@@ -155,8 +145,51 @@ Page {
                 }
             }
 
+            Repeater {
+                model: removableVolumes.filter(function (v) { return scanFolders.indexOf(v.path) < 0 })
+
+                delegate: Button {
+                    x: Theme.horizontalPageMargin
+                    text: removableVolumes.length > 1
+                          ? qsTr("Add memory card %1").arg(modelData.name)
+                          : qsTr("Add memory card")
+                    enabled: facePipeline && facePipeline.initialized
+                    onClicked: addFolder(modelData.path)
+                }
+            }
+
+            Slider {
+                id: thresholdSlider
+                width: parent.width
+                label: qsTr("Recognition strictness")
+                minimumValue: 0.65
+                maximumValue: 0.80
+                stepSize: 0.01
+                valueText: Math.round(value * 100) + "%"
+                enabled: facePipeline && facePipeline.initialized
+
+                Component.onCompleted: {
+                    if (facePipeline && facePipeline.initialized) {
+                        value = parseFloat(facePipeline.getSetting("auto_match_threshold", "0.72"))
+                    }
+                }
+
+                onReleased: {
+                    facePipeline.setSetting("auto_match_threshold", value.toFixed(2))
+                }
+            }
+
+            Label {
+                x: Theme.horizontalPageMargin
+                width: parent.width - 2 * Theme.horizontalPageMargin
+                text: qsTr("Higher values reduce wrong matches but leave more faces to identify manually")
+                font.pixelSize: Theme.fontSizeExtraSmall
+                color: Theme.secondaryColor
+                wrapMode: Text.WordWrap
+            }
+
             SectionHeader {
-                text: qsTr("Language")
+                text: qsTr("Display")
             }
 
             ComboBox {
@@ -205,10 +238,6 @@ Page {
                 color: Theme.secondaryHighlightColor
                 wrapMode: Text.WordWrap
                 visible: false
-            }
-
-            SectionHeader {
-                text: qsTr("Display")
             }
 
             ComboBox {
@@ -277,10 +306,6 @@ Page {
                 wrapMode: Text.WordWrap
             }
 
-            SectionHeader {
-                text: qsTr("Events")
-            }
-
             TextSwitch {
                 width: parent.width
                 text: qsTr("Include photos without people")
@@ -295,132 +320,16 @@ Page {
             }
 
             SectionHeader {
-                text: qsTr("Scanning")
+                text: qsTr("Contacts")
             }
 
-            Slider {
-                id: thresholdSlider
-                width: parent.width
-                label: qsTr("Recognition strictness")
-                minimumValue: 0.65
-                maximumValue: 0.80
-                stepSize: 0.01
-                valueText: Math.round(value * 100) + "%"
+            TextSwitch {
+                text: qsTr("Contacts integration")
+                description: qsTr("Let you link people to your device contacts. When off, Nami never reads your contacts, even though the permission is granted.")
                 enabled: facePipeline && facePipeline.initialized
-
-                Component.onCompleted: {
-                    if (facePipeline && facePipeline.initialized) {
-                        value = parseFloat(facePipeline.getSetting("auto_match_threshold", "0.72"))
-                    }
-                }
-
-                onReleased: {
-                    facePipeline.setSetting("auto_match_threshold", value.toFixed(2))
-                }
-            }
-
-            Label {
-                x: Theme.horizontalPageMargin
-                width: parent.width - 2 * Theme.horizontalPageMargin
-                text: qsTr("Higher values reduce wrong matches but leave more faces to identify manually")
-                font.pixelSize: Theme.fontSizeExtraSmall
-                color: Theme.secondaryColor
-                wrapMode: Text.WordWrap
-            }
-
-            SectionHeader {
-                text: qsTr("Storage")
-            }
-
-            DetailItem {
-                label: qsTr("Detected faces")
-                value: stats.total_faces || 0
-            }
-
-            DetailItem {
-                label: qsTr("Named people")
-                value: stats.total_people || 0
-            }
-
-            DetailItem {
-                label: qsTr("Storage used")
-                value: {
-                    var bytes = stats.db_size_bytes || 0
-                    if (bytes < 1024) return bytes + " B"
-                    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB"
-                    return (bytes / (1024 * 1024)).toFixed(1) + " MB"
-                }
-            }
-
-            SectionHeader {
-                text: qsTr("Data Management")
-            }
-
-            Label {
-                x: Theme.horizontalPageMargin
-                width: parent.width - 2 * Theme.horizontalPageMargin
-                text: qsTr("Photos you deleted from your phone stay in Nami as empty tiles. This forgets them. It runs on its own after every scan, so you only need it to clean up without rescanning.")
-                font.pixelSize: Theme.fontSizeExtraSmall
-                color: Theme.secondaryColor
-                wrapMode: Text.Wrap
-            }
-
-            ButtonLayout {
-                Button {
-                    text: qsTr("Forget deleted photos")
-                    enabled: facePipeline && facePipeline.initialized
-                    onClicked: {
-                        var removed = facePipeline.removeMissingPhotos()
-                        pruneResultLabel.text = removed > 0
-                            ? qsTr("%n photo(s) forgotten", "", removed)
-                            : qsTr("Nothing to clean up")
-                    }
-                }
-            }
-
-            Label {
-                id: pruneResultLabel
-                x: Theme.horizontalPageMargin
-                width: parent.width - 2 * Theme.horizontalPageMargin
-                visible: text.length > 0
-                font.pixelSize: Theme.fontSizeExtraSmall
-                color: Theme.highlightColor
-                wrapMode: Text.Wrap
-            }
-
-            ButtonLayout {
-                Button {
-                    text: qsTr("Export data")
-                    enabled: facePipeline && facePipeline.initialized
-                    onClicked: {
-                        var path = facePipeline.exportData()
-                        exportResultLabel.text = path
-                            ? qsTr("Exported to %1").arg(path)
-                            : qsTr("Export failed")
-                    }
-                }
-
-                Button {
-                    text: qsTr("Clear all data")
-                    enabled: facePipeline && facePipeline.initialized
-                    onClicked: {
-                        var remorse = Remorse.popupAction(page, qsTr("Deleting all data"), function() {
-                            if (facePipeline.deleteAllData()) {
-                                loadStatistics()
-                            }
-                        })
-                    }
-                }
-            }
-
-            Label {
-                id: exportResultLabel
-                x: Theme.horizontalPageMargin
-                width: parent.width - 2 * Theme.horizontalPageMargin
-                font.pixelSize: Theme.fontSizeExtraSmall
-                color: Theme.secondaryHighlightColor
-                wrapMode: Text.Wrap
-                visible: text.length > 0
+                automaticCheck: false
+                checked: facePipeline && facePipeline.contactsEnabled
+                onClicked: facePipeline.contactsEnabled = !facePipeline.contactsEnabled
             }
 
             SectionHeader {
@@ -430,7 +339,7 @@ Page {
             Label {
                 x: Theme.horizontalPageMargin
                 width: parent.width - 2 * Theme.horizontalPageMargin
-                text: qsTr("A backup includes everyone you've identified, their photos and your trips, so you can restore it all on a new device. Links to your contacts are left out, since those contacts may not exist on the new phone — you can link them again there. It's encrypted with a passphrase you choose — if you forget it, the backup can't be recovered. On the new phone, scan your gallery first, then restore: this is always safe, whether your photos ended up at the same path or not, and whatever Nami version you're running.")
+                text: qsTr("Everyone you've identified, their photos and your trips, encrypted with a passphrase you choose. Links to contacts are not included.")
                 font.pixelSize: Theme.fontSizeExtraSmall
                 color: Theme.secondaryColor
                 wrapMode: Text.WordWrap
@@ -523,6 +432,91 @@ Page {
                 color: Theme.secondaryHighlightColor
                 wrapMode: Text.Wrap
                 visible: text.length > 0
+            }
+
+            SectionHeader {
+                text: qsTr("Data")
+            }
+
+            DetailItem {
+                label: qsTr("Storage used")
+                value: {
+                    var bytes = stats.db_size_bytes || 0
+                    if (bytes < 1024) return bytes + " B"
+                    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB"
+                    return (bytes / (1024 * 1024)).toFixed(1) + " MB"
+                }
+            }
+
+            Label {
+                x: Theme.horizontalPageMargin
+                width: parent.width - 2 * Theme.horizontalPageMargin
+                text: qsTr("Photos deleted from the phone stay as empty tiles until forgotten. This also happens after every scan.")
+                font.pixelSize: Theme.fontSizeExtraSmall
+                color: Theme.secondaryColor
+                wrapMode: Text.WordWrap
+            }
+
+            ButtonLayout {
+                Button {
+                    text: qsTr("Forget deleted photos")
+                    enabled: facePipeline && facePipeline.initialized
+                    onClicked: {
+                        var removed = facePipeline.removeMissingPhotos()
+                        pruneResultLabel.text = removed > 0
+                            ? qsTr("%n photo(s) forgotten", "", removed)
+                            : qsTr("Nothing to clean up")
+                    }
+                }
+            }
+
+            Label {
+                id: pruneResultLabel
+                x: Theme.horizontalPageMargin
+                width: parent.width - 2 * Theme.horizontalPageMargin
+                visible: text.length > 0
+                font.pixelSize: Theme.fontSizeExtraSmall
+                color: Theme.highlightColor
+                wrapMode: Text.Wrap
+            }
+
+            ButtonLayout {
+                Button {
+                    text: qsTr("Export data")
+                    enabled: facePipeline && facePipeline.initialized
+                    onClicked: {
+                        var path = facePipeline.exportData()
+                        exportResultLabel.text = path
+                            ? qsTr("Exported to %1").arg(path)
+                            : qsTr("Export failed")
+                    }
+                }
+            }
+
+            Label {
+                id: exportResultLabel
+                x: Theme.horizontalPageMargin
+                width: parent.width - 2 * Theme.horizontalPageMargin
+                font.pixelSize: Theme.fontSizeExtraSmall
+                color: Theme.secondaryHighlightColor
+                wrapMode: Text.Wrap
+                visible: text.length > 0
+            }
+
+            // Alone at the very bottom: nothing else should sit within a
+            // slipped tap of wiping everything
+            ButtonLayout {
+                Button {
+                    text: qsTr("Clear all data")
+                    enabled: facePipeline && facePipeline.initialized
+                    onClicked: {
+                        var remorse = Remorse.popupAction(page, qsTr("Deleting all data"), function() {
+                            if (facePipeline.deleteAllData()) {
+                                loadStatistics()
+                            }
+                        })
+                    }
+                }
             }
         }
     }

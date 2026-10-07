@@ -368,10 +368,6 @@
 <context>
     <name>HomePage</name>
     <message>
-        <source>About</source>
-        <translation>Om</translation>
-    </message>
-    <message>
         <source>Automatically organize your photos by faces. All processing happens on your device for complete privacy.</source>
         <translation>Organiser bildene dine automatisk etter ansikter. All behandling skjer på enheten din for fullt personvern.</translation>
     </message>
@@ -386,10 +382,6 @@
     <message>
         <source>Identify Faces</source>
         <translation>Identifiser ansikter</translation>
-    </message>
-    <message>
-        <source>Memories</source>
-        <translation>Minner</translation>
     </message>
     <message>
         <source>Nami</source>
@@ -454,6 +446,10 @@
     <message>
         <source>Check which folders are scanned in Settings</source>
         <translation>Se hvilke mapper som skannes i innstillingene</translation>
+    </message>
+    <message>
+        <source>All memories</source>
+        <translation>Alle minner</translation>
     </message>
 </context>
 <context>
@@ -967,24 +963,12 @@
 <context>
     <name>SettingsPage</name>
     <message>
-        <source>All face recognition processing happens locally on your device. No data is sent to external servers.</source>
-        <translation>All behandling av ansiktsgjenkjenning skjer lokalt på enheten din. Ingen data sendes til eksterne servere.</translation>
-    </message>
-    <message>
         <source>Clear all data</source>
         <translation>Tøm alle data</translation>
     </message>
     <message>
-        <source>Data Management</source>
-        <translation>Dataadministrasjon</translation>
-    </message>
-    <message>
         <source>Deleting all data</source>
         <translation>Sletter alle data</translation>
-    </message>
-    <message>
-        <source>Detected faces</source>
-        <translation>Oppdagede ansikter</translation>
     </message>
     <message>
         <source>Export data</source>
@@ -1003,24 +987,8 @@
         <translation>Høyere verdier reduserer feilaktige treff, men etterlater flere ansikter som må identifiseres manuelt</translation>
     </message>
     <message>
-        <source>Named people</source>
-        <translation>Navngitte personer</translation>
-    </message>
-    <message>
-        <source>On-device processing</source>
-        <translation>Behandling på enheten</translation>
-    </message>
-    <message>
-        <source>Privacy</source>
-        <translation>Personvern</translation>
-    </message>
-    <message>
         <source>Recognition strictness</source>
         <translation>Strikthet for gjenkjenning</translation>
-    </message>
-    <message>
-        <source>Scanning</source>
-        <translation>Skanning</translation>
     </message>
     <message>
         <source>Select folder to scan</source>
@@ -1031,16 +999,8 @@
         <translation>Innstillinger</translation>
     </message>
     <message>
-        <source>Storage</source>
-        <translation>Lagring</translation>
-    </message>
-    <message>
         <source>Storage used</source>
         <translation>Lagringsplass brukt</translation>
-    </message>
-    <message>
-        <source>Language</source>
-        <translation>Språk</translation>
     </message>
     <message>
         <source>App language</source>
@@ -1055,12 +1015,16 @@
         <translation>Start Nami på nytt for å bruke det nye språket</translation>
     </message>
     <message>
-        <source>A backup includes everyone you've identified, their photos and your trips, so you can restore it all on a new device. Links to your contacts are left out, since those contacts may not exist on the new phone — you can link them again there. It's encrypted with a passphrase you choose — if you forget it, the backup can't be recovered. On the new phone, scan your gallery first, then restore: this is always safe, whether your photos ended up at the same path or not, and whatever Nami version you're running.</source>
-        <translation>En sikkerhetskopi inneholder alle du har identifisert, bildene deres og turene dine, slik at du kan gjenopprette alt på en ny enhet. Koblinger til kontaktene dine utelates, siden de kontaktene kanskje ikke finnes på den nye telefonen, du kan koble dem på nytt der. Den krypteres med en passfrase du velger: glemmer du den, kan ikke sikkerhetskopien gjenopprettes. På den nye telefonen skanner du galleriet først og gjenoppretter deretter: dette er alltid trygt, uansett om bildene havnet i samme mappe eller ikke, og uansett hvilken Nami-versjon du kjører.</translation>
-    </message>
-    <message>
         <source>Add folder</source>
         <translation>Legg til mappe</translation>
+    </message>
+    <message>
+        <source>Add memory card</source>
+        <translation>Legg til minnekort</translation>
+    </message>
+    <message>
+        <source>Add memory card %1</source>
+        <translation>Legg til minnekort %1</translation>
     </message>
     <message>
         <source>Backup</source>
@@ -1093,10 +1057,6 @@
     <message>
         <source>Enter the backup's passphrase</source>
         <translation>Skriv inn passfrasen til sikkerhetskopien</translation>
-    </message>
-    <message>
-        <source>Events</source>
-        <translation>Hendelser</translation>
     </message>
     <message>
         <source>Grid ×2</source>
@@ -1182,10 +1142,6 @@
         <translation>Gjenopprettet %1 bilder (%2 koblet på nytt etter innhold), %3 ansikter, %4 personer, %5 turer (%6 bilder hoppet over, ikke funnet på denne enheten)</translation>
     </message>
     <message>
-        <source>Scanned folders</source>
-        <translation>Skannede mapper</translation>
-    </message>
-    <message>
         <source>Select folder containing the backup</source>
         <translation>Velg mappen med sikkerhetskopien</translation>
     </message>
@@ -1213,8 +1169,28 @@
         <translation>Ingenting å rydde</translation>
     </message>
     <message>
-        <source>Photos you deleted from your phone stay in Nami as empty tiles. This forgets them. It runs on its own after every scan, so you only need it to clean up without rescanning.</source>
-        <translation>Bilder du har slettet fra telefonen blir liggende i Nami som tomme ruter. Dette glemmer dem. Det skjer av seg selv etter hver skanning, så knappen trengs bare for å rydde uten å skanne på nytt.</translation>
+        <source>About</source>
+        <translation>Om</translation>
+    </message>
+    <message>
+        <source>Photos</source>
+        <translation>Bilder</translation>
+    </message>
+    <message>
+        <source>Contacts</source>
+        <translation>Kontakter</translation>
+    </message>
+    <message>
+        <source>Data</source>
+        <translation>Data</translation>
+    </message>
+    <message>
+        <source>Everyone you&apos;ve identified, their photos and your trips, encrypted with a passphrase you choose. Links to contacts are not included.</source>
+        <translation>Alle du har identifisert, bildene deres og turene dine, kryptert med en passfrase du velger. Koblinger til kontakter er ikke med.</translation>
+    </message>
+    <message>
+        <source>Photos deleted from the phone stay as empty tiles until forgotten. This also happens after every scan.</source>
+        <translation>Bilder slettet fra telefonen blir stående som tomme ruter til de glemmes. Dette skjer også etter hver skanning.</translation>
     </message>
 </context>
 <context>
@@ -1367,6 +1343,10 @@
     <message>
         <source>Select a backup to restore</source>
         <translation>Velg en sikkerhetskopi å gjenopprette</translation>
+    </message>
+    <message>
+        <source>Scan this phone&apos;s gallery first, so restored people find their photos. Restoring is safe whatever the Nami version or photo paths.</source>
+        <translation>Skann galleriet på denne telefonen først, slik at gjenopprettede personer finner bildene sine. Gjenoppretting er trygt uansett Nami-versjon og bildeplassering.</translation>
     </message>
 </context>
 <context>

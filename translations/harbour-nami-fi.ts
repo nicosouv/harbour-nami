@@ -458,10 +458,6 @@
 <context>
     <name>HomePage</name>
     <message>
-        <source>About</source>
-        <translation>Tietoja</translation>
-    </message>
-    <message>
         <source>Automatically organize your photos by faces. All processing happens on your device for complete privacy.</source>
         <translation>Järjestä kuvasi automaattisesti kasvojen mukaan. Kaikki käsittely tapahtuu laitteellasi.</translation>
     </message>
@@ -476,10 +472,6 @@
     <message>
         <source>Identify Faces</source>
         <translation>Tunnista kasvot</translation>
-    </message>
-    <message>
-        <source>Memories</source>
-        <translation>Muistot</translation>
     </message>
     <message>
         <source>Nami</source>
@@ -544,6 +536,10 @@
     <message>
         <source>Check which folders are scanned in Settings</source>
         <translation>Tarkista läpikäytävät kansiot asetuksista</translation>
+    </message>
+    <message>
+        <source>All memories</source>
+        <translation>Kaikki muistot</translation>
     </message>
 </context>
 <context>
@@ -1124,16 +1120,20 @@
         <translation>Ruudukko ×4</translation>
     </message>
     <message>
-        <source>Scanned folders</source>
-        <translation>Skannatut kansiot</translation>
-    </message>
-    <message>
         <source>Nami only scans the folders listed here. Add a folder on the SD card to include external photos.</source>
         <translation>Nami skannaa vain tässä luetellut kansiot. Lisää kansio SD-kortilta ottaaksesi mukaan ulkoiset kuvat.</translation>
     </message>
     <message>
         <source>Add folder</source>
         <translation>Lisää kansio</translation>
+    </message>
+    <message>
+        <source>Add memory card</source>
+        <translation>Lisää muistikortti</translation>
+    </message>
+    <message>
+        <source>Add memory card %1</source>
+        <translation>Lisää muistikortti %1</translation>
     </message>
     <message>
         <source>Display</source>
@@ -1152,24 +1152,12 @@
         <translation>Poista</translation>
     </message>
     <message>
-        <source>All face recognition processing happens locally on your device. No data is sent to external servers.</source>
-        <translation>Kaikki kasvontunnistus tapahtuu paikallisesti laitteellasi. Tietoja ei lähetetä ulkoisille palvelimille.</translation>
-    </message>
-    <message>
         <source>Clear all data</source>
         <translation>Tyhjennä kaikki tiedot</translation>
     </message>
     <message>
-        <source>Data Management</source>
-        <translation>Tietojen hallinta</translation>
-    </message>
-    <message>
         <source>Deleting all data</source>
         <translation>Poistetaan kaikki tiedot</translation>
-    </message>
-    <message>
-        <source>Detected faces</source>
-        <translation>Havaitut kasvot</translation>
     </message>
     <message>
         <source>Export data</source>
@@ -1188,24 +1176,8 @@
         <translation>Suuremmat arvot vähentävät virheitä mutta jättävät enemmän kasvoja tunnistettavaksi käsin</translation>
     </message>
     <message>
-        <source>Named people</source>
-        <translation>Nimetyt henkilöt</translation>
-    </message>
-    <message>
-        <source>On-device processing</source>
-        <translation>Käsittely laitteella</translation>
-    </message>
-    <message>
-        <source>Privacy</source>
-        <translation>Yksityisyys</translation>
-    </message>
-    <message>
         <source>Recognition strictness</source>
         <translation>Tunnistuksen tarkkuus</translation>
-    </message>
-    <message>
-        <source>Scanning</source>
-        <translation>Skannaus</translation>
     </message>
     <message>
         <source>Select folder to scan</source>
@@ -1216,16 +1188,8 @@
         <translation>Asetukset</translation>
     </message>
     <message>
-        <source>Storage</source>
-        <translation>Tallennustila</translation>
-    </message>
-    <message>
         <source>Storage used</source>
         <translation>Käytetty tila</translation>
-    </message>
-    <message>
-        <source>Language</source>
-        <translation>Kieli</translation>
     </message>
     <message>
         <source>App language</source>
@@ -1238,10 +1202,6 @@
     <message>
         <source>Restart Nami to apply the new language</source>
         <translation>Käynnistä Nami uudelleen käyttääksesi uutta kieltä</translation>
-    </message>
-    <message>
-        <source>A backup includes everyone you've identified, their photos and your trips, so you can restore it all on a new device. Links to your contacts are left out, since those contacts may not exist on the new phone — you can link them again there. It's encrypted with a passphrase you choose — if you forget it, the backup can't be recovered. On the new phone, scan your gallery first, then restore: this is always safe, whether your photos ended up at the same path or not, and whatever Nami version you're running.</source>
-        <translation>Varmuuskopio sisältää kaikki tunnistamasi henkilöt, heidän kuvansa ja matkasi, joten voit palauttaa kaiken uuteen laitteeseen. Yhteystietolinkit jätetään pois, koska niitä yhteystietoja ei ehkä ole uudessa puhelimessa, voit liittää ne siellä uudelleen. Kopio salataan valitsemallasi salalauseella: jos unohdat sen, varmuuskopiota ei voi palauttaa. Skannaa uudessa puhelimessa ensin galleria ja palauta sitten: tämä on aina turvallista riippumatta siitä, päätyivätkö kuvat samaan polkuun, ja mistä Nami-versiosta tahansa.</translation>
     </message>
     <message>
         <source>Backup</source>
@@ -1266,10 +1226,6 @@
     <message>
         <source>Enter the backup's passphrase</source>
         <translation>Anna varmuuskopion salalause</translation>
-    </message>
-    <message>
-        <source>Events</source>
-        <translation>Tapahtumat</translation>
     </message>
     <message>
         <source>Identifications and trips will be added to what's already on this device. Nothing is deleted.</source>
@@ -1342,8 +1298,28 @@
         <translation>Ei siivottavaa</translation>
     </message>
     <message>
-        <source>Photos you deleted from your phone stay in Nami as empty tiles. This forgets them. It runs on its own after every scan, so you only need it to clean up without rescanning.</source>
-        <translation>Puhelimesta poistamasi kuvat jäävät Namiin tyhjinä ruutuina. Tämä unohtaa ne. Se tehdään automaattisesti jokaisen skannauksen jälkeen, joten painiketta tarvitaan vain siivoamiseen ilman uutta skannausta.</translation>
+        <source>About</source>
+        <translation>Tietoja</translation>
+    </message>
+    <message>
+        <source>Photos</source>
+        <translation>Kuvat</translation>
+    </message>
+    <message>
+        <source>Contacts</source>
+        <translation>Yhteystiedot</translation>
+    </message>
+    <message>
+        <source>Data</source>
+        <translation>Tiedot</translation>
+    </message>
+    <message>
+        <source>Everyone you&apos;ve identified, their photos and your trips, encrypted with a passphrase you choose. Links to contacts are not included.</source>
+        <translation>Kaikki tunnistamasi henkilöt, heidän kuvansa ja matkasi, salattuna valitsemallasi tunnuslauseella. Linkit yhteystietoihin eivät sisälly.</translation>
+    </message>
+    <message>
+        <source>Photos deleted from the phone stay as empty tiles until forgotten. This also happens after every scan.</source>
+        <translation>Puhelimesta poistetut kuvat jäävät tyhjiksi ruuduiksi, kunnes ne unohdetaan. Tämä tapahtuu myös jokaisen skannauksen jälkeen.</translation>
     </message>
 </context>
 <context>
@@ -1477,6 +1453,10 @@
     <message>
         <source>Select a backup to restore</source>
         <translation>Valitse palautettava varmuuskopio</translation>
+    </message>
+    <message>
+        <source>Scan this phone&apos;s gallery first, so restored people find their photos. Restoring is safe whatever the Nami version or photo paths.</source>
+        <translation>Skannaa ensin tämän puhelimen galleria, jotta palautetut henkilöt löytävät kuvansa. Palautus on turvallinen Nami-versiosta ja kuvien sijainnista riippumatta.</translation>
     </message>
 </context>
 <context>

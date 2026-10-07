@@ -32,6 +32,16 @@ Dialog {
                 wrapMode: Text.WordWrap
             }
 
+            // Said here rather than in Settings: this is the moment it matters
+            Label {
+                x: Theme.horizontalPageMargin
+                width: parent.width - 2 * Theme.horizontalPageMargin
+                text: qsTr("Scan this phone's gallery first, so restored people find their photos. Restoring is safe whatever the Nami version or photo paths.")
+                color: Theme.secondaryHighlightColor
+                font.pixelSize: Theme.fontSizeExtraSmall
+                wrapMode: Text.WordWrap
+            }
+
             Repeater {
                 model: backups
 
