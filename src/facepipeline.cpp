@@ -1,6 +1,7 @@
 #include "facepipeline.h"
 #include "exifreader.h"
 #include "filehash.h"
+#include "galleryscan.h"
 #include "backupcrypto.h"
 #include "memorygenerator.h"
 #include "memoryexporter.h"
@@ -164,23 +165,11 @@ void FacePipeline::scanGalleries(const QStringList &galleryPaths, bool recursive
     qCDebug(lcNami) << "Scanning galleries:" << galleryPaths << "(recursive:" << recursive
              << "force:" << forceRescan << ")";
 
-    // Find all image files across every folder, deduplicated (folders may
-    // overlap, e.g. an SD card mounted under a scanned parent)
-    QStringList allFiles;
-    QSet<QString> seen;
-    for (const QString &path : galleryPaths) {
-        if (path.isEmpty()) {
-            continue;
-        }
-        const QStringList files = findImageFiles(path, recursive);
-        for (const QString &file : files) {
-            if (!seen.contains(file)) {
-                seen.insert(file);
-                allFiles.append(file);
-            }
-        }
-    }
-    m_pendingFiles = allFiles;
+    // Every image across the folders, once each even when folders overlap
+    // or a link leads to the same card twice, under the path the database
+    // already uses for it so a forced rescan updates rather than duplicates
+    m_pendingFiles = collectGalleryImages(galleryPaths, recursive,
+                                          m_database->knownPhotoPaths());
 
     // Incremental scan: skip photos already processed
     if (!forceRescan) {
@@ -573,33 +562,6 @@ void FacePipeline::cancel()
 }
 
 // === Helpers ===
-
-QStringList FacePipeline::findImageFiles(const QString &directory, bool recursive)
-{
-    QStringList imageFiles;
-    QDir dir(directory);
-
-    // Supported image formats
-    QStringList nameFilters;
-    nameFilters << "*.jpg" << "*.jpeg" << "*.png" << "*.bmp" << "*.gif";
-
-    QDir::Filters filters = QDir::Files | QDir::Readable;
-    if (recursive) {
-        filters |= QDir::AllDirs | QDir::NoDotAndDotDot;
-    }
-
-    QFileInfoList entries = dir.entryInfoList(nameFilters, filters);
-
-    for (const QFileInfo &entry : entries) {
-        if (entry.isDir() && recursive) {
-            imageFiles.append(findImageFiles(entry.absoluteFilePath(), true));
-        } else if (entry.isFile()) {
-            imageFiles.append(entry.absoluteFilePath());
-        }
-    }
-
-    return imageFiles;
-}
 
 QImage FacePipeline::loadImage(const QString &filePath)
 {
@@ -1602,21 +1564,15 @@ int FacePipeline::unscannedPhotoCount(const QStringList &folders)
 
     const QSet<QString> known = m_database->knownPhotoPaths();
 
-    // Deduplicated across folders: a whitelist can name a directory and its
-    // parent, and counting a photo twice would promise a scan twice as big
-    QSet<QString> unscanned;
-    for (const QString &folder : folders) {
-        if (folder.isEmpty()) {
-            continue;
-        }
-        for (const QString &path : findImageFiles(folder, true)) {
-            if (!known.contains(path)) {
-                unscanned.insert(path);
-            }
+    // Deduplicated the same way as the scan, so the count promises exactly
+    // what a scan would do
+    int unscanned = 0;
+    for (const QString &path : collectGalleryImages(folders, true, known)) {
+        if (!known.contains(path)) {
+            unscanned++;
         }
     }
-
-    return unscanned.size();
+    return unscanned;
 }
 
 QVariantList FacePipeline::removableVolumes() const

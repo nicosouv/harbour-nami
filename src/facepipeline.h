@@ -810,9 +810,6 @@ private:
     // Helper: DB part, main thread only
     PhotoProcessingResult commitExtraction(const PhotoExtraction &extraction, bool reprocess);
 
-    // Helper: Find image files in directory
-    QStringList findImageFiles(const QString &directory, bool recursive);
-
     // Helper: Load and validate image
     QImage loadImage(const QString &filePath);
 

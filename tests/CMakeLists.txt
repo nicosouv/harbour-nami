@@ -98,6 +98,15 @@ target_include_directories(tst_filehash PRIVATE ${NAMI_SRC})
 target_link_libraries(tst_filehash Qt5::Core Qt5::Test)
 add_test(NAME filehash COMMAND tst_filehash)
 
+# The gallery walk: one photo however many paths lead to it
+add_executable(tst_galleryscan
+    ${CMAKE_CURRENT_LIST_DIR}/tst_galleryscan.cpp
+    ${NAMI_SRC}/galleryscan.cpp
+)
+target_include_directories(tst_galleryscan PRIVATE ${NAMI_SRC})
+target_link_libraries(tst_galleryscan Qt5::Core Qt5::Test)
+add_test(NAME galleryscan COMMAND tst_galleryscan)
+
 # Face crops: the geometry behind every avatar and thumbnail in the app
 add_executable(tst_faceimageprovider
     ${CMAKE_CURRENT_LIST_DIR}/tst_faceimageprovider.cpp

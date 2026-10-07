@@ -64,6 +64,7 @@ set(SOURCES
     src/faceimageprovider.cpp
     src/exifreader.cpp
     src/filehash.cpp
+    src/galleryscan.cpp
     src/backupcrypto.cpp
 )
 
@@ -85,6 +86,7 @@ set(HEADERS
     src/faceimageprovider.h
     src/exifreader.h
     src/filehash.h
+    src/galleryscan.h
     src/backupcrypto.h
 )
 

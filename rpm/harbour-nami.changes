@@ -1,6 +1,9 @@
 * Wed Oct 07 2026 Nicolas Souveton <souvetonnicolas@gmail.com> 0.9.2-1
 - A memory card can be added to the scanned folders in one tap from Settings,
   for phones where the folder picker cannot reach it
+- A photo reached by two paths, such as a card linked into the home folder,
+  is scanned once, and a link pointing back at its own folder no longer
+  sends the scan round forever
 - Settings are regrouped in five sections, with shorter explanations and the
   button that clears everything kept alone at the bottom
 - The home pull-down menu is shorter: About moves to Settings, all memories
