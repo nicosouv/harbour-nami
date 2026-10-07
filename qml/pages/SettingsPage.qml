@@ -86,6 +86,7 @@ Page {
         Column {
             id: column
             width: page.width
+            spacing: Theme.paddingMedium
 
             PageHeader {
                 title: qsTr("Settings")
@@ -104,27 +105,32 @@ Page {
                 wrapMode: Text.WordWrap
             }
 
-            Repeater {
-                model: scanFolders
+            // Kept in a column of its own so the rows stay flush, as a list
+            Column {
+                width: parent.width
 
-                delegate: ListItem {
-                    width: parent.width
-                    contentHeight: Theme.itemSizeSmall
-                    enabled: facePipeline && facePipeline.initialized
+                Repeater {
+                    model: scanFolders
 
-                    Label {
-                        x: Theme.horizontalPageMargin
-                        width: parent.width - 2 * Theme.horizontalPageMargin
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: modelData
-                        truncationMode: TruncationMode.Fade
-                        font.pixelSize: Theme.fontSizeSmall
-                    }
+                    delegate: ListItem {
+                        width: parent.width
+                        contentHeight: Theme.itemSizeSmall
+                        enabled: facePipeline && facePipeline.initialized
 
-                    menu: ContextMenu {
-                        MenuItem {
-                            text: qsTr("Remove")
-                            onClicked: removeFolder(modelData)
+                        Label {
+                            x: Theme.horizontalPageMargin
+                            width: parent.width - 2 * Theme.horizontalPageMargin
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: modelData
+                            truncationMode: TruncationMode.Fade
+                            font.pixelSize: Theme.fontSizeSmall
+                        }
+
+                        menu: ContextMenu {
+                            MenuItem {
+                                text: qsTr("Remove")
+                                onClicked: removeFolder(modelData)
+                            }
                         }
                     }
                 }
@@ -468,19 +474,7 @@ Page {
                             : qsTr("Nothing to clean up")
                     }
                 }
-            }
 
-            Label {
-                id: pruneResultLabel
-                x: Theme.horizontalPageMargin
-                width: parent.width - 2 * Theme.horizontalPageMargin
-                visible: text.length > 0
-                font.pixelSize: Theme.fontSizeExtraSmall
-                color: Theme.highlightColor
-                wrapMode: Text.Wrap
-            }
-
-            ButtonLayout {
                 Button {
                     text: qsTr("Export data")
                     enabled: facePipeline && facePipeline.initialized
@@ -494,6 +488,16 @@ Page {
             }
 
             Label {
+                id: pruneResultLabel
+                x: Theme.horizontalPageMargin
+                width: parent.width - 2 * Theme.horizontalPageMargin
+                visible: text.length > 0
+                font.pixelSize: Theme.fontSizeExtraSmall
+                color: Theme.highlightColor
+                wrapMode: Text.Wrap
+            }
+
+            Label {
                 id: exportResultLabel
                 x: Theme.horizontalPageMargin
                 width: parent.width - 2 * Theme.horizontalPageMargin
@@ -502,6 +506,9 @@ Page {
                 wrapMode: Text.Wrap
                 visible: text.length > 0
             }
+
+            // Extra room before the one action that cannot be undone
+            Item { width: 1; height: Theme.paddingLarge }
 
             // Alone at the very bottom: nothing else should sit within a
             // slipped tap of wiping everything
@@ -518,6 +525,8 @@ Page {
                     }
                 }
             }
+
+            Item { width: 1; height: Theme.paddingLarge }
         }
     }
 }
