@@ -222,20 +222,17 @@ Page {
         contentHeight: content.height + Theme.paddingLarge
 
         PullDownMenu {
-            MenuItem { text: qsTr("About"); onClicked: pageStack.push(Qt.resolvedUrl("AboutPage.qml")) }
             MenuItem { text: qsTr("Settings"); onClicked: pageStack.push(Qt.resolvedUrl("SettingsPage.qml")) }
-            MenuItem {
-                text: qsTr("Memories")
-                enabled: facePipeline && facePipeline.initialized
-                onClicked: pageStack.push(Qt.resolvedUrl("MemoriesPage.qml"))
-            }
             MenuItem {
                 text: qsTr("Events")
                 enabled: facePipeline && facePipeline.initialized
                 onClicked: pageStack.push(Qt.resolvedUrl("EventsPage.qml"))
             }
+            // Only when there is someone to name: the line on the page says
+            // the same, but sits below the fold on a full home
             MenuItem {
                 text: qsTr("Identify Faces")
+                visible: facesToIdentify > 0
                 enabled: facePipeline && facePipeline.initialized
                 onClicked: pageStack.push(Qt.resolvedUrl("IdentifyFacesPage.qml"))
             }
@@ -403,7 +400,8 @@ Page {
 
                 width: parent.width
                 height: cardWidth * 0.66 + Theme.itemSizeExtraSmall
-                visible: count > 0
+                // Also with the hero alone, so the full list stays reachable
+                visible: count > 0 || heroMemory !== null
 
                 orientation: ListView.Horizontal
                 flickableDirection: Flickable.HorizontalFlick
@@ -413,7 +411,33 @@ Page {
                 model: memoriesModel
 
                 header: Item { width: Theme.horizontalPageMargin; height: 1 }
-                footer: Item { width: Theme.horizontalPageMargin; height: 1 }
+                // The whole list at the end of the strip, where the eye
+                // already is, rather than in the pulley
+                footer: Item {
+                    width: allMemories.width + Theme.horizontalPageMargin
+                           + (memoryStrip.count > 0 ? memoryStrip.spacing : 0)
+                    height: memoryStrip.height
+
+                    BackgroundItem {
+                        id: allMemories
+                        x: memoryStrip.count > 0 ? memoryStrip.spacing : 0
+                        width: memoryStrip.cardWidth * 0.6
+                        height: memoryStrip.cardWidth * 0.66
+
+                        Label {
+                            anchors.centerIn: parent
+                            width: parent.width - 2 * Theme.paddingMedium
+                            horizontalAlignment: Text.AlignHCenter
+                            wrapMode: Text.WordWrap
+                            text: qsTr("All memories")
+                            color: allMemories.highlighted ? Theme.highlightColor
+                                                           : Theme.primaryColor
+                            font.pixelSize: Theme.fontSizeSmall
+                        }
+
+                        onClicked: pageStack.push(Qt.resolvedUrl("MemoriesPage.qml"))
+                    }
+                }
 
                 delegate: BackgroundItem {
                     id: memoryCard
