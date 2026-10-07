@@ -13,6 +13,7 @@
 #include <QtConcurrent>
 #include <QSet>
 #include <QStandardPaths>
+#include <QStorageInfo>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
@@ -1616,6 +1617,31 @@ int FacePipeline::unscannedPhotoCount(const QStringList &folders)
     }
 
     return unscanned.size();
+}
+
+QVariantList FacePipeline::removableVolumes() const
+{
+    QVariantList volumes;
+    QString user = QString::fromLocal8Bit(qgetenv("USER"));
+    if (user.isEmpty()) {
+        user = QDir::home().dirName();
+    }
+
+    const QDir media(QStringLiteral("/run/media/") + user);
+    const QFileInfoList entries = media.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot | QDir::Readable);
+    for (const QFileInfo &entry : entries) {
+        const QString path = entry.absoluteFilePath();
+        const QStorageInfo storage(path);
+        // A card that is not mounted leaves an empty directory behind
+        if (!storage.isValid() || !storage.isReady() || storage.rootPath() != path) {
+            continue;
+        }
+        QVariantMap volume;
+        volume.insert(QStringLiteral("path"), path);
+        volume.insert(QStringLiteral("name"), storage.name().isEmpty() ? entry.fileName() : storage.name());
+        volumes.append(volume);
+    }
+    return volumes;
 }
 
 int FacePipeline::countPhotosOfPeople(const QVariantList &personIds, bool together)

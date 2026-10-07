@@ -359,6 +359,14 @@ public:
     Q_INVOKABLE int unscannedPhotoCount(const QStringList &folders);
 
     /**
+     * @brief Memory cards currently mounted, as {path, name} maps
+     *
+     * Read straight from /run/media/<user> rather than through the folder
+     * picker, which on some releases cannot reach a vfat card at all.
+     */
+    Q_INVOKABLE QVariantList removableVolumes() const;
+
+    /**
      * @brief Delete all face recognition data
      * @return true if successful
      */
